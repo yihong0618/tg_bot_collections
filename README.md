@@ -1,6 +1,8 @@
 # tg_bot_collections
 Collections of yihong0618's telegram bot
 
+for my channel: https://t.me/hyi0618
+
 ## HOW TO
 
 1. pip install -r requirements.txt
