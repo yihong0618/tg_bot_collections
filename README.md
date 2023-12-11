@@ -10,7 +10,7 @@ for my channel: https://t.me/hyi0618
 
 ## Bot -> pretty mapper
 
-![image](https://github.com/yihong0618/tg_bot_collections/assets/15976103/d64c334c-19b6-43e3-8b1f-3e145e0ca945)
+![image](https://github.com/yihong0618/tg_bot_collections/assets/15976103/29848d22-5289-4953-8ab0-4e84c16f79e3)
 
 
 ## HOW TO
