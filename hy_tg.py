@@ -4,20 +4,55 @@ import os
 import gc
 import subprocess
 from telebot import TeleBot  # type: ignore
-from telebot.types import BotCommand, Message  # type: ignore
+from telebot.types import Message  # type: ignore
 
 from prettymapp.geo import get_aoi
 from prettymapp.osm import get_osm_geometries
 from prettymapp.plotting import Plot
 from prettymapp.settings import STYLES
 
+from matplotlib import figure
+
 from PIL import Image
+import numpy as np
 import PIL
 import io
 
 PIL.Image.MAX_IMAGE_PIXELS = 933120000
 file_in = "map.jpg"
 file_out = "map_out.jpg"
+
+
+# monkey patch for Plot thanks @higuoxing https://github.com/higuoxing
+def __post_init__(self):
+    (
+        self.xmin,
+        self.ymin,
+        self.xmax,
+        self.ymax,
+    ) = self.aoi_bounds
+    # take from aoi geometry bounds, otherwise probelematic if unequal geometry distribution over plot.
+    self.xmid = (self.xmin + self.xmax) / 2
+    self.ymid = (self.ymin + self.ymax) / 2
+    self.xdif = self.xmax - self.xmin
+    self.ydif = self.ymax - self.ymin
+
+    self.bg_buffer_x = (self.bg_buffer / 100) * self.xdif
+    self.bg_buffer_y = (self.bg_buffer / 100) * self.ydif
+
+    # self.fig, self.ax = subplots(
+    #     1, 1, figsize=(12, 12), constrained_layout=True, dpi=1200
+    # )
+    self.fig = figure.Figure(figsize=(12, 12), constrained_layout=True, dpi=1200)
+    self.ax = self.fig.subplots(1, 1)
+    self.ax.set_aspect(1 / np.cos(self.ymid * np.pi / 180))
+
+    self.ax.axis("off")
+    self.ax.set_xlim(self.xmin - self.bg_buffer_x, self.xmax + self.bg_buffer_x)
+    self.ax.set_ylim(self.ymin - self.bg_buffer_y, self.ymax + self.bg_buffer_y)
+
+
+Plot.__post_init__ = __post_init__
 
 
 def sizeof_image(image):
@@ -34,7 +69,7 @@ def compress_image(input_path, output_path, target_size):
 
         while sizeof_image(img) > target_bytes:
             factor -= 0.05
-            (width, height) = img.size
+            width, height = img.size
             img = img.resize(
                 (int(width * factor), int(height * factor)),
                 PIL.Image.Resampling.LANCZOS,
@@ -49,7 +84,7 @@ def draw_pretty_map(location, file_name, style):
     df = get_osm_geometries(aoi=aoi)
     fig = Plot(df=df, aoi_bounds=aoi.bounds, draw_settings=STYLES[style]).plot_all()
     fig.savefig(file_name)
-    compress_image(file_in, file_out, 9)  # 10MB
+    compress_image(file_in, file_out, 9)  # telegram tog need png less than 10MB
 
 
 def main():
@@ -114,6 +149,7 @@ def main():
             bot.reply_to(message, "Something wrong please check")
             print(str(e))
         bot.delete_message(reply_message.chat.id, reply_message.message_id)
+        # we need this, fuck it
         gc.collect()
 
     # Start bot
