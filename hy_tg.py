@@ -58,10 +58,9 @@ def sizeof_image(image):
         return f.tell()
 
 
-def compress_image(input_image, target_size):
+def compress_image(input_image, output_image, target_size):
     quality = 95
     factor = 1.0
-    output = SpooledTemporaryFile(max_size=MAX_IN_MEMORY)
     with Image.open(input_image) as img:
         while sizeof_image(img) > target_size:
             factor -= 0.05
@@ -70,20 +69,20 @@ def compress_image(input_image, target_size):
                 (int(width * factor), int(height * factor)),
                 PIL.Image.Resampling.LANCZOS,
             )
-        img.save(output, format="JPEG", quality=quality)
-    output.seek(0)
-    return output
+        img.save(output_image, format="JPEG", quality=quality)
+    output_image.seek(0)
 
 
-def draw_pretty_map(location, style):
+def draw_pretty_map(location, style, output_file):
     aoi = get_aoi(address=location, radius=1100, rectangular=True)
     df = get_osm_geometries(aoi=aoi)
     fig = Plot(df=df, aoi_bounds=aoi.bounds, draw_settings=STYLES[style]).plot_all()
     with SpooledTemporaryFile(max_size=MAX_IN_MEMORY) as buffer:
         fig.savefig(buffer, format="jpeg")
         buffer.seek(0)
-        return compress_image(
+        compress_image(
             buffer,
+            output_file,
             10 * 1024 * 1024,  # telegram tog need png less than 10MB
         )
 
@@ -151,15 +150,15 @@ def main():
         style = random.choice(styles_list)
         try:
             # TODO why this memory leak?
-            out_image = draw_pretty_map(location, style)
-            # tg can only send image less than 10MB
-            with open("map_out.jpg", "wb") as f:
-                shutil.copyfileobj(out_image, f)
-            out_image.seek(0)
-            bot.send_photo(
-                message.chat.id, out_image, reply_to_message_id=message.message_id
-            )
-            out_image.close()
+            with SpooledTemporaryFile(max_size=MAX_IN_MEMORY) as out_image:
+                draw_pretty_map(location, style, out_image)
+                # tg can only send image less than 10MB
+                with open("map_out.jpg", "wb") as f:  # for debug
+                    shutil.copyfileobj(out_image, f)
+                out_image.seek(0)
+                bot.send_photo(
+                    message.chat.id, out_image, reply_to_message_id=message.message_id
+                )
 
         except Exception:
             traceback.print_exc()
