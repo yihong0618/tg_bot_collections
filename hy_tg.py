@@ -22,6 +22,7 @@ file_out = "map_out.jpg"
 
 class Plot(PrettyPlot):
     # memory leak fix for Plot. thanks @higuoxing https://github.com/higuoxing
+    # refer to: https://www.mail-archive.com/matplotlib-users@lists.sourceforge.net/msg11809.html
     def __post_init__(self):
         (
             self.xmin,
