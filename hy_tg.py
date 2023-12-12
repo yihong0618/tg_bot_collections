@@ -15,7 +15,7 @@ from prettymapp.osm import get_osm_geometries
 from prettymapp.plotting import Plot as PrettyPlot
 from prettymapp.settings import STYLES
 from telebot import TeleBot  # type: ignore
-from telebot.types import Message  # type: ignore
+from telebot.types import BotCommand, Message  # type: ignore
 
 PIL.Image.MAX_IMAGE_PIXELS = 933120000
 MAX_IN_MEMORY = 10 * 1024 * 1024  # 10MiB
@@ -98,14 +98,10 @@ def main():
     bot = TeleBot(options.tg_token)
     bot.set_my_commands(
         [
-            {
-                "command": "github",
-                "description": "github poster: /github <github_user_name> [<start>-<end>]",
-            },
-            {
-                "command": "map",
-                "description": "pretty map: /map <address>",
-            },
+            BotCommand(
+                "github", "github poster: /github <github_user_name> [<start>-<end>]"
+            ),
+            BotCommand("map", "pretty map: /map <address>"),
         ]
     )
     print("Bot init done.")
