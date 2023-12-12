@@ -145,7 +145,6 @@ def main():
         styles_list = list(STYLES.keys())
         style = random.choice(styles_list)
         try:
-            # TODO why this memory leak?
             with SpooledTemporaryFile(max_size=MAX_IN_MEMORY) as out_image:
                 draw_pretty_map(location, style, out_image)
                 # tg can only send image less than 10MB
@@ -160,7 +159,35 @@ def main():
             traceback.print_exc()
             bot.reply_to(message, "Something wrong please check")
         bot.delete_message(reply_message.chat.id, reply_message.message_id)
-        # we need this, fuck it
+        gc.collect()
+
+    @bot.message_handler(content_types=["location", "venue"])
+    def map_location_handler(message: Message):
+        # TODO refactor the function
+        reply_message = bot.reply_to(
+            message,
+            "Generating pretty map using location now, may take some time please wait:",
+        )
+        location = "{0}, {1}".format(
+            message.location.latitude, message.location.longitude
+        )
+        styles_list = list(STYLES.keys())
+        style = random.choice(styles_list)
+        try:
+            with SpooledTemporaryFile(max_size=MAX_IN_MEMORY) as out_image:
+                draw_pretty_map(location, style, out_image)
+                # tg can only send image less than 10MB
+                with open("map_out.jpg", "wb") as f:  # for debug
+                    shutil.copyfileobj(out_image, f)
+                out_image.seek(0)
+                bot.send_photo(
+                    message.chat.id, out_image, reply_to_message_id=message.message_id
+                )
+
+        except Exception:
+            traceback.print_exc()
+            bot.reply_to(message, "Something wrong please check")
+        bot.delete_message(reply_message.chat.id, reply_message.message_id)
         gc.collect()
 
     # Start bot

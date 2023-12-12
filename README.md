@@ -1,7 +1,7 @@
 # tg_bot_collections
 Collections of yihong0618's telegram bot
 
-for my channel: https://t.me/hyi0618
+for yihong0618's channel: https://t.me/hyi0618
 
 
 ## Bot -> poster
@@ -17,5 +17,16 @@ for my channel: https://t.me/hyi0618
 
 1. pip install -r requirements.txt
 2. Get tg token, ask Google or ChatGPT, need get it from [BotFather](https://t.me/BotFather)
-3. python hy_tg.py ${tg_token}
+3. python tg.py ${tg_token}
+
+
+## Contribution
+
+- Any issue reports or PRs are welcome.
+- Any other bot type like slack/discord welcome
+- Before PR, use `pip install -U black` then `black .` first
+
+## Appreciation
+
+- Thank you, that's enough. Just enjoy it.
 
