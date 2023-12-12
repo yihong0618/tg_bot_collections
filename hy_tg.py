@@ -106,6 +106,7 @@ def main():
     print("Bot init done.")
 
     @bot.message_handler(commands=["github"])
+    @bot.message_handler(regexp="^github:")
     def github_poster_handler(message: Message):
         reply_message = bot.reply_to(message, "Generating poster please wait:")
         m = message.text.strip().split(maxsplit=1)[1].strip()
@@ -133,6 +134,7 @@ def main():
         bot.delete_message(reply_message.chat.id, reply_message.message_id)
 
     @bot.message_handler(commands=["map"])
+    @bot.message_handler(regexp="^map:")
     def map_handler(message: Message):
         reply_message = bot.reply_to(
             message, "Generating pretty map may take some time please wait:"
