@@ -70,9 +70,7 @@ def compress_image(input_path, output_path, target_size):
                 (int(width * factor), int(height * factor)),
                 PIL.Image.Resampling.LANCZOS,
             )
-            if sizeof_image(img) <= target_bytes:
-                img.save(output_path, format="JPEG", quality=quality)
-                return
+        img.save(output_path, format="JPEG", quality=quality)
 
 
 def draw_pretty_map(location, file_name, style):
