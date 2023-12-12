@@ -1,8 +1,10 @@
 import argparse
 import gc
-import io
 import random
+import shutil
 import subprocess
+import traceback
+from tempfile import SpooledTemporaryFile
 
 import numpy as np
 import PIL
@@ -16,8 +18,7 @@ from telebot import TeleBot  # type: ignore
 from telebot.types import Message  # type: ignore
 
 PIL.Image.MAX_IMAGE_PIXELS = 933120000
-file_in = "map.jpg"
-file_out = "map_out.jpg"
+MAX_IN_MEMORY = 10 * 1024 * 1024  # 10MiB
 
 
 class Plot(PrettyPlot):
@@ -52,35 +53,38 @@ class Plot(PrettyPlot):
 
 
 def sizeof_image(image):
-    with io.BytesIO() as buff:
-        image.save(buff, format="JPEG", quality=95)
-        return buff.tell()
+    with SpooledTemporaryFile(max_size=MAX_IN_MEMORY) as f:
+        image.save(f, format="JPEG", quality=95)
+        return f.tell()
 
 
-def compress_image(input_path, output_path, target_size):
+def compress_image(input_image, output_image, target_size):
     quality = 95
     factor = 1.0
-    with Image.open(input_path) as img:
-        target_bytes = 10 * 1024 * 1024
-
-        while sizeof_image(img) > target_bytes:
+    with Image.open(input_image) as img:
+        while sizeof_image(img) > target_size:
             factor -= 0.05
             width, height = img.size
             img = img.resize(
                 (int(width * factor), int(height * factor)),
                 PIL.Image.Resampling.LANCZOS,
             )
-            if sizeof_image(img) <= target_bytes:
-                img.save(output_path, format="JPEG", quality=quality)
-                return
+        img.save(output_image, format="JPEG", quality=quality)
+    output_image.seek(0)
 
 
-def draw_pretty_map(location, file_name, style):
+def draw_pretty_map(location, style, output_file):
     aoi = get_aoi(address=location, radius=1100, rectangular=True)
     df = get_osm_geometries(aoi=aoi)
     fig = Plot(df=df, aoi_bounds=aoi.bounds, draw_settings=STYLES[style]).plot_all()
-    fig.savefig(file_name)
-    compress_image(file_in, file_out, 9)  # telegram tog need png less than 10MB
+    with SpooledTemporaryFile(max_size=MAX_IN_MEMORY) as buffer:
+        fig.savefig(buffer, format="jpeg")
+        buffer.seek(0)
+        compress_image(
+            buffer,
+            output_file,
+            10 * 1024 * 1024,  # telegram tog need png less than 10MB
+        )
 
 
 def main():
@@ -146,16 +150,19 @@ def main():
         style = random.choice(styles_list)
         try:
             # TODO why this memory leak?
-            draw_pretty_map(location, file_in, style)
-            # tg can only send image less than 10MB
-            with open(file_out, "rb") as photo:
+            with SpooledTemporaryFile(max_size=MAX_IN_MEMORY) as out_image:
+                draw_pretty_map(location, style, out_image)
+                # tg can only send image less than 10MB
+                with open("map_out.jpg", "wb") as f:  # for debug
+                    shutil.copyfileobj(out_image, f)
+                out_image.seek(0)
                 bot.send_photo(
-                    message.chat.id, photo, reply_to_message_id=message.message_id
+                    message.chat.id, out_image, reply_to_message_id=message.message_id
                 )
 
-        except Exception as e:
+        except Exception:
+            traceback.print_exc()
             bot.reply_to(message, "Something wrong please check")
-            print(str(e))
         bot.delete_message(reply_message.chat.id, reply_message.message_id)
         # we need this, fuck it
         gc.collect()
