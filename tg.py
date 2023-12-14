@@ -6,6 +6,7 @@ import subprocess
 import traceback
 from tempfile import SpooledTemporaryFile
 from os import environ
+from pathlib import Path
 
 import numpy as np
 import PIL
@@ -233,7 +234,7 @@ def main():
     def gemini_handler(message: Message):
         reply_message = bot.reply_to(
             message,
-            "Generating google gemini answer please wait:",
+            "Generating google gemini answer please wait, note, will only keep the last five messages:",
         )
         m = message.text.strip().split(maxsplit=1)[1].strip()
         player = None
@@ -244,19 +245,56 @@ def main():
         else:
             player = gemini_player_dict[str(message.from_user.id)]
         if len(player.history) > 10:
-            bot.reply_to(message, "Your hisotry length > 5 will only keep last 5")
             player.history = player.history[2:]
         try:
             player.send_message(m)
             try:
-                bot.reply_to(message, "Gemini answer:\n" + player.last.text, parse_mode='MarkdownV2')
+                bot.reply_to(
+                    message,
+                    "Gemini answer:\n" + player.last.text,
+                    parse_mode="MarkdownV2",
+                )
             except:
                 bot.reply_to(message, "Gemini answer:\n" + player.last.text)
 
-
         except Exception as e:
             traceback.print_exc()
-            bot.reply_to(message, "Something wrong please check")
+            bot.reply_to(message, "Something wrong please check the log")
+        bot.delete_message(reply_message.chat.id, reply_message.message_id)
+
+    @bot.message_handler(content_types=["photo"])
+    def gemini_photo_handler(message: Message) -> None:
+        s = message.caption
+        if not s or not s.startswith("gemini:"):
+            return
+        reply_message = bot.reply_to(
+            message,
+            "Generating google gemini vision answer please wait,",
+        )
+        try:
+            prompt = s.strip().split(maxsplit=1)[1].strip()
+
+            max_size_photo = max(message.photo, key=lambda p: p.file_size)
+            file_path = bot.get_file(max_size_photo.file_id).file_path
+            downloaded_file = bot.download_file(file_path)
+            with open("gemini_temp.jpg", "wb") as temp_file:
+                temp_file.write(downloaded_file)
+        except Exception as e:
+            traceback.print_exc()
+            bot.reply_to(message, "Something is wrong reading your photo or prompt")
+        model = genai.GenerativeModel("gemini-pro-vision")
+        image_path = Path("gemini_temp.jpg")
+        image_data = image_path.read_bytes()
+        contents = {
+            "parts": [{"mime_type": "image/jpeg", "data": image_data}, {"text": prompt}]
+        }
+        try:
+            response = model.generate_content(contents=contents)
+            print(response.text)
+            bot.reply_to(message, "Gemini vision answer:\n" + response.text)
+        except Exception as e:
+            traceback.print_exc()
+            bot.reply_to(message, "Something wrong please check the log")
 
     # Start bot
     print("Starting tg collections bot.")
