@@ -13,6 +13,13 @@ for yihong0618's channel: https://t.me/hyi0618
 ![image](https://github.com/yihong0618/tg_bot_collections/assets/15976103/29848d22-5289-4953-8ab0-4e84c16f79e3)
 
 
+## Bot -> Gemini player
+
+1. visit https://makersuite.google.com/app/apikey get the key
+2. export GOOGLE_GEMINI_KEY=${the_key}
+3. use `gemini: ${message}` to ask
+
+
 ## HOW TO
 
 1. pip install -r requirements.txt

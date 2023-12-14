@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import traceback
 from tempfile import SpooledTemporaryFile
+from os import environ
 
 import numpy as np
 import PIL
@@ -16,9 +17,44 @@ from prettymapp.plotting import Plot as PrettyPlot
 from prettymapp.settings import STYLES
 from telebot import TeleBot  # type: ignore
 from telebot.types import BotCommand, Message  # type: ignore
+import google.generativeai as genai
 
 PIL.Image.MAX_IMAGE_PIXELS = 933120000
 MAX_IN_MEMORY = 10 * 1024 * 1024  # 10MiB
+
+GOOGLE_GEMINI_KEY = environ.get("GOOGLE_GEMINI_KEY")
+
+
+genai.configure(api_key=GOOGLE_GEMINI_KEY)
+generation_config = {
+    "temperature": 0.9,
+    "top_p": 1,
+    "top_k": 1,
+    "max_output_tokens": 2048,
+}
+
+safety_settings = [
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {
+        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+    },
+    {
+        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+    },
+]
+
+
+def make_new_gemini_convo():
+    model = genai.GenerativeModel(
+        model_name="gemini-pro",
+        generation_config=generation_config,
+        safety_settings=safety_settings,
+    )
+    convo = model.start_chat()
+    return convo
 
 
 class Plot(PrettyPlot):
@@ -93,6 +129,7 @@ def main():
     parser.add_argument("tg_token", help="tg token")
     options = parser.parse_args()
     print("Arg parse done.")
+    gemini_player_dict = {}
 
     # Init bot
     bot = TeleBot(options.tg_token)
@@ -102,6 +139,7 @@ def main():
                 "github", "github poster: /github <github_user_name> [<start>-<end>]"
             ),
             BotCommand("map", "pretty map: /map <address>"),
+            BotCommand("gemini", "Gemini : /gemini <question>"),
         ]
     )
     print("Bot init done.")
@@ -189,6 +227,36 @@ def main():
             bot.reply_to(message, "Something wrong please check")
         bot.delete_message(reply_message.chat.id, reply_message.message_id)
         gc.collect()
+
+    @bot.message_handler(commands=["gemini"])
+    @bot.message_handler(regexp="^gemini:")
+    def gemini_handler(message: Message):
+        reply_message = bot.reply_to(
+            message,
+            "Generating google gemini answer please wait:",
+        )
+        m = message.text.strip().split(maxsplit=1)[1].strip()
+        player = None
+        # restart will lose all TODO
+        if str(message.from_user.id) not in gemini_player_dict:
+            player = make_new_gemini_convo()
+            gemini_player_dict[str(message.from_user.id)] = player
+        else:
+            player = gemini_player_dict[str(message.from_user.id)]
+        if len(player.history) > 10:
+            bot.reply_to(message, "Your hisotry length > 5 will only keep last 5")
+            player.history = player.history[2:]
+        try:
+            player.send_message(m)
+            try:
+                bot.reply_to(message, "Gemini answer:\n" + player.last.text, parse_mode='MarkdownV2')
+            except:
+                bot.reply_to(message, "Gemini answer:\n" + player.last.text)
+
+
+        except Exception as e:
+            traceback.print_exc()
+            bot.reply_to(message, "Something wrong please check")
 
     # Start bot
     print("Starting tg collections bot.")

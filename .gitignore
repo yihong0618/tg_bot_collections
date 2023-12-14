@@ -162,3 +162,4 @@ cython_debug/
 *.png
 OUT_FOLDER/
 cache/
+nohup.out
