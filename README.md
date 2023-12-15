@@ -20,11 +20,34 @@ for yihong0618's channel: https://t.me/hyi0618
 3. use `gemini: ${message}` to ask
 
 
-## HOW TO
+## HOW TO Install and Run
+
+### Run with systemd service
+
+1. Git clone this repo
+2. cd tg_bot_collections
+3. Edit setup.sh file and change the following variables
+    - python_bin_path (python3 path)
+    - project_path (this repo path)
+    - GOOGLE_GEMINI_KEY_Text (Google Gemini API KEY)
+    - Telegram_Bot_KEY_Text (Telegram Bot Token)
+4. Run ```chmod +x setup.sh && ./setup.sh``` or ``` bash setup.sh ```
+5. Run ```systemctl status tg_bot_collections``` to check the status
+6. Run ```systemctl start tg_bot_collections``` to start the service
+7. Run ```systemctl stop tg_bot_collections``` to stop the service
+
+### Manually install 
 
 1. pip install -r requirements.txt
 2. Get tg token, ask Google or ChatGPT, need get it from [BotFather](https://t.me/BotFather)
-3. python tg.py ${tg_token}
+3. export GOOGLE_GEMINI_KEY=${your_google_gemini_apikey}
+4. python tg.py ${telegram_bot_token}
+
+
+## HOW TO Use
+
+1. Type `/gemini: ${message}` to ask
+2. Type `gemini: ${message}` and upload picture to ask with picture
 
 
 ## Contribution
