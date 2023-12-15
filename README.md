@@ -30,8 +30,13 @@ for yihong0618's channel: https://t.me/hyi0618
 ## Contribution
 
 - Any issue reports or PRs are welcome.
-- Any other bot type like slack/discord welcome
 - Before PR, use `pip install -U black` then `black .` first
+
+## Acknowledge
+
+- poster use my repo -> https://github.com/yihong0618/GitHubPoster
+- pretty map use wonder repo -> https://github.com/chrieke/prettymapp
+- Gemini use -> https://github.com/google/generative-ai-python
 
 ## Appreciation
 
