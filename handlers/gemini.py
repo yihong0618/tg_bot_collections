@@ -76,7 +76,7 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
 
 def gemini_photo_handler(message: Message, bot: TeleBot) -> None:
     s = message.caption
-    bot.reply_to(
+    reply_message = bot.reply_to(
         message,
         "Generating google gemini vision answer please wait,",
     )
@@ -93,9 +93,11 @@ def gemini_photo_handler(message: Message, bot: TeleBot) -> None:
     contents = {
         "parts": [{"mime_type": "image/jpeg", "data": image_data}, {"text": prompt}]
     }
-    response = model.generate_content(contents=contents)
-    print(response.text)
-    bot.reply_to(message, "Gemini vision answer:\n" + response.text)
+    try:
+        response = model.generate_content(contents=contents)
+        bot.reply_to(message, "Gemini vision answer:\n" + response.text)
+    finally:
+        bot.delete_message(reply_message.chat.id, reply_message.message_id)
 
 
 def register(bot: TeleBot) -> None:
@@ -104,6 +106,6 @@ def register(bot: TeleBot) -> None:
     bot.register_message_handler(
         gemini_photo_handler,
         content_types=["photo"],
-        func=lambda m: m.caption and m.caption.startswith("gemini:"),
+        func=lambda m: m.caption and m.caption.startswith(("gemini:", "/gemini")),
         pass_bot=True,
     )
