@@ -65,6 +65,11 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
             "Gemini answer:\n" + player.last.text,
             parse_mode="MarkdownV2",
         )
+    except:
+        bot.reply_to(
+            message,
+            "Gemini answer:\n" + player.last.text,
+        )
     finally:
         bot.delete_message(reply_message.chat.id, reply_message.message_id)
 

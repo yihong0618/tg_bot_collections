@@ -1,6 +1,6 @@
 import gc
 import shutil
-from random import random
+import random
 from tempfile import SpooledTemporaryFile
 
 import numpy as np
