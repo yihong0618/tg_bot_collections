@@ -47,7 +47,7 @@ def wrap_handler(handler: T, bot: TeleBot) -> T:
             if not m:
                 bot.reply_to(message, "Please provide info after start words.")
                 return
-            return handler(m, *args, **kwargs)
+            return handler(message, *args, **kwargs)
         except Exception:
             traceback.print_exc()
             bot.reply_to(message, "Something wrong, please check the log")
