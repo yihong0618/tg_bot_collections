@@ -22,14 +22,14 @@ def extract_prompt(message: str, bot_name: str) -> str:
     """
     # remove '@bot_name' as it is considered part of the command when in a group chat.
     message = re.sub(re.escape(f"@{bot_name}"), "", message).strip()
-    # add a whitespace after the first colon to make sure it is separated from the prompt.
+    # add a whitespace after the first colon as we separate the prompt from the command by the first whitespace.
     message = re.sub(":", ": ", message, count=1).strip()
     try:
         left, message = message.split(maxsplit=1)
     except ValueError:
         return ""
     if ":" not in left:
-        # restore the added space
+        # the replacement happens in the right part, restore it.
         message = message.replace(": ", ":", 1)
     return message.strip()
 
@@ -70,6 +70,7 @@ def load_handlers(bot: TeleBot) -> None:
     all_commands: list[BotCommand] = []
     for handler in bot.message_handlers:
         help_text = getattr(handler["function"], "__doc__", "")
+        # Add pre-processing and error handling to all callbacks
         handler["function"] = wrap_handler(handler["function"], bot)
         for command in handler["filters"].get("commands", []):
             all_commands.append(BotCommand(command, help_text))
