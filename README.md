@@ -26,6 +26,9 @@ for yihong0618's channel: https://t.me/hyi0618
 2. Get tg token, ask Google or ChatGPT, need get it from [BotFather](https://t.me/BotFather)
 3. python tg.py ${tg_token}
 
+> [!Note]
+> If you don't want to use one of these command, you can use `--disable-command <command>` option to disable it. This option can be used multiple times.
+
 
 ## Contribution
 
