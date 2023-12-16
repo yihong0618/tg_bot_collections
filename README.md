@@ -19,6 +19,7 @@ for yihong0618's channel: https://t.me/hyi0618
 2. export GOOGLE_GEMINI_KEY=${the_key}
 3. use `gemini: ${message}` to ask
 
+![telegram-cloud-photo-size-5-6336976091083817765-y](https://github.com/yihong0618/tg_bot_collections/assets/15976103/683a9c22-6f64-4a51-93e6-5e36218e1668)
 
 ## HOW TO
 
