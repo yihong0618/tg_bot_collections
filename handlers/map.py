@@ -28,7 +28,7 @@ class Plot(PrettyPlot):
             self.xmax,
             self.ymax,
         ) = self.aoi_bounds
-        # take from aoi geometry bounds, otherwise probelematic if unequal geometry distribution over plot.
+        # take from aoi geometry bounds, otherwise problematic if unequal geometry distribution over plot.
         self.xmid = (self.xmin + self.xmax) / 2
         self.ymid = (self.ymin + self.ymax) / 2
         self.xdif = self.xmax - self.xmin
