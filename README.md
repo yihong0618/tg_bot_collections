@@ -27,15 +27,16 @@ for yihong0618's channel: https://t.me/hyi0618
 
 1. Git clone this repo
 2. cd tg_bot_collections
-3. Edit setup.sh file and change the following variables
-    - python_bin_path (python3 path)
-    - project_path (this repo path)
-    - GOOGLE_GEMINI_KEY_Text (Google Gemini API KEY)
-    - Telegram_Bot_KEY_Text (Telegram Bot Token)
-4. Run ```chmod +x setup.sh && ./setup.sh``` or ``` bash setup.sh ```
-5. Run ```systemctl status tg_bot_collections``` to check the status
-6. Run ```systemctl start tg_bot_collections``` to start the service
-7. Run ```systemctl stop tg_bot_collections``` to stop the service
+3. Copy file .env.example to .env 
+4. Edit .env file and change the following variables
+    - Google_Gemini_API_Key (Google Gemini API KEY)
+    - Telegram_Bot_Token (Telegram Bot Token)
+5. Run ```chmod +x setup.sh && ./setup.sh``` or ``` bash setup.sh ``` to install and run
+
+6. Run ```systemctl status tgbotyh``` to check the status
+7. Run ```systemctl start tgbotyh``` to start the service
+8. Run ```systemctl stop tgbotyh``` to stop the service
+9. Run ```systemctl restart tgbotyh``` to restart the service
 
 ### Manually install 
 

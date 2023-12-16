@@ -1,16 +1,29 @@
 #!/bin/bash
 
-python_bin_path="/usr/local/bin/python3.10"
+python_bin_path="$(which python3)"
 venv_dir="venv"
 
-project_path="/root/github/tg_bot_collections"
+project_path="$(pwd)"
+service_name="tgbotyh"
 
-GOOGLE_GEMINI_KEY_Text="xxx"
-Telegram_Bot_KEY_Text="xxx"
+source .env
 
+google_gemini_api_key="${Google_Gemini_API_Key}"
+telegram_bot_token="${Telegram_Bot_Token}"
 
+echo "=============================="
+echo "Prapare to setup telegram bot"
+echo ""
+echo "Project path: $project_path"
+echo "Python bin path: $python_bin_path"
+echo "Google_Gemini_API_Key: $Google_Gemini_API_Key"
+echo "Telegram Bot Token: $Telegram_Bot_Token"
+echo ""
 
-
+sudoCmd=""
+if [[ $(/usr/bin/id -u) -ne 0 ]]; then
+  sudoCmd="sudo"
+fi
 
 # Check Virtual Environment exist
 if [ -d "$venv_dir" ]; then
@@ -20,26 +33,19 @@ fi
 
 # created virtual environment
 $python_bin_path -m venv "$venv_dir"
-
-
 if [ $? -eq 0 ]; then
   echo "Successfully created virtual environment."
 else
   echo "Failed to create virtual environment."
 fi
 
-
 source $venv_dir/bin/activate
-
 python -m pip install --upgrade pip
-
 pip install -r requirements.txt
-
-
 
 osSystemMdPath="/lib/systemd/system/"
 
-# 检测系统发行版代号
+# Chcek OS release distribution
 function getLinuxOSRelease(){
     if [[ -f /etc/redhat-release ]]; then
         osRelease="centos"
@@ -53,7 +59,6 @@ function getLinuxOSRelease(){
         osRelease="ubuntu"
         osSystemPackage="apt-get"
         osSystemMdPath="/lib/systemd/system/"
-        osReleaseVersionCodeName="bionic"
     elif cat /etc/issue | grep -Eqi "centos|red hat|redhat"; then
         osRelease="centos"
         osSystemPackage="yum"
@@ -74,23 +79,20 @@ function getLinuxOSRelease(){
 
 }
 
-
-
-
-cat > ${osSystemMdPath}tgbotgemini.service <<-EOF
+cat > ${osSystemMdPath}${service_name}.service <<-EOF
 
 [Unit]
-Description=tgbotgemini service
+Description=$service_name service
 After=network.target
 
 [Service]
 User=root
 Group=root
 
-Environment="GOOGLE_GEMINI_KEY=${GOOGLE_GEMINI_KEY_Text}"
+Environment="GOOGLE_GEMINI_KEY=${google_gemini_api_key}"
 
 WorkingDirectory=$project_path
-ExecStart=$project_path/venv/bin/python $project_path/tg.py "${Telegram_Bot_KEY_Text}"
+ExecStart=$project_path/venv/bin/python $project_path/tg.py "${telegram_bot_token}"
 
 Restart=on-failure
 RestartSec=30
@@ -99,12 +101,15 @@ RestartSec=30
 WantedBy=multi-user.target
 EOF
 
+${sudoCmd} chmod +x ${osSystemMdPath}${service_name}.service
+${sudoCmd} systemctl daemon-reload
+${sudoCmd} systemctl start ${service_name}.service
 
-chmod +x ${osSystemMdPath}tgbotgemini.service
-systemctl daemon-reload
-systemctl start tgbotgemini.service
-
+echo ""
+echo "${service_name}.service running successfully" 
+echo ""
 echo "Run following command to start / stop telegram bot"
-echo "Start: systemctl start tgbotgemini.service"
-echo "Stop: systemctl stop tgbotgemini.service"
-echo "Check running status: systemctl status tgbotgemini.service"
+echo "Start: systemctl start ${service_name}.service"
+echo "Stop: systemctl stop ${service_name}.service"
+echo "Check running status: systemctl status ${service_name}.service"
+echo "=============================="
