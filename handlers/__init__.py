@@ -82,7 +82,7 @@ def load_handlers(bot: TeleBot, disable_commands: list[str]) -> None:
         print("Setting commands done.")
 
 
-def available_commands() -> list[str]:
+def list_available_commands() -> list[str]:
     commands = []
     this_path = Path(__file__).parent
     for child in this_path.iterdir():

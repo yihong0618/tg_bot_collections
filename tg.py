@@ -2,7 +2,7 @@ import argparse
 
 from telebot import TeleBot
 
-from handlers import available_commands, load_handlers
+from handlers import list_available_commands, load_handlers
 
 
 def main():
@@ -19,7 +19,7 @@ def main():
         dest="disable_commands",
         help="Specify a command to disable. Can be used multiple times.",
         default=[],
-        choices=available_commands(),
+        choices=list_available_commands(),
     )
 
     options = parser.parse_args()
