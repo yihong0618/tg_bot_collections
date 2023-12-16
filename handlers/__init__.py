@@ -57,15 +57,12 @@ def wrap_handler(handler: T, bot: TeleBot) -> T:
 
 def load_handlers(bot: TeleBot, disable_commands: list[str]) -> None:
     # import all submodules
-    this_path = Path(__file__).parent
-    for child in this_path.iterdir():
-        if child.name.startswith("_"):
+    for name in list_available_commands():
+        if name in disable_commands:
             continue
-        if child.stem in disable_commands:
-            continue
-        module = importlib.import_module(f".{child.stem}", __package__)
+        module = importlib.import_module(f".{name}", __package__)
         if hasattr(module, "register"):
-            print(f"Loading {child.stem} handlers.")
+            print(f"Loading {name} handlers.")
             module.register(bot)
     print("Loading handlers done.")
 
