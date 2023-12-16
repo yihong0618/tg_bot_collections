@@ -80,3 +80,13 @@ def load_handlers(bot: TeleBot, disable_commands: list[str]) -> None:
     if all_commands:
         bot.set_my_commands(all_commands)
         print("Setting commands done.")
+
+
+def available_commands() -> list[str]:
+    commands = []
+    this_path = Path(__file__).parent
+    for child in this_path.iterdir():
+        if child.name.startswith("_"):
+            continue
+        commands.append(child.stem)
+    return commands
