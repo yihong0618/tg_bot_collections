@@ -1,19 +1,21 @@
 FROM bitnami/python:3.10
 WORKDIR /app
+# Update the package list and install necessary packages including GDAL and Cairo
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         gdal-bin \
         libgdal-dev \
         libcairo2 \
     && rm -rf /var/lib/apt/lists/*
-# 设置环境变量，使得 Python 包安装程序可以找到 gdal-config
+# Set environment variables so that Python package installer can find gdal-config
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
 # Copy necessary files
 COPY requirements.txt ./
+# Upgrade pip and install dependencies from requirements.txt
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
-# 复制项目文件到容器中
+# Copy project files into the container
 COPY *.py .
 COPY handlers /app/handlers
-ENV GOOGLE_GEMINI_KEY=your_google_gemini_apikey
+# Command to run the application, using the TELEGRAM_BOT_TOKEN environment variable
 CMD python tg.py ${TELEGRAM_BOT_TOKEN}
