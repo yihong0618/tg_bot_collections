@@ -1,7 +1,6 @@
 #!/bin/bash
 
 python_bin_path="$(which python3)"
-venv_dir="venv"
 
 project_path="$(pwd)"
 service_name="tgbotyh"
@@ -10,6 +9,14 @@ source .env
 
 google_gemini_api_key="${Google_Gemini_API_Key}"
 telegram_bot_token="${Telegram_Bot_Token}"
+
+if [ -n "$Python_Venv_Path" ]; then
+    venv_dir="${Python_Venv_Path}"
+fi
+
+if [ -n "$Python_Bin_Path" ]; then
+    python_bin_path="$Python_Bin_Path"
+fi
 
 echo "=============================="
 echo "Prapare to setup telegram bot"
@@ -27,16 +34,16 @@ fi
 
 # Check Virtual Environment exist
 if [ -d "$venv_dir" ]; then
-  echo "Virtual Environment already exist"
-  exit 1
+    echo "Virtual Environment already exist"
+    exit 1
 fi
 
 # created virtual environment
 $python_bin_path -m venv "$venv_dir"
 if [ $? -eq 0 ]; then
-  echo "Successfully created virtual environment."
+    echo "Successfully created virtual environment."
 else
-  echo "Failed to create virtual environment."
+    echo "Failed to create virtual environment."
 fi
 
 source $venv_dir/bin/activate

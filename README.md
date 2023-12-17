@@ -31,6 +31,9 @@ for yihong0618's channel: https://t.me/hyi0618
 4. Edit .env file and change the following variables
     - Google_Gemini_API_Key (Google Gemini API KEY)
     - Telegram_Bot_Token (Telegram Bot Token)
+    - Python_Bin_Path (If you install python alternative version, you can use this to specify the python bin path. Default is blank or /usr/bin/python3)
+    - Python_Venv_Path (Python virtualenv path. Default is venv)
+
 5. Run ```chmod +x setup.sh && ./setup.sh``` or ``` bash setup.sh ``` to install and run
 
 6. Run ```systemctl status tgbotyh``` to check the status
@@ -38,8 +41,16 @@ for yihong0618's channel: https://t.me/hyi0618
 8. Run ```systemctl stop tgbotyh``` to stop the service
 9. Run ```systemctl restart tgbotyh``` to restart the service
 
-### Manually install 
+### Run with command line with Python virtualenv environment
+1. Git clone this repo
+2. cd tg_bot_collections
+3. Copy file .env.example to .env 
+4. Edit .env file and change the following variables (Same as above that Run with systemd service)
+5. Run ```chmod +x run.sh && ./run.sh``` or ``` bash run.sh ``` to install and run
+6. Ctrl + C to quit and Run ```deactivate``` to exit the virtualenv environment
+7. Next time, you can run ```./run.sh``` or ``` bash run.sh ``` to run the bot
 
+### Manually install 
 1. pip install -r requirements.txt
 2. Get tg token, ask Google or ChatGPT, need get it from [BotFather](https://t.me/BotFather)
 3. export GOOGLE_GEMINI_KEY=${your_google_gemini_apikey}
