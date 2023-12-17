@@ -41,6 +41,7 @@ for yihong0618's channel: https://t.me/hyi0618
 - poster use my repo -> https://github.com/yihong0618/GitHubPoster
 - pretty map use wonder repo -> https://github.com/chrieke/prettymapp
 - Gemini use -> https://github.com/google/generative-ai-python
+- Telegram markdownV2 change code copy from https://github.com/yym68686/md2tgmd/blob/main/src/md2tgmd.py thanks a lot.
 
 ## Appreciation
 

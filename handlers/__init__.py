@@ -48,9 +48,13 @@ def wrap_handler(handler: T, bot: TeleBot) -> T:
                 bot.reply_to(message, "Please provide info after start words.")
                 return
             return handler(message, *args, **kwargs)
-        except Exception:
+        except Exception as e:
             traceback.print_exc()
-            bot.reply_to(message, "Something wrong, please check the log")
+            # handle more here
+            if str(e).find("RECITATION") > 0:
+                bot.reply_to(message, "Your prompt `RECITATION` please check the log")
+            else:
+                bot.reply_to(message, "Something wrong, please check the log")
 
     return update_wrapper(wrapper, handler)
 
