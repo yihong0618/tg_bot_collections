@@ -21,11 +21,35 @@ for yihong0618's channel: https://t.me/hyi0618
 
 ![telegram-cloud-photo-size-5-6336976091083817765-y](https://github.com/yihong0618/tg_bot_collections/assets/15976103/683a9c22-6f64-4a51-93e6-5e36218e1668)
 
-## HOW TO
+## HOW TO Install and Run
+
+### Run with systemd service
+
+1. Git clone this repo
+2. cd tg_bot_collections
+3. Copy file .env.example to .env 
+4. Edit .env file and change the following variables
+    - Google_Gemini_API_Key (Google Gemini API KEY)
+    - Telegram_Bot_Token (Telegram Bot Token)
+5. Run ```chmod +x setup.sh && ./setup.sh``` or ``` bash setup.sh ``` to install and run
+
+6. Run ```systemctl status tgbotyh``` to check the status
+7. Run ```systemctl start tgbotyh``` to start the service
+8. Run ```systemctl stop tgbotyh``` to stop the service
+9. Run ```systemctl restart tgbotyh``` to restart the service
+
+### Manually install 
 
 1. pip install -r requirements.txt
 2. Get tg token, ask Google or ChatGPT, need get it from [BotFather](https://t.me/BotFather)
-3. python tg.py ${tg_token}
+3. export GOOGLE_GEMINI_KEY=${your_google_gemini_apikey}
+4. python tg.py ${telegram_bot_token}
+
+
+## HOW TO Use
+
+1. Type `/gemini: ${message}` to ask
+2. Type `gemini: ${message}` and upload picture to ask with picture
 
 > [!Note]
 > If you don't want to use one of these command, you can use `--disable-command <command>` option to disable it. This option can be used multiple times.
