@@ -44,6 +44,9 @@ def wrap_handler(handler: T, bot: TeleBot) -> T:
                 m = message.caption = extract_prompt(
                     message.caption, bot.get_me().username
                 )
+            elif message.location and message.location.latitude is not None:
+                # for location map handler just return
+                return handler(message, *args, **kwargs)
             if not m:
                 bot.reply_to(message, "Please provide info after start words.")
                 return
