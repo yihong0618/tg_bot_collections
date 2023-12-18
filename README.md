@@ -45,6 +45,10 @@ for yihong0618's channel: https://t.me/hyi0618
 3. export GOOGLE_GEMINI_KEY=${your_google_gemini_apikey}
 4. python tg.py ${telegram_bot_token}
 
+### Run from Docker
+1. docker build -t tg_bot_collections .
+2. docker run -d --name tg_bot_collections -e GOOGLE_GEMINI_KEY='${GOOGLE_GEMINI_KEY}' -e TELEGRAM_BOT_TOKEN='${TELEGRAM_BOT_TOKEN}' --network host tg_bot_collections
+
 
 ## HOW TO Use
 
