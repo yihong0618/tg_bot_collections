@@ -2,7 +2,6 @@
 
 python_bin_path="$(which python3)"
 project_path="$(pwd)"
-
 service_name="tgbotyh"
 
 source .env
