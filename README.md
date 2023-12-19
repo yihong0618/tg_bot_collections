@@ -23,30 +23,6 @@ for yihong0618's channel: https://t.me/hyi0618
 
 ## HOW TO Install and Run
 
-### Run with systemd service with Python virtualenv environment
-
-1. Git clone this repo
-2. cd tg_bot_collections
-3. Copy file .env.example to .env 
-4. Edit .env file and change the following variables
-    - Google_Gemini_API_Key (Google Gemini API KEY)
-    - Telegram_Bot_Token (Telegram Bot Token)
-    - Python_Bin_Path (If you install python alternative version, you can use this to specify the python bin path. Default is blank or /usr/bin/python3)
-    - Python_Venv_Path (Python virtualenv path. Default is venv)
-
-5. Run ```chmod +x setup.sh && ./setup.sh``` or ``` bash setup.sh 1 ``` to install and run
-6. Next time, you can run ```./setup.sh``` or ``` bash setup.sh ``` to restart / stop the tg_bot_collections service and check the status or log
-7. you can also run ```./setup.sh 4 ``` to restart service, ```./setup.sh 5 ``` to stop, ```./setup.sh 7 ``` to check the log
-
-### Run with command line with Python virtualenv environment
-1. Git clone this repo
-2. cd tg_bot_collections
-3. Copy file .env.example to .env 
-4. Edit .env file and change the following variables (Same as above that Run with systemd service)
-5. Run ```chmod +x setup.sh && ./setup.sh``` or ``` bash setup.sh 2 ``` to install and run
-6. Ctrl + C to quit and Run ```deactivate``` to exit the virtualenv environment
-7. Next time, you can run ```./setup.sh``` or ``` bash setup.sh ``` to restart / stop the tg_bot_collections service and check the status or log
-
 ### Manually install 
 1. pip install -r requirements.txt
 2. Get tg token, ask Google or ChatGPT, need get it from [BotFather](https://t.me/BotFather)
@@ -56,6 +32,10 @@ for yihong0618's channel: https://t.me/hyi0618
 ### Run from Docker
 1. docker build -t tg_bot_collections .
 2. docker run -d --name tg_bot_collections -e GOOGLE_GEMINI_KEY='${GOOGLE_GEMINI_KEY}' -e TELEGRAM_BOT_TOKEN='${TELEGRAM_BOT_TOKEN}' --network host tg_bot_collections
+
+### Run as shell
+
+Note, this may break your system config -> check this https://github.com/yihong0618/tg_bot_collections/issues/5
 
 
 ## HOW TO Use
