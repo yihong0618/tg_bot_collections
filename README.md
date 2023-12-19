@@ -23,7 +23,7 @@ for yihong0618's channel: https://t.me/hyi0618
 
 ## HOW TO Install and Run
 
-### Run with systemd service
+### Run with systemd service with Python virtualenv environment
 
 1. Git clone this repo
 2. cd tg_bot_collections
@@ -31,15 +31,23 @@ for yihong0618's channel: https://t.me/hyi0618
 4. Edit .env file and change the following variables
     - Google_Gemini_API_Key (Google Gemini API KEY)
     - Telegram_Bot_Token (Telegram Bot Token)
-5. Run ```chmod +x setup.sh && ./setup.sh``` or ``` bash setup.sh ``` to install and run
+    - Python_Bin_Path (If you install python alternative version, you can use this to specify the python bin path. Default is blank or /usr/bin/python3)
+    - Python_Venv_Path (Python virtualenv path. Default is venv)
 
-6. Run ```systemctl status tgbotyh``` to check the status
-7. Run ```systemctl start tgbotyh``` to start the service
-8. Run ```systemctl stop tgbotyh``` to stop the service
-9. Run ```systemctl restart tgbotyh``` to restart the service
+5. Run ```chmod +x setup.sh && ./setup.sh``` or ``` bash setup.sh 1 ``` to install and run
+6. Next time, you can run ```./setup.sh``` or ``` bash setup.sh ``` to restart / stop the tg_bot_collections service and check the status or log
+7. you can also run ```./setup.sh 4 ``` to restart service, ```./setup.sh 5 ``` to stop, ```./setup.sh 7 ``` to check the log
+
+### Run with command line with Python virtualenv environment
+1. Git clone this repo
+2. cd tg_bot_collections
+3. Copy file .env.example to .env 
+4. Edit .env file and change the following variables (Same as above that Run with systemd service)
+5. Run ```chmod +x setup.sh && ./setup.sh``` or ``` bash setup.sh 2 ``` to install and run
+6. Ctrl + C to quit and Run ```deactivate``` to exit the virtualenv environment
+7. Next time, you can run ```./setup.sh``` or ``` bash setup.sh ``` to restart / stop the tg_bot_collections service and check the status or log
 
 ### Manually install 
-
 1. pip install -r requirements.txt
 2. Get tg token, ask Google or ChatGPT, need get it from [BotFather](https://t.me/BotFather)
 3. export GOOGLE_GEMINI_KEY=${your_google_gemini_apikey}
@@ -74,4 +82,3 @@ for yihong0618's channel: https://t.me/hyi0618
 ## Appreciation
 
 - Thank you, that's enough. Just enjoy it.
-
