@@ -3,6 +3,7 @@ from pathlib import Path
 import re
 
 import google.generativeai as genai
+from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
 from telebot.types import Message
 
@@ -161,8 +162,18 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
     # keep the last 5, every has two ask and answer.
     if len(player.history) > 10:
         player.history = player.history[2:]
-    player.send_message(m)
-    gemini_reply_text = player.last.text.strip()
+
+    try:
+        player.send_message(m)
+        gemini_reply_text = player.last.text.strip()
+    except StopCandidateException as e:
+        match = re.search(r'content\s*{\s*parts\s*{\s*text:\s*"([^"]+)"', str(e))
+        if match:
+            gemini_reply_text = match.group(1)
+            gemini_reply_text = re.sub(r"\\n", "\n", gemini_reply_text)
+        else:
+            raise e
+
     try:
         bot.reply_to(
             message,
