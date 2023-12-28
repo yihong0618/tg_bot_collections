@@ -172,7 +172,12 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
             gemini_reply_text = match.group(1)
             gemini_reply_text = re.sub(r"\\n", "\n", gemini_reply_text)
         else:
-            raise e
+            print("No meaningful text was extracted from the exception.")
+            bot.reply_to(
+                message,
+                "Google gemini encountered an error while generating an answer. Please check the log.",
+            )
+            return
 
     try:
         bot.reply_to(
