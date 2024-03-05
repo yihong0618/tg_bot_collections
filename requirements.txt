@@ -3,4 +3,5 @@ cairosvg
 github_poster
 prettymapp
 google-generativeai
+anthropic
 

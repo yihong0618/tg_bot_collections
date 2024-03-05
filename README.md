@@ -21,6 +21,14 @@ for yihong0618's channel: https://t.me/hyi0618
 
 ![telegram-cloud-photo-size-5-6336976091083817765-y](https://github.com/yihong0618/tg_bot_collections/assets/15976103/683a9c22-6f64-4a51-93e6-5e36218e1668)
 
+
+## Bot -> Claude 3
+
+1. visit https://console.anthropic.com/ get the key
+2. export ANTHROPIC_API_KEY=${the_key}
+3. use `claude: ${message}` to ask
+
+
 ## HOW TO Install and Run
 
 ### Manually install 
