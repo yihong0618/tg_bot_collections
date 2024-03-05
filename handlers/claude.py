@@ -201,31 +201,33 @@ def claude_photo_handler(message: Message, bot: TeleBot) -> None:
     with open("claude_temp.jpg", "wb") as temp_file:
         temp_file.write(downloaded_file)
 
+    f = Path("claude_temp.jpg")
     try:
-        r = client.messages.create(
-            max_tokens=1024,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt,
-                        },
-                        {
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": "image/jpeg",
-                                "data": Path("claude_temp.jpg"),
+        with f:
+            r = client.messages.create(
+                max_tokens=1024,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": prompt,
                             },
-                        },
-                    ],
-                },
-            ],
-            model="claude-3-opus-20240229",
-        )
-        bot.reply_to(message, "Claude vision answer:\n" + r.content[0].text)
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": "image/jpeg",
+                                    "data": f,
+                                },
+                            },
+                        ],
+                    },
+                ],
+                model=ANTHROPIC_MODEL,
+            )
+            bot.reply_to(message, "Claude vision answer:\n" + r.content[0].text)
     except Exception as e:
         print(e)
         bot.reply_to(

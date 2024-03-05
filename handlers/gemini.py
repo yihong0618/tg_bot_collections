@@ -210,8 +210,8 @@ def gemini_photo_handler(message: Message, bot: TeleBot) -> None:
         temp_file.write(downloaded_file)
 
     model = genai.GenerativeModel("gemini-pro-vision")
-    image_path = Path("gemini_temp.jpg")
-    image_data = image_path.read_bytes()
+    with open("gemini_temp.jpg", "rb") as image_file:
+        image_data = image_file.read()
     contents = {
         "parts": [{"mime_type": "image/jpeg", "data": image_data}, {"text": prompt}]
     }
