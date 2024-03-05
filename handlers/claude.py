@@ -140,10 +140,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
     claude_reply_text = ""
     try:
         if len(player_message) > 2:
-            if (
-                player_message[-1]["role"] == "user"
-                and player_message[-2]["role"] == "user"
-            ):
+            if player_message[-1]["role"] == player_message[-2]["role"]:
                 # tricky
                 player_message.pop()
         r = client.messages.create(
