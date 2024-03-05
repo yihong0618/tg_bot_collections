@@ -186,7 +186,63 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
         bot.delete_message(reply_message.chat.id, reply_message.message_id)
         return
 
+def claude_photo_handler(message: Message, bot: TeleBot) -> None:
+    s = message.caption
+    reply_message = bot.reply_to(
+        message,
+        "Generating claude vision answer please wait.",
+    )
+    prompt = s.strip()
+    # get the high quaility picture.
+    max_size_photo = max(message.photo, key=lambda p: p.file_size)
+    file_path = bot.get_file(max_size_photo.file_id).file_path
+    downloaded_file = bot.download_file(file_path)
+    with open("claude_temp.jpg", "wb") as temp_file:
+        temp_file.write(downloaded_file)
+
+    try:
+        r = client.messages.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt,
+                        },
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/jpeg",
+                                "data": Path("claude_temp.jpg"),
+                            },
+                        },
+                    ],
+                },
+            ],
+            model="claude-3-opus-20240229",
+        )
+        bot.reply_to(message, "Claude vision answer:\n" + r.content[0].text)
+    except Exception as e:
+        print(e)
+        bot.reply_to(
+            message,
+            "Claude vision answer:\n" + "claude vision answer wrong",
+            parse_mode="MarkdownV2",
+        )
+    finally:
+        bot.delete_message(reply_message.chat.id, reply_message.message_id)
+
+
 
 def register(bot: TeleBot) -> None:
     bot.register_message_handler(claude_handler, commands=["claude"], pass_bot=True)
     bot.register_message_handler(claude_handler, regexp="^claude:", pass_bot=True)
+    bot.register_message_handler(
+        claude_photo_handler,
+        content_types=["photo"],
+        func=lambda m: m.caption and m.caption.startswith(("claude:", "/claude")),
+        pass_bot=True,
+    )
