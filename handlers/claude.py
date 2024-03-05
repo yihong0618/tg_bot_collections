@@ -126,9 +126,9 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
     player_message = []
     # restart will lose all TODO
     if str(message.from_user.id) not in claude_player_dict:
-        claude_player_dict[
-            str(message.from_user.id)
-        ] = player_message  # for the imuutable list
+        claude_player_dict[str(message.from_user.id)] = (
+            player_message  # for the imuutable list
+        )
     else:
         player_message = claude_player_dict[str(message.from_user.id)]
 
@@ -151,6 +151,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
         )
         if not r.content:
             claude_reply_text = "Claude did not answer."
+            player_message.pop()
         else:
             claude_reply_text = r.content[0].text
             player_message.append(
