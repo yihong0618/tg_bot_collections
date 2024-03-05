@@ -147,7 +147,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
                 # tricky
                 player_message.pop()
         r = client.messages.create(
-            max_tokens=1024, messages=player_message, model="claude-3-sonnet-20240229"
+            max_tokens=1024, messages=player_message, model=ANTHROPIC_MODEL
         )
         if not r.content:
             claude_reply_text = "Claude did not answer."
