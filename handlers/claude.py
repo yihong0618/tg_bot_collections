@@ -186,6 +186,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
         bot.delete_message(reply_message.chat.id, reply_message.message_id)
         return
 
+
 def claude_photo_handler(message: Message, bot: TeleBot) -> None:
     s = message.caption
     reply_message = bot.reply_to(
@@ -234,7 +235,6 @@ def claude_photo_handler(message: Message, bot: TeleBot) -> None:
         )
     finally:
         bot.delete_message(reply_message.chat.id, reply_message.message_id)
-
 
 
 def register(bot: TeleBot) -> None:
