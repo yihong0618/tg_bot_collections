@@ -28,6 +28,8 @@ for yihong0618's channel: https://t.me/hyi0618
 2. export ANTHROPIC_API_KEY=${the_key}
 3. use `claude: ${message}` to ask
 
+Note, if you are using third party service, you need to `export ANTHROPIC_BASE_URL=${the_url}` to change the url.
+
 
 ## HOW TO Install and Run
 
