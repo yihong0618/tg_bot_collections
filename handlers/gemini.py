@@ -5,7 +5,11 @@ import google.generativeai as genai
 from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
 from telebot.types import Message
-from md2tgmd import escape
+import telegramify_markdown
+from telegramify_markdown.customize import markdown_symbol
+
+markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
+markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 GOOGLE_GEMINI_KEY = environ.get("GOOGLE_GEMINI_KEY")
 
@@ -46,10 +50,6 @@ def make_new_gemini_convo():
 
 def gemini_handler(message: Message, bot: TeleBot) -> None:
     """Gemini : /gemini <question>"""
-    reply_message = bot.reply_to(
-        message,
-        "Generating google gemini answer please wait, note, will only keep the last five messages:",
-    )
     m = message.text.strip()
     player = None
     # restart will lose all TODO
@@ -81,7 +81,7 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
     try:
         bot.reply_to(
             message,
-            "Gemini answer:\n" + escape(gemini_reply_text),
+            "Gemini answer:\n" + telegramify_markdown.convert(gemini_reply_text),
             parse_mode="MarkdownV2",
         )
     except:
@@ -90,8 +90,6 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
             message,
             "Gemini answer:\n\n" + gemini_reply_text,
         )
-    finally:
-        bot.delete_message(reply_message.chat.id, reply_message.message_id)
 
 
 def gemini_photo_handler(message: Message, bot: TeleBot) -> None:

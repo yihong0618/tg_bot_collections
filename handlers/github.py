@@ -6,7 +6,6 @@ from telebot.types import Message
 
 def github_poster_handler(message: Message, bot: TeleBot):
     """github poster: /github <github_user_name> [<start>-<end>]"""
-    reply_message = bot.reply_to(message, "Generating poster please wait:")
     m = message.text.strip()
     message_list = m.split(",")
     name = message_list[0].strip()
@@ -26,8 +25,8 @@ def github_poster_handler(message: Message, bot: TeleBot):
                 bot.send_photo(
                     message.chat.id, photo, reply_to_message_id=message.message_id
                 )
-    finally:
-        bot.delete_message(reply_message.chat.id, reply_message.message_id)
+    except:
+        bot.reply_to(message, "github poster error")
 
 
 def register(bot: TeleBot) -> None:

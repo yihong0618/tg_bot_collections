@@ -86,9 +86,7 @@ def draw_pretty_map(location, style, output_file):
 
 def map_handler(message: Message, bot: TeleBot):
     """pretty map: /map <address>"""
-    reply_message = bot.reply_to(
-        message, "Generating pretty map may take some time please wait:"
-    )
+    bot.reply_to(message, "Generating pretty map may take some time please wait:")
     m = message.text.strip()
     location = m.strip()
     styles_list = list(STYLES.keys())
@@ -104,16 +102,11 @@ def map_handler(message: Message, bot: TeleBot):
                 message.chat.id, out_image, reply_to_message_id=message.message_id
             )
         finally:
-            bot.delete_message(reply_message.chat.id, reply_message.message_id)
             gc.collect()
 
 
 def map_location_handler(message: Message, bot: TeleBot):
     # TODO refactor the function
-    reply_message = bot.reply_to(
-        message,
-        "Generating pretty map using location now, may take some time please wait:",
-    )
     location = "{0}, {1}".format(message.location.latitude, message.location.longitude)
     styles_list = list(STYLES.keys())
     style = random.choice(styles_list)
@@ -129,7 +122,6 @@ def map_location_handler(message: Message, bot: TeleBot):
             )
 
     finally:
-        bot.delete_message(reply_message.chat.id, reply_message.message_id)
         gc.collect()
 
 

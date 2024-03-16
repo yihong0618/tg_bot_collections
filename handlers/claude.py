@@ -4,7 +4,12 @@ from pathlib import Path
 from anthropic import Anthropic, APITimeoutError
 from telebot import TeleBot
 from telebot.types import Message
-from md2tgmd import escape
+
+import telegramify_markdown
+from telegramify_markdown.customize import markdown_symbol
+
+markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
+markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 ANTHROPIC_API_KEY = environ.get("ANTHROPIC_API_KEY")
 ANTHROPIC_BASE_URL = environ.get("ANTHROPIC_BASE_URL")
@@ -18,10 +23,6 @@ claude_player_dict = {}
 
 def claude_handler(message: Message, bot: TeleBot) -> None:
     """claude : /claude <question>"""
-    reply_message = bot.reply_to(
-        message,
-        "Generating Anthropic claude answer please wait, note, will only keep the last five messages:",
-    )
     m = message.text.strip()
     player_message = []
     # restart will lose all TODO
@@ -71,7 +72,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
     try:
         bot.reply_to(
             message,
-            "claude answer:\n" + escape(claude_reply_text),
+            "Claude answer:\n" + telegramify_markdown.convert(claude_reply_text),
             parse_mode="MarkdownV2",
         )
         return
@@ -81,9 +82,6 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
             message,
             "claude answer:\n\n" + claude_reply_text,
         )
-        return
-    finally:
-        bot.delete_message(reply_message.chat.id, reply_message.message_id)
         return
 
 
