@@ -53,7 +53,6 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
                 player_message.pop()
         r = client.chat.completions.create(messages=player_message, model=YI_MODEL)
         content = r.choices[0].message.content.encode("utf8").decode()
-        print(content)
         if not content:
             yi_reply_text = "yi did not answer."
             player_message.pop()
@@ -140,7 +139,6 @@ def yi_photo_handler(message: Message, bot: TeleBot) -> None:
         headers=headers,
         json=payload,
     ).json()
-    print(response)
     try:
         text = response["choices"][0]["message"]["content"].encode("utf8").decode()
         bot.reply_to(message, "yi vision answer:\n" + text)
