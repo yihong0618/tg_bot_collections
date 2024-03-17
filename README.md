@@ -31,6 +31,14 @@ for yihong0618's channel: https://t.me/hyi0618
 Note, if you are using third party service, you need to `export ANTHROPIC_BASE_URL=${the_url}` to change the url.
 
 
+## Bot -> lingyiwanwu
+
+1. visit https://console.anthropic.com/ get the key
+2. export YI_API_KEY=${the_key}
+3. export YI_BASE_URL=${the_url}
+3. use `yi: ${message}` to ask
+
+
 ## HOW TO Install and Run
 
 ### Manually install 
@@ -68,6 +76,7 @@ Note, this may break your system config -> check this https://github.com/yihong0
 - pretty map use wonder repo -> https://github.com/chrieke/prettymapp
 - Gemini use -> https://github.com/google/generative-ai-python
 - Telegram markdownV2 change code copy from https://github.com/yym68686/md2tgmd/blob/main/src/md2tgmd.py thanks a lot.
+- Telegram markdownV2 change to telegramify-markdown
 
 ## Appreciation
 
