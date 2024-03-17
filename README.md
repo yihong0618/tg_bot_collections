@@ -33,7 +33,7 @@ Note, if you are using third party service, you need to `export ANTHROPIC_BASE_U
 
 ## Bot -> lingyiwanwu
 
-1. visit https://console.anthropic.com/ get the key
+1. visit https://platform.lingyiwanwu.com/apikeys get the key
 2. export YI_API_KEY=${the_key}
 3. export YI_BASE_URL=${the_url}
 3. use `yi: ${message}` to ask
@@ -48,8 +48,15 @@ Note, if you are using third party service, you need to `export ANTHROPIC_BASE_U
 4. python tg.py ${telegram_bot_token}
 
 ### Run from Docker
-1. docker build -t tg_bot_collections .
-2. docker run -d --name tg_bot_collections -e GOOGLE_GEMINI_KEY='${GOOGLE_GEMINI_KEY}' -e TELEGRAM_BOT_TOKEN='${TELEGRAM_BOT_TOKEN}' --network host tg_bot_collections
+#### build docker image
+`docker build -t tg_bot_collections .`
+#### Run Gemini
+`docker run -d --name tg_bot_collections -e GOOGLE_GEMINI_KEY='${GOOGLE_GEMINI_KEY}' -e TELEGRAM_BOT_TOKEN='${TELEGRAM_BOT_TOKEN}' --network host tg_bot_collections`
+#### Run Claude 3
+`docker run -d --name tg_bot_collections -e ANTHROPIC_API_KEY='${ANTHROPIC_API_KEY}' -e TELEGRAM_BOT_TOKEN='${TELEGRAM_BOT_TOKEN}' --network host tg_bot_collections`
+#### Run lingyiwanwu
+`docker run -d --name tg_bot_collections -e YI_API_KEY='${YI_API_KEY}' -e YI_BASE_URL='${YI_BASE_URL}' -e TELEGRAM_BOT_TOKEN='${TELEGRAM_BOT_TOKEN}' --network host tg_bot_collections`
+
 
 ### Run as shell
 
