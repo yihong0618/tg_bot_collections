@@ -153,8 +153,8 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
                             text=convert(s),
                             parse_mode="MarkdownV2",
                         )
-                    except:
-                        pass
+                    except Exception as e:
+                        print(str(e))
         try:
             # maybe not complete
             # maybe the same message
@@ -164,7 +164,8 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
                 text=convert(s),
                 parse_mode="MarkdownV2",
             )
-        except:
+        except Exception as e:
+            print(str(e))
             pass
 
         player_message.append(

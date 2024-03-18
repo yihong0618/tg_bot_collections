@@ -31,7 +31,7 @@ def main():
 
     # Start bot
     print("Starting tg collections bot.")
-    bot.infinity_polling(timeout=40, long_polling_timeout=20)
+    bot.infinity_polling(timeout=40, long_polling_timeout=120)
 
 
 if __name__ == "__main__":
