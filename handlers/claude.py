@@ -122,7 +122,7 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
                 # tricky
                 player_message.pop()
         r = client.messages.create(
-            max_tokens=1024,
+            max_tokens=4096,
             messages=player_message,
             model=ANTHROPIC_PRO_MODEL,
             stream=True,
@@ -134,7 +134,7 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
         for e in r:
             if e.type == "content_block_delta":
                 s += e.delta.text
-            if time.time() - start > 1.1:
+            if time.time() - start > 1.0:
                 start = time.time()
                 if is_send:
                     reply_id = bot.reply_to(
