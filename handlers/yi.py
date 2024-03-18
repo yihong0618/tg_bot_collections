@@ -22,7 +22,6 @@ client = OpenAI(
     api_key=YI_API_KEY,
     base_url=YI_BASE_URL,
 )
-print(client.base_url)
 
 # Global history cache
 yi_player_dict = {}
@@ -31,6 +30,7 @@ yi_player_dict = {}
 def yi_handler(message: Message, bot: TeleBot) -> None:
     """yi : /yi <question>"""
     m = message.text.strip()
+
     player_message = []
     # restart will lose all TODO
     if str(message.from_user.id) not in yi_player_dict:
@@ -39,6 +39,13 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
         )
     else:
         player_message = yi_player_dict[str(message.from_user.id)]
+    if m.strip() == "clear":
+        bot.reply_to(
+            message,
+            "just clear you yi messages history",
+        )
+        player_message.clear()
+        return
 
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.
@@ -52,6 +59,7 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
                 # tricky
                 player_message.pop()
         r = client.chat.completions.create(messages=player_message, model=YI_MODEL)
+
         content = r.choices[0].message.content.encode("utf8").decode()
         if not content:
             yi_reply_text = "yi did not answer."
@@ -61,7 +69,7 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
             player_message.append(
                 {
                     "role": "assistant",
-                    "content": content,
+                    "content": yi_reply_text,
                 }
             )
 
@@ -82,14 +90,12 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
             "yi answer:\n" + telegramify_markdown.convert(yi_reply_text),
             parse_mode="MarkdownV2",
         )
-        return
     except:
         print("wrong markdown format")
         bot.reply_to(
             message,
             "yi answer:\n\n" + yi_reply_text,
         )
-        return
 
 
 def _image_to_data_uri(file_path):

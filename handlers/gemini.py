@@ -52,6 +52,13 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
         gemini_player_dict[str(message.from_user.id)] = player
     else:
         player = gemini_player_dict[str(message.from_user.id)]
+    if m.strip() == "clear":
+        bot.reply_to(
+            message,
+            "just clear you gemini messages history",
+        )
+        player.history.clear()
+        return
     # keep the last 5, every has two ask and answer.
     if len(player.history) > 10:
         player.history = player.history[2:]

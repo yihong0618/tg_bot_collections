@@ -1,5 +1,4 @@
 import argparse
-
 from telebot import TeleBot
 
 from handlers import list_available_commands, load_handlers
@@ -32,7 +31,7 @@ def main():
 
     # Start bot
     print("Starting tg collections bot.")
-    bot.infinity_polling()
+    bot.infinity_polling(timeout=10, long_polling_timeout=5)
 
 
 if __name__ == "__main__":
