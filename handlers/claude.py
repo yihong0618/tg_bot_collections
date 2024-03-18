@@ -134,7 +134,7 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
         for e in r:
             if e.type == "content_block_delta":
                 s += e.delta.text
-            if time.time() - start > 1.0:
+            if time.time() - start > 1.7:
                 start = time.time()
                 if is_send:
                     reply_id = bot.reply_to(
