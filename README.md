@@ -38,6 +38,8 @@ Note, if you are using third party service, you need to `export ANTHROPIC_BASE_U
 3. export YI_BASE_URL=${the_url}
 3. use `yi: ${message}` to ask
 
+![image](https://github.com/yihong0618/tg_bot_collections/assets/15976103/11d96dde-447b-4b7e-886d-c3564e27b0d6)
+
 
 ## HOW TO Install and Run
 
