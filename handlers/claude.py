@@ -116,7 +116,6 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
     if len(player_message) > 10:
         player_message = player_message[2:]
 
-    claude_reply_text = ""
     try:
         if len(player_message) > 2:
             if player_message[-1]["role"] == player_message[-2]["role"]:
