@@ -155,6 +155,17 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
                         )
                     except:
                         pass
+        try:
+            # maybe not complete
+            # maybe the same message
+            bot.edit_message_text(
+                message_id=reply_id.message_id,
+                chat_id=reply_id.chat.id,
+                text=convert(s),
+                parse_mode="MarkdownV2",
+            )
+        except:
+            pass
 
         player_message.append(
             {
