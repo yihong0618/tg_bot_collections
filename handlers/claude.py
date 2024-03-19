@@ -76,7 +76,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
             parse_mode="MarkdownV2",
         )
         # pop my user
-        player_message.pop()
+        player_message.clear()
         return
 
     try:
@@ -164,8 +164,9 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
                 parse_mode="MarkdownV2",
             )
         except Exception as e:
+            player_message.clear()
             print(str(e))
-            pass
+            return
 
         player_message.append(
             {
@@ -181,7 +182,7 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
             parse_mode="MarkdownV2",
         )
         # pop my user
-        player_message.pop()
+        player_message.clear()
         return
 
 
