@@ -9,8 +9,44 @@ from typing import Any, Callable, TypeVar
 
 from telebot import TeleBot
 from telebot.types import BotCommand, Message
+from telebot.util import smart_split
+import telegramify_markdown
+from telegramify_markdown.customize import markdown_symbol
+
+markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
+markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 T = TypeVar("T", bound=Callable)
+
+BOT_MESSAGE_LENGTH = 4000
+
+
+def bot_reply_markdown(message: Message, hint: str, text: str, bot: TeleBot) -> None:
+    """
+    reply the Markdown by take care of the message length.
+    it will fallback to plain text in case of any failure
+    """
+    try:
+        if len(text.encode("utf-8")) <= BOT_MESSAGE_LENGTH:
+            bot.reply_to(
+                message,
+                f"**{hint}**:\n{telegramify_markdown.convert(text)}",
+                parse_mode="MarkdownV2",
+            )
+            return
+
+        # Need a split of message
+        msgs = smart_split(text, BOT_MESSAGE_LENGTH)
+        for i in range(len(msgs)):
+            bot.reply_to(
+                message,
+                f"**{hint}** \[{i+1}/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[i])}",
+                parse_mode="MarkdownV2",
+            )
+    except Exception as e:
+        print(traceback.format_exc())
+        # print(f"wrong markdown format: {text}")
+        bot.reply_to(message, f"{hint}:\n{text}")
 
 
 def extract_prompt(message: str, bot_name: str) -> str:
@@ -94,3 +130,7 @@ def list_available_commands() -> list[str]:
             continue
         commands.append(child.stem)
     return commands
+
+
+# `import *` will give you these
+__all__ = ["bot_reply_markdown", "extract_prompt"]

@@ -5,11 +5,8 @@ import google.generativeai as genai
 from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
 from telebot.types import Message
-import telegramify_markdown
-from telegramify_markdown.customize import markdown_symbol
 
-markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
-markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
+from . import bot_reply_markdown
 
 GOOGLE_GEMINI_KEY = environ.get("GOOGLE_GEMINI_KEY")
 
@@ -18,7 +15,7 @@ generation_config = {
     "temperature": 0.7,
     "top_p": 1,
     "top_k": 1,
-    "max_output_tokens": 2048,
+    "max_output_tokens": 4096,
 }
 
 safety_settings = [
@@ -66,6 +63,8 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
     try:
         player.send_message(m)
         gemini_reply_text = player.last.text.strip()
+        # Gemini is often using ':' in **Title** which not work in Telegram Markdown
+        gemini_reply_text = gemini_reply_text.replace(": **", "**\: ")
     except StopCandidateException as e:
         match = re.search(r'content\s*{\s*parts\s*{\s*text:\s*"([^"]+)"', str(e))
         if match:
@@ -79,18 +78,8 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
             )
             return
 
-    try:
-        bot.reply_to(
-            message,
-            "Gemini answer:\n" + telegramify_markdown.convert(gemini_reply_text),
-            parse_mode="MarkdownV2",
-        )
-    except:
-        print("wrong markdown format")
-        bot.reply_to(
-            message,
-            "Gemini answer:\n\n" + gemini_reply_text,
-        )
+    # By default markdown
+    bot_reply_markdown(message, "Gemini answer", gemini_reply_text, bot)
 
 
 def gemini_photo_handler(message: Message, bot: TeleBot) -> None:
