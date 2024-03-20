@@ -7,11 +7,7 @@ import requests
 from telebot import TeleBot
 from telebot.types import Message
 
-import telegramify_markdown
-from telegramify_markdown.customize import markdown_symbol
-
-markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
-markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
+from . import bot_reply_markdown
 
 YI_BASE_URL = environ.get("YI_BASE_URL")
 YI_API_KEY = environ.get("YI_API_KEY")
@@ -84,18 +80,8 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
         player_message.pop()
         return
 
-    try:
-        bot.reply_to(
-            message,
-            "yi answer:\n" + telegramify_markdown.convert(yi_reply_text),
-            parse_mode="MarkdownV2",
-        )
-    except:
-        print("wrong markdown format")
-        bot.reply_to(
-            message,
-            "yi answer:\n\n" + yi_reply_text,
-        )
+    # reply back as Markdown and fallback to plain text if failed.
+    bot_reply_markdown(message, "yi answer", yi_reply_text, bot)
 
 
 def _image_to_data_uri(file_path):

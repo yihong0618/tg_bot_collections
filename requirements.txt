@@ -1,8 +1,8 @@
-pyTelegramBotAPI
+pyTelegramBotAPI>=4.16
 cairosvg
 github_poster
 prettymapp
-google-generativeai==0.3.1
+google-generativeai>=0.4
 anthropic
 telegramify-markdown
 openai

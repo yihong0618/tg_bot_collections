@@ -6,6 +6,8 @@ from anthropic import Anthropic, APITimeoutError
 from telebot import TeleBot
 from telebot.types import Message
 
+from . import bot_reply_markdown
+
 from telegramify_markdown import convert
 from telegramify_markdown.customize import markdown_symbol
 
@@ -79,18 +81,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
         player_message.clear()
         return
 
-    try:
-        bot.reply_to(
-            message,
-            "Claude answer:\n" + convert(claude_reply_text),
-            parse_mode="MarkdownV2",
-        )
-    except:
-        print("wrong markdown format")
-        bot.reply_to(
-            message,
-            "claude answer:\n\n" + claude_reply_text,
-        )
+    bot_reply_markdown(message, "Claude answer", claude_reply_text, bot)
 
 
 def claude_pro_handler(message: Message, bot: TeleBot) -> None:
