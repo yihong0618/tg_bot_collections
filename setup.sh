@@ -1,6 +1,7 @@
 #!/bin/bash
 
 python_bin_path="$(which python3)"
+venv_dir="venv"
 project_path="$(pwd)"
 service_name="tgbotyh"
 
@@ -8,21 +9,18 @@ source .env
 
 google_gemini_api_key="${Google_Gemini_API_Key}"
 telegram_bot_token="${Telegram_Bot_Token}"
+anthropic_api_key="${Anthropic_API_Key}"
+openai_api_key="${Openai_API_Key}"
+yi_api_key="${Yi_API_Key}"
+yi_base_url="${Yi_Base_Url}"
 
-if [ -n "$Python_Venv_Path" ]; then
-    venv_dir="${Python_Venv_Path}"
-fi
-
-if [ -n "$Python_Bin_Path" ]; then
-    python_bin_path="$Python_Bin_Path"
-fi
-
-if [ -n "$Python_Venv_Path" ]; then
-    venv_dir="${Python_Venv_Path}"
-fi
 
 if [ -n "$Python_Bin_Path" ]; then
     python_bin_path="$Python_Bin_Path"
+fi
+
+if [ -n "$Python_Venv_Path" ]; then
+    venv_dir="${Python_Venv_Path}"
 fi
 
 sudoCmd=""
@@ -92,6 +90,12 @@ function installPythonVirtualEnv(){
     echo "Python bin path: $python_bin_path"
     echo "Google_Gemini_API_Key: $Google_Gemini_API_Key"
     echo "Telegram Bot Token: $Telegram_Bot_Token"
+    echo "Anthropic API Key: $Anthropic_API_Key"
+    echo "Openai API Key: $Openai_API_Key"
+    echo "Yi API Key: $Yi_API_Key"
+    echo "Yi Base Url: $Yi_Base_Url"
+    echo "=============================="
+
     echo
 
     # Check Virtual Environment exist
@@ -134,6 +138,11 @@ User=root
 Group=root
 
 Environment="GOOGLE_GEMINI_KEY=${google_gemini_api_key}"
+Environment="ANTHROPIC_API_KEY=${anthropic_api_key}"
+Environment="OPENAI_API_KEY=${openai_api_key}"
+Environment="YI_API_KEY=${yi_api_key}"
+Environment="YI_BASE_URL=${yi_base_url}"
+
 
 WorkingDirectory=$project_path
 ExecStart=$project_path/venv/bin/python $project_path/tg.py "${telegram_bot_token}"
@@ -172,6 +181,10 @@ function installCommandLine(){
     echo
     echo "=============================="
     export GOOGLE_GEMINI_KEY=$google_gemini_api_key
+    export ANTHROPIC_API_KEY=$anthropic_api_key
+    export OPENAI_API_KEY=$openai_api_key
+    export YI_API_KEY=$yi_api_key
+    export YI_BASE_URL=$yi_base_url
     python tg.py "${telegram_bot_token}"
 }
 
