@@ -23,7 +23,7 @@ BOT_MESSAGE_LENGTH = 4000
 def bot_reply_first(message: Message, who: str, bot: TeleBot) -> Message:
     """ Create the first reply message which make user feel the bot is working. """
     return bot.reply_to(message,
-        f"**{who}** is __thinking__ \.\.\.",
+        f"**{who}** is *thinking* \.\.\.",
         parse_mode="MarkdownV2"
     )
 
@@ -53,7 +53,7 @@ def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> 
         for i in range(1, len(msgs)):
             bot.reply_to(
                 reply_id.reply_to_message,
-                f"**{hint}** \[{i+1}/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[i])}",
+                f"**{who}** \[{i+1}/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[i])}",
                 parse_mode="MarkdownV2",
             )
     except Exception as e:
