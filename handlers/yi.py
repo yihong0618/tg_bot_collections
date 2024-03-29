@@ -35,13 +35,20 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
         )
     else:
         player_message = yi_player_dict[str(message.from_user.id)]
-    if m.strip() == "clear":
+    q = m.strip()
+    if q == "clear" or len(q) == 0:
         bot.reply_to(
             message,
             "just clear your yi messages history",
         )
         player_message.clear()
         return
+
+    # show something, make it more responsible
+    reply_id = bot.reply_to(message,
+        "**Yi** is __thinking__...",
+        parse_mode="MarkdownV2"
+    )
 
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.
@@ -81,7 +88,7 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
         return
 
     # reply back as Markdown and fallback to plain text if failed.
-    bot_reply_markdown(message, "yi answer", yi_reply_text, bot)
+    bot_reply_markdown(replay_id, "Yi", yi_reply_text, bot)
 
 
 def _image_to_data_uri(file_path):

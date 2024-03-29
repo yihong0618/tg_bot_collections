@@ -37,13 +37,21 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
         )
     else:
         player_message = claude_player_dict[str(message.from_user.id)]
-    if m.strip() == "clear":
+
+    q = m.strip()
+    if q == "clear" or len(q) == 0:
         bot.reply_to(
             message,
             "just clear you claude messages history",
         )
         player_message.clear()
         return
+
+    # show something, make it more responsible
+    reply_id = bot.reply_to(message,
+        "**Claude** is __thinking__...",
+        parse_mode="MarkdownV2"
+    )
 
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.
@@ -57,7 +65,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
                 # tricky
                 player_message.pop()
         r = client.messages.create(
-            max_tokens=1024, messages=player_message, model=ANTHROPIC_MODEL
+            max_tokens=4096, messages=player_message, model=ANTHROPIC_MODEL
         )
         if not r.content:
             claude_reply_text = "Claude did not answer."
@@ -81,7 +89,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
         player_message.clear()
         return
 
-    bot_reply_markdown(message, "Claude answer", claude_reply_text, bot)
+    bot_reply_markdown(reply_id, "Claude", claude_reply_text, bot)
 
 
 def claude_pro_handler(message: Message, bot: TeleBot) -> None:
@@ -94,7 +102,8 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
         )
     else:
         player_message = claude_pro_player_dict[str(message.from_user.id)]
-    if m.strip() == "clear":
+    q = m.strip()
+    if q == "clear" or len(q) == 0:
         bot.reply_to(
             message,
             "just clear you claude opus messages history",

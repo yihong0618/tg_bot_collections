@@ -49,13 +49,21 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
         gemini_player_dict[str(message.from_user.id)] = player
     else:
         player = gemini_player_dict[str(message.from_user.id)]
-    if m.strip() == "clear":
+    q = m.strip()
+    if q == "clear" or len(q) == 0:
         bot.reply_to(
             message,
             "just clear you gemini messages history",
         )
         player.history.clear()
         return
+
+    # show something, make it more responsible
+    reply_id = bot.reply_to(message,
+        "**Gemini** is __thinking__...",
+        parse_mode="MarkdownV2"
+    )
+
     # keep the last 5, every has two ask and answer.
     if len(player.history) > 10:
         player.history = player.history[2:]
@@ -64,7 +72,7 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
         player.send_message(m)
         gemini_reply_text = player.last.text.strip()
         # Gemini is often using ':' in **Title** which not work in Telegram Markdown
-        gemini_reply_text = gemini_reply_text.replace(": **", "**\: ")
+        gemini_reply_text = gemini_reply_text.replace(":**", "\:**")
     except StopCandidateException as e:
         match = re.search(r'content\s*{\s*parts\s*{\s*text:\s*"([^"]+)"', str(e))
         if match:
@@ -79,7 +87,7 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
             return
 
     # By default markdown
-    bot_reply_markdown(message, "Gemini answer", gemini_reply_text, bot)
+    bot_reply_markdown(reply_id, "Gemini", gemini_reply_text, bot)
 
 
 def gemini_photo_handler(message: Message, bot: TeleBot) -> None:
