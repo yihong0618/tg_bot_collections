@@ -23,7 +23,7 @@ BOT_MESSAGE_LENGTH = 4000
 def bot_reply_first(message: Message, who: str, bot: TeleBot) -> Message:
     """ Create the first reply message which make user feel the bot is working. """
     return bot.reply_to(message,
-        f"**{who}** is *thinking* \.\.\.",
+        f"*{who}* is _thinking_ \.\.\.",
         parse_mode="MarkdownV2"
     )
 
@@ -35,7 +35,7 @@ def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> 
     try:
         if len(text.encode("utf-8")) <= BOT_MESSAGE_LENGTH:
             bot.edit_message_text(
-                f"**{who}**:\n{telegramify_markdown.convert(text)}",
+                f"*{who}*:\n{telegramify_markdown.convert(text)}",
                 chat_id=reply_id.chat.id,
                 message_id=reply_id.message_id,
                 parse_mode="MarkdownV2"
@@ -45,7 +45,7 @@ def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> 
         # Need a split of message
         msgs = smart_split(text, BOT_MESSAGE_LENGTH)
         bot.edit_message_text(
-            f"**{who}** \[1/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[0])}",
+            f"*{who}* \[1/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[0])}",
             chat_id=reply_id.chat.id,
             message_id=reply_id.message_id,
             parse_mode="MarkdownV2"
@@ -53,14 +53,14 @@ def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> 
         for i in range(1, len(msgs)):
             bot.reply_to(
                 reply_id.reply_to_message,
-                f"**{who}** \[{i+1}/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[i])}",
+                f"*{who}* \[{i+1}/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[i])}",
                 parse_mode="MarkdownV2",
             )
     except Exception as e:
         print(traceback.format_exc())
         # print(f"wrong markdown format: {text}")
         bot.edit_message_text(
-            f"**{who}**:\n{text}",
+            f"*{who}*:\n{text}",
             chat_id=reply_id.chat.id,
             message_id=reply_id.message_id,
         )
@@ -150,4 +150,4 @@ def list_available_commands() -> list[str]:
 
 
 # `import *` will give you these
-__all__ = ["bot_reply_first", "bot_reply_markdown", "extract_prompt"]
+__all__ = ["bot_reply_first", "bot_reply_markdown"]
