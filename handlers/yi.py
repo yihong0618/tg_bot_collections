@@ -7,7 +7,7 @@ import requests
 from telebot import TeleBot
 from telebot.types import Message
 
-from . import bot_reply_markdown
+from . import *
 
 YI_BASE_URL = environ.get("YI_BASE_URL")
 YI_API_KEY = environ.get("YI_API_KEY")
@@ -45,10 +45,7 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
         return
 
     # show something, make it more responsible
-    reply_id = bot.reply_to(message,
-        "**Yi** is __thinking__...",
-        parse_mode="MarkdownV2"
-    )
+    reply_id = bot_reply_first(message, "Yi", bot)
 
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.

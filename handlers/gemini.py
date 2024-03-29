@@ -6,7 +6,7 @@ from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
 from telebot.types import Message
 
-from . import bot_reply_markdown
+from . import *
 
 GOOGLE_GEMINI_KEY = environ.get("GOOGLE_GEMINI_KEY")
 
@@ -59,10 +59,7 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
         return
 
     # show something, make it more responsible
-    reply_id = bot.reply_to(message,
-        "**Gemini** is __thinking__...",
-        parse_mode="MarkdownV2"
-    )
+    reply_id = bot_reply_first(message, "Gemini", bot)
 
     # keep the last 5, every has two ask and answer.
     if len(player.history) > 10:

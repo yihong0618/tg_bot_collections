@@ -6,7 +6,7 @@ from anthropic import Anthropic, APITimeoutError
 from telebot import TeleBot
 from telebot.types import Message
 
-from . import bot_reply_markdown
+from . import *
 
 from telegramify_markdown import convert
 from telegramify_markdown.customize import markdown_symbol
@@ -48,10 +48,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
         return
 
     # show something, make it more responsible
-    reply_id = bot.reply_to(message,
-        "**Claude** is __thinking__...",
-        parse_mode="MarkdownV2"
-    )
+    reply_id = bot_reply_first(message, "Claude", bot)
 
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.

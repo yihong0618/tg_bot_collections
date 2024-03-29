@@ -20,6 +20,12 @@ T = TypeVar("T", bound=Callable)
 
 BOT_MESSAGE_LENGTH = 4000
 
+def bot_reply_first(message: Message, who: str, bot: TeleBot) -> Message:
+    """ Create the first reply message which make user feel the bot is working. """
+    return bot.reply_to(message,
+        f"**{who}** is __thinking__ \.\.\.",
+        parse_mode="MarkdownV2"
+    )
 
 def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> None:
     """
@@ -144,4 +150,4 @@ def list_available_commands() -> list[str]:
 
 
 # `import *` will give you these
-__all__ = ["bot_reply_markdown", "extract_prompt"]
+__all__ = ["bot_reply_first", "bot_reply_markdown", "extract_prompt"]
