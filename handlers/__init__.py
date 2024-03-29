@@ -20,12 +20,13 @@ T = TypeVar("T", bound=Callable)
 
 BOT_MESSAGE_LENGTH = 4000
 
+
 def bot_reply_first(message: Message, who: str, bot: TeleBot) -> Message:
-    """ Create the first reply message which make user feel the bot is working. """
-    return bot.reply_to(message,
-        f"*{who}* is _thinking_ \.\.\.",
-        parse_mode="MarkdownV2"
+    """Create the first reply message which make user feel the bot is working."""
+    return bot.reply_to(
+        message, f"*{who}* is _thinking_ \.\.\.", parse_mode="MarkdownV2"
     )
+
 
 def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> None:
     """
@@ -38,7 +39,7 @@ def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> 
                 f"*{who}*:\n{telegramify_markdown.convert(text)}",
                 chat_id=reply_id.chat.id,
                 message_id=reply_id.message_id,
-                parse_mode="MarkdownV2"
+                parse_mode="MarkdownV2",
             )
             return
 
@@ -48,7 +49,7 @@ def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> 
             f"*{who}* \[1/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[0])}",
             chat_id=reply_id.chat.id,
             message_id=reply_id.message_id,
-            parse_mode="MarkdownV2"
+            parse_mode="MarkdownV2",
         )
         for i in range(1, len(msgs)):
             bot.reply_to(
