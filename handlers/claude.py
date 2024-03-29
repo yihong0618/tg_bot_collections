@@ -38,8 +38,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
     else:
         player_message = claude_player_dict[str(message.from_user.id)]
 
-    q = m.strip()
-    if q == "clear" or len(q) == 0:
+    if m.strip() == "clear":
         bot.reply_to(
             message,
             "just clear you claude messages history",
@@ -119,7 +118,7 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
                 # tricky
                 player_message.pop()
         r = client.messages.create(
-            max_tokens=4096,
+            max_tokens=8192,
             messages=player_message,
             model=ANTHROPIC_PRO_MODEL,
             stream=True,

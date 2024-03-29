@@ -15,7 +15,7 @@ generation_config = {
     "temperature": 0.7,
     "top_p": 1,
     "top_k": 1,
-    "max_output_tokens": 4096,
+    "max_output_tokens": 8192,
 }
 
 safety_settings = [
@@ -49,8 +49,7 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
         gemini_player_dict[str(message.from_user.id)] = player
     else:
         player = gemini_player_dict[str(message.from_user.id)]
-    q = m.strip()
-    if q == "clear" or len(q) == 0:
+    if m.strip() == "clear":
         bot.reply_to(
             message,
             "just clear you gemini messages history",

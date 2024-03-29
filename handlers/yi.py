@@ -35,8 +35,7 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
         )
     else:
         player_message = yi_player_dict[str(message.from_user.id)]
-    q = m.strip()
-    if q == "clear" or len(q) == 0:
+    if m.strip() == "clear":
         bot.reply_to(
             message,
             "just clear your yi messages history",
