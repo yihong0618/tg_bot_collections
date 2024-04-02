@@ -118,7 +118,7 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
                 # tricky
                 player_message.pop()
         r = client.messages.create(
-            max_tokens=8192,
+            max_tokens=2048,
             messages=player_message,
             model=ANTHROPIC_PRO_MODEL,
             stream=True,
@@ -142,6 +142,8 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
                 else:
                     try:
                         # maybe the same message
+                        if not reply_id:
+                            continue
                         bot.edit_message_text(
                             message_id=reply_id.message_id,
                             chat_id=reply_id.chat.id,
