@@ -84,7 +84,7 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
         return
 
     # reply back as Markdown and fallback to plain text if failed.
-    bot_reply_markdown(replay_id, "Yi", yi_reply_text, bot)
+    bot_reply_markdown(reply_id, "Yi", yi_reply_text, bot)
 
 
 def _image_to_data_uri(file_path):
