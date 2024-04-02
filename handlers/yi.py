@@ -7,7 +7,7 @@ import requests
 from telebot import TeleBot
 from telebot.types import Message
 
-from . import bot_reply_markdown
+from . import *
 
 YI_BASE_URL = environ.get("YI_BASE_URL")
 YI_API_KEY = environ.get("YI_API_KEY")
@@ -42,6 +42,9 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
         )
         player_message.clear()
         return
+
+    # show something, make it more responsible
+    reply_id = bot_reply_first(message, "Yi", bot)
 
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.
@@ -81,7 +84,7 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
         return
 
     # reply back as Markdown and fallback to plain text if failed.
-    bot_reply_markdown(message, "yi answer", yi_reply_text, bot)
+    bot_reply_markdown(replay_id, "Yi", yi_reply_text, bot)
 
 
 def _image_to_data_uri(file_path):

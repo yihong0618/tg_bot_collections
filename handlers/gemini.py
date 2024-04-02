@@ -6,7 +6,7 @@ from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
 from telebot.types import Message
 
-from . import bot_reply_markdown
+from . import *
 
 GOOGLE_GEMINI_KEY = environ.get("GOOGLE_GEMINI_KEY")
 
@@ -15,7 +15,7 @@ generation_config = {
     "temperature": 0.7,
     "top_p": 1,
     "top_k": 1,
-    "max_output_tokens": 4096,
+    "max_output_tokens": 8192,
 }
 
 safety_settings = [
@@ -56,6 +56,10 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
         )
         player.history.clear()
         return
+
+    # show something, make it more responsible
+    reply_id = bot_reply_first(message, "Gemini", bot)
+
     # keep the last 5, every has two ask and answer.
     if len(player.history) > 10:
         player.history = player.history[2:]
@@ -64,7 +68,8 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
         player.send_message(m)
         gemini_reply_text = player.last.text.strip()
         # Gemini is often using ':' in **Title** which not work in Telegram Markdown
-        gemini_reply_text = gemini_reply_text.replace(": **", "**\: ")
+        gemini_reply_text = gemini_reply_text.replace(":**", "\:**")
+        gemini_reply_text = gemini_reply_text.replace("：**", "**\: ")
     except StopCandidateException as e:
         match = re.search(r'content\s*{\s*parts\s*{\s*text:\s*"([^"]+)"', str(e))
         if match:
@@ -79,7 +84,7 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
             return
 
     # By default markdown
-    bot_reply_markdown(message, "Gemini answer", gemini_reply_text, bot)
+    bot_reply_markdown(reply_id, "Gemini", gemini_reply_text, bot)
 
 
 def gemini_photo_handler(message: Message, bot: TeleBot) -> None:

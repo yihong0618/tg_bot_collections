@@ -21,32 +21,50 @@ T = TypeVar("T", bound=Callable)
 BOT_MESSAGE_LENGTH = 4000
 
 
-def bot_reply_markdown(message: Message, hint: str, text: str, bot: TeleBot) -> None:
+def bot_reply_first(message: Message, who: str, bot: TeleBot) -> Message:
+    """Create the first reply message which make user feel the bot is working."""
+    return bot.reply_to(
+        message, f"*{who}* is _thinking_ \.\.\.", parse_mode="MarkdownV2"
+    )
+
+
+def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> None:
     """
     reply the Markdown by take care of the message length.
     it will fallback to plain text in case of any failure
     """
     try:
         if len(text.encode("utf-8")) <= BOT_MESSAGE_LENGTH:
-            bot.reply_to(
-                message,
-                f"**{hint}**:\n{telegramify_markdown.convert(text)}",
+            bot.edit_message_text(
+                f"*{who}*:\n{telegramify_markdown.convert(text)}",
+                chat_id=reply_id.chat.id,
+                message_id=reply_id.message_id,
                 parse_mode="MarkdownV2",
             )
             return
 
         # Need a split of message
         msgs = smart_split(text, BOT_MESSAGE_LENGTH)
-        for i in range(len(msgs)):
+        bot.edit_message_text(
+            f"*{who}* \[1/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[0])}",
+            chat_id=reply_id.chat.id,
+            message_id=reply_id.message_id,
+            parse_mode="MarkdownV2",
+        )
+        for i in range(1, len(msgs)):
             bot.reply_to(
-                message,
-                f"**{hint}** \[{i+1}/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[i])}",
+                reply_id.reply_to_message,
+                f"*{who}* \[{i+1}/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[i])}",
                 parse_mode="MarkdownV2",
             )
     except Exception as e:
         print(traceback.format_exc())
         # print(f"wrong markdown format: {text}")
-        bot.reply_to(message, f"{hint}:\n{text}")
+        bot.edit_message_text(
+            f"*{who}*:\n{text}",
+            chat_id=reply_id.chat.id,
+            message_id=reply_id.message_id,
+        )
 
 
 def extract_prompt(message: str, bot_name: str) -> str:
@@ -133,4 +151,4 @@ def list_available_commands() -> list[str]:
 
 
 # `import *` will give you these
-__all__ = ["bot_reply_markdown", "extract_prompt"]
+__all__ = ["bot_reply_first", "bot_reply_markdown"]
