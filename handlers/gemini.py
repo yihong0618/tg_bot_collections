@@ -161,7 +161,7 @@ def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
     except:
         bot.reply_to(
             message,
-            "claude answer:\n" + "geminipro answer timeout",
+            "Geminipro answer:\n" + "geminipro answer timeout",
             parse_mode="MarkdownV2",
         )
         player.history.clear()
