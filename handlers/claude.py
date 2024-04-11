@@ -191,8 +191,18 @@ def claude_photo_handler(message: Message, bot: TeleBot) -> None:
                     },
                 ],
                 model=ANTHROPIC_MODEL,
+                stream=True,
             )
-            bot_reply_markdown(reply_id, who, r.content[0].text, bot)
+            s = ""
+            start = time.time()
+            for e in r:
+                if e.type == "content_block_delta":
+                    s += e.delta.text
+                if time.time() - start > 1.7:
+                    start = time.time()
+                    bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+
+            bot_reply_markdown(reply_id, who, s, bot)
     except Exception as e:
         print(e)
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
