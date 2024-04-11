@@ -45,7 +45,7 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
 
     who = "Yi"
     # show something, make it more responsible
-    reply_id = bot_reply_first(message, {who}, bot)
+    reply_id = bot_reply_first(message, who, bot)
 
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.
