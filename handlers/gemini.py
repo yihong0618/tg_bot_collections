@@ -69,8 +69,9 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
         player.history.clear()
         return
 
+    who = "Gemini"
     # show something, make it more responsible
-    reply_id = bot_reply_first(message, "Gemini", bot)
+    reply_id = bot_reply_first(message, who, bot)
 
     # keep the last 5, every has two ask and answer.
     if len(player.history) > 10:
@@ -89,14 +90,11 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
             gemini_reply_text = re.sub(r"\\n", "\n", gemini_reply_text)
         else:
             print("No meaningful text was extracted from the exception.")
-            bot.reply_to(
-                message,
-                "Google gemini encountered an error while generating an answer. Please check the log.",
-            )
+            bot_reply_markdown(reply_id, who, "answer wrong", bot)
             return
 
     # By default markdown
-    bot_reply_markdown(reply_id, "Gemini", gemini_reply_text, bot)
+    bot_reply_markdown(reply_id, who, gemini_reply_text, bot)
 
 
 def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
@@ -117,8 +115,9 @@ def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
         player.history.clear()
         return
 
+    who = "Gemini Pro"
     # show something, make it more responsible
-    reply_id = bot_reply_first(message, "Geminipro", bot)
+    reply_id = bot_reply_first(message, who, bot)
 
     # keep the last 5, every has two ask and answer.
     if len(player.history) > 10:
@@ -133,37 +132,16 @@ def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
             print(s)
             if time.time() - start > 1.7:
                 start = time.time()
-                try:
-                    # maybe the same message
-                    if not reply_id:
-                        continue
-                    bot.edit_message_text(
-                        message_id=reply_id.message_id,
-                        chat_id=reply_id.chat.id,
-                        text=convert(s),
-                        parse_mode="MarkdownV2",
-                    )
-                except Exception as e:
-                    print(str(e))
-        try:
+                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+
+        if not bot_reply_markdown(reply_id, who, s, bot):
             # maybe not complete
             # maybe the same message
-            bot.edit_message_text(
-                message_id=reply_id.message_id,
-                chat_id=reply_id.chat.id,
-                text=convert(s),
-                parse_mode="MarkdownV2",
-            )
-        except Exception as e:
             player.history.clear()
-            print(str(e))
             return
-    except:
-        bot.reply_to(
-            message,
-            "Geminipro answer:\n" + "geminipro answer timeout",
-            parse_mode="MarkdownV2",
-        )
+    except Exception as e:
+        print(e)
+        bot_reply_markdown(reply_id, who, "answer wrong", bot)
         player.history.clear()
         return
 

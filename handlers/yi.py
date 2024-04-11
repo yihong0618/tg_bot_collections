@@ -43,8 +43,9 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
         player_message.clear()
         return
 
+    who = "Yi"
     # show something, make it more responsible
-    reply_id = bot_reply_first(message, "Yi", bot)
+    reply_id = bot_reply_first(message, {who}, bot)
 
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.
@@ -61,7 +62,7 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
 
         content = r.choices[0].message.content.encode("utf8").decode()
         if not content:
-            yi_reply_text = "yi did not answer."
+            yi_reply_text = f"{who} did not answer."
             player_message.pop()
         else:
             yi_reply_text = content
@@ -74,17 +75,13 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
 
     except Exception as e:
         print(e)
-        bot.reply_to(
-            message,
-            "yi answer:\n" + "yi answer timeout",
-            parse_mode="MarkdownV2",
-        )
+        bot_reply_markdown(reply_id, who, "answer wrong", bot)
         # pop my user
         player_message.pop()
         return
 
     # reply back as Markdown and fallback to plain text if failed.
-    bot_reply_markdown(reply_id, "Yi", yi_reply_text, bot)
+    bot_reply_markdown(reply_id, who, yi_reply_text, bot)
 
 
 def _image_to_data_uri(file_path):
@@ -95,11 +92,10 @@ def _image_to_data_uri(file_path):
 
 def yi_photo_handler(message: Message, bot: TeleBot) -> None:
     s = message.caption
-    bot.reply_to(
-        message,
-        "Generating yi vision answer please wait.",
-    )
     prompt = s.strip()
+    who = "Yi Vision"
+    # show something, make it more responsible
+    reply_id = bot_reply_first(message, who, bot)
     # get the high quaility picture.
     max_size_photo = max(message.photo, key=lambda p: p.file_size)
     file_path = bot.get_file(max_size_photo.file_id).file_path
@@ -136,14 +132,10 @@ def yi_photo_handler(message: Message, bot: TeleBot) -> None:
     ).json()
     try:
         text = response["choices"][0]["message"]["content"].encode("utf8").decode()
-        bot.reply_to(message, "yi vision answer:\n" + text)
+        bot_reply_markdown(reply_id, who, text, bot)
     except Exception as e:
         print(e)
-        bot.reply_to(
-            message,
-            "yi vision answer:\n" + "yi vision answer wrong",
-            parse_mode="MarkdownV2",
-        )
+        bot_reply_markdown(reply_id, who, "answer wrong", bot)
 
 
 def register(bot: TeleBot) -> None:

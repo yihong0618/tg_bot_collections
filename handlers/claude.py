@@ -46,8 +46,9 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
         player_message.clear()
         return
 
+    who = "Claude"
     # show something, make it more responsible
-    reply_id = bot_reply_first(message, "Claude", bot)
+    reply_id = bot_reply_first(message, who, bot)
 
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.
@@ -64,7 +65,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
             max_tokens=4096, messages=player_message, model=ANTHROPIC_MODEL
         )
         if not r.content:
-            claude_reply_text = "Claude did not answer."
+            claude_reply_text = f"{who} did not answer."
             player_message.pop()
         else:
             claude_reply_text = r.content[0].text
@@ -76,16 +77,12 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
             )
 
     except APITimeoutError:
-        bot.reply_to(
-            message,
-            "claude answer:\n" + "claude answer timeout",
-            parse_mode="MarkdownV2",
-        )
+        bot_reply_markdown(reply_id, who, "answer timeout", bot)
         # pop my user
         player_message.clear()
         return
 
-    bot_reply_markdown(reply_id, "Claude", claude_reply_text, bot)
+    bot_reply_markdown(reply_id, who, claude_reply_text, bot)
 
 
 def claude_pro_handler(message: Message, bot: TeleBot) -> None:
@@ -107,6 +104,10 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
         player_message.clear()
         return
 
+    who = "Claude Pro"
+    # show something, make it more responsible
+    reply_id = bot_reply_first(message, who, bot)
+
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.
     if len(player_message) > 10:
@@ -125,45 +126,17 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
         )
         s = ""
         start = time.time()
-        is_send = True
-        reply_id = None
         for e in r:
             if e.type == "content_block_delta":
                 s += e.delta.text
             if time.time() - start > 1.7:
                 start = time.time()
-                if is_send:
-                    reply_id = bot.reply_to(
-                        message,
-                        convert(s),
-                        parse_mode="MarkdownV2",
-                    )
-                    is_send = False
-                else:
-                    try:
-                        # maybe the same message
-                        if not reply_id:
-                            continue
-                        bot.edit_message_text(
-                            message_id=reply_id.message_id,
-                            chat_id=reply_id.chat.id,
-                            text=convert(s),
-                            parse_mode="MarkdownV2",
-                        )
-                    except Exception as e:
-                        print(str(e))
-        try:
+                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+
+        if not bot_reply_markdown(reply_id, who, s, bot):
             # maybe not complete
             # maybe the same message
-            bot.edit_message_text(
-                message_id=reply_id.message_id,
-                chat_id=reply_id.chat.id,
-                text=convert(s),
-                parse_mode="MarkdownV2",
-            )
-        except Exception as e:
             player_message.clear()
-            print(str(e))
             return
 
         player_message.append(
@@ -174,11 +147,7 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
         )
 
     except APITimeoutError:
-        bot.reply_to(
-            message,
-            "claude answer:\n" + "claude answer timeout",
-            parse_mode="MarkdownV2",
-        )
+        bot_reply_markdown(reply_id, who, "answer timeout", bot)
         # pop my user
         player_message.clear()
         return
@@ -186,11 +155,10 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
 
 def claude_photo_handler(message: Message, bot: TeleBot) -> None:
     s = message.caption
-    reply_message = bot.reply_to(
-        message,
-        "Generating claude vision answer please wait.",
-    )
     prompt = s.strip()
+    who = "Claude Vision"
+    # show something, make it more responsible
+    reply_id = bot_reply_first(message, who, bot)
     # get the high quaility picture.
     max_size_photo = max(message.photo, key=lambda p: p.file_size)
     file_path = bot.get_file(max_size_photo.file_id).file_path
@@ -224,16 +192,10 @@ def claude_photo_handler(message: Message, bot: TeleBot) -> None:
                 ],
                 model=ANTHROPIC_MODEL,
             )
-            bot.reply_to(message, "Claude vision answer:\n" + r.content[0].text)
+            bot_reply_markdown(reply_id, who, r.content[0].text, bot)
     except Exception as e:
         print(e)
-        bot.reply_to(
-            message,
-            "Claude vision answer:\n" + "claude vision answer wrong",
-            parse_mode="MarkdownV2",
-        )
-    finally:
-        bot.delete_message(reply_message.chat.id, reply_message.message_id)
+        bot_reply_markdown(reply_id, who, "answer wrong", bot)
 
 
 def register(bot: TeleBot) -> None:
