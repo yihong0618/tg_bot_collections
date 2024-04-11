@@ -174,26 +174,19 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
         return
 
 
-def _image_to_data_uri(file_path):
-    with open(file_path, "rb") as image_file:
-        encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
-        return f"data:image/png;base64,{encoded_image}"
-
-
 def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
     s = message.caption
-    reply_message = bot.reply_to(
-        message,
-        "Generating chatgpt vision answer please wait.",
-    )
     prompt = s.strip()
+    reply_id = bot_reply_first(message, "ChatGPT Vision", bot)
     # get the high quaility picture.
     max_size_photo = max(message.photo, key=lambda p: p.file_size)
     file_path = bot.get_file(max_size_photo.file_id).file_path
     downloaded_file = bot.download_file(file_path)
     with open("chatgpt_temp.jpg", "wb") as temp_file:
         temp_file.write(downloaded_file)
-
+    with open("chatgpt_temp.jpg", "rb") as image_file:
+        image_data = image_file.read()
+    base64_image_data = base64.b64encode(image_data).decode("utf-8")
     try:
         r = client.chat.completions.create(
             max_tokens=1024,
@@ -205,28 +198,54 @@ def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": _image_to_data_uri("chatgpt_temp.jpg")
+                                "url": f"data:image/jpeg;base64,{base64_image_data}"
                             },
                         },
                     ],
                 }
             ],
             model=CHATGPT_PRO_MODEL,
+            stream=True,
         )
-        bot.reply_to(
-            message,
-            "ChatGPT vision answer:\n"
-            + r.choices[0].message.content.encode("utf8").decode(),
-        )
+        s = "ChatGPT Vision answer:\n"
+        start = time.time()
+        for chunk in r:
+            if chunk.choices[0].delta.content is None:
+                break
+            s += chunk.choices[0].delta.content
+
+            if time.time() - start > 1.7:
+                start = time.time()
+                try:
+                    bot.edit_message_text(
+                        message_id=reply_id.message_id,
+                        chat_id=reply_id.chat.id,
+                        text=convert(s),
+                        parse_mode="MarkdownV2",
+                    )
+                except Exception as e:
+                    print(str(e))
+        try:
+            # maybe not complete
+            # maybe the same message
+            bot.edit_message_text(
+                message_id=reply_id.message_id,
+                chat_id=reply_id.chat.id,
+                text=convert(s),
+                parse_mode="MarkdownV2",
+            )
+        except Exception as e:
+            print(str(e))
+            return
+
     except Exception as e:
-        print(e)
+        print(str(e))
         bot.reply_to(
             message,
-            "ChatGPT vision answer:\n" + "chatgpt vision answer wrong",
+            "ChatGPT Vision answer:\n" + "ChatGPT Vision answer timeout",
             parse_mode="MarkdownV2",
         )
-    finally:
-        bot.delete_message(reply_message.chat.id, reply_message.message_id)
+        return
 
 
 def register(bot: TeleBot) -> None:
