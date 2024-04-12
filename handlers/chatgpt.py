@@ -49,8 +49,9 @@ def chatgpt_handler(message: Message, bot: TeleBot) -> None:
         player_message.clear()
         return
 
+    who = "ChatGPT"
     # show something, make it more responsible
-    reply_id = bot_reply_first(message, "ChatGPT", bot)
+    reply_id = bot_reply_first(message, who, bot)
 
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.
@@ -64,7 +65,7 @@ def chatgpt_handler(message: Message, bot: TeleBot) -> None:
         )
         content = r.choices[0].message.content.encode("utf8").decode()
         if not content:
-            chatgpt_reply_text = "chatgpt did not answer."
+            chatgpt_reply_text = f"{who} did not answer."
             player_message.pop()
         else:
             chatgpt_reply_text = content
@@ -77,17 +78,13 @@ def chatgpt_handler(message: Message, bot: TeleBot) -> None:
 
     except Exception as e:
         print(e)
-        bot.reply_to(
-            message,
-            "ChatGPT answer:\n" + "chatgpt answer timeout",
-            parse_mode="MarkdownV2",
-        )
+        bot_reply_markdown(reply_id, who, "answer wrong", bot)
         # pop my user
         player_message.pop()
         return
 
     # reply back as Markdown and fallback to plain text if failed.
-    bot_reply_markdown(reply_id, "ChatGPT", chatgpt_reply_text, bot)
+    bot_reply_markdown(reply_id, who, chatgpt_reply_text, bot)
 
 
 def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
@@ -110,7 +107,8 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
         player_message.clear()
         return
 
-    reply_id = bot_reply_first(message, "ChatGPT", bot)
+    who = "ChatGPT Pro"
+    reply_id = bot_reply_first(message, who, bot)
 
     player_message.append({"role": "user", "content": m})
     # keep the last 5, every has two ask and answer.
@@ -130,30 +128,14 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
             if chunk.choices[0].delta.content is None:
                 break
             s += chunk.choices[0].delta.content
-
             if time.time() - start > 1.7:
                 start = time.time()
-                try:
-                    bot.edit_message_text(
-                        message_id=reply_id.message_id,
-                        chat_id=reply_id.chat.id,
-                        text=convert(s),
-                        parse_mode="MarkdownV2",
-                    )
-                except Exception as e:
-                    print(str(e))
-        try:
+                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+
+        if not bot_reply_markdown(reply_id, who, s, bot):
             # maybe not complete
             # maybe the same message
-            bot.edit_message_text(
-                message_id=reply_id.message_id,
-                chat_id=reply_id.chat.id,
-                text=convert(s),
-                parse_mode="MarkdownV2",
-            )
-        except Exception as e:
             player_message.clear()
-            print(str(e))
             return
 
         player_message.append(
@@ -164,12 +146,8 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
         )
 
     except Exception as e:
-        bot.reply_to(
-            message,
-            "chatgpt answer:\n" + "chatgpt answer timeout",
-            parse_mode="MarkdownV2",
-        )
-        # pop my user
+        print(e)
+        bot_reply_markdown(reply_id, who, "answer wrong", bot)
         player_message.clear()
         return
 
@@ -177,7 +155,9 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
 def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
     s = message.caption
     prompt = s.strip()
-    reply_id = bot_reply_first(message, "ChatGPT Vision", bot)
+    who = "ChatGPT Vision"
+    # show something, make it more responsible
+    reply_id = bot_reply_first(message, who, bot)
     # get the high quaility picture.
     max_size_photo = max(message.photo, key=lambda p: p.file_size)
     file_path = bot.get_file(max_size_photo.file_id).file_path
@@ -207,45 +187,20 @@ def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
             model=CHATGPT_PRO_MODEL,
             stream=True,
         )
-        s = "ChatGPT Vision answer:\n"
+        s = ""
         start = time.time()
         for chunk in r:
             if chunk.choices[0].delta.content is None:
                 break
             s += chunk.choices[0].delta.content
-
             if time.time() - start > 1.7:
                 start = time.time()
-                try:
-                    bot.edit_message_text(
-                        message_id=reply_id.message_id,
-                        chat_id=reply_id.chat.id,
-                        text=convert(s),
-                        parse_mode="MarkdownV2",
-                    )
-                except Exception as e:
-                    print(str(e))
-        try:
-            # maybe not complete
-            # maybe the same message
-            bot.edit_message_text(
-                message_id=reply_id.message_id,
-                chat_id=reply_id.chat.id,
-                text=convert(s),
-                parse_mode="MarkdownV2",
-            )
-        except Exception as e:
-            print(str(e))
-            return
+                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
 
+        bot_reply_markdown(reply_id, who, s, bot)
     except Exception as e:
-        print(str(e))
-        bot.reply_to(
-            message,
-            "ChatGPT Vision answer:\n" + "ChatGPT Vision answer timeout",
-            parse_mode="MarkdownV2",
-        )
-        return
+        print(e)
+        bot_reply_markdown(reply_id, who, "answer wrong", bot)
 
 
 def register(bot: TeleBot) -> None:
