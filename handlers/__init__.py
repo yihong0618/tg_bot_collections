@@ -28,20 +28,22 @@ def bot_reply_first(message: Message, who: str, bot: TeleBot) -> Message:
     )
 
 
-def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> None:
+def bot_reply_markdown(
+    reply_id: Message, who: str, text: str, bot: TeleBot, split_text: bool = True
+) -> bool:
     """
     reply the Markdown by take care of the message length.
     it will fallback to plain text in case of any failure
     """
     try:
-        if len(text.encode("utf-8")) <= BOT_MESSAGE_LENGTH:
+        if len(text.encode("utf-8")) <= BOT_MESSAGE_LENGTH or not split_text:
             bot.edit_message_text(
                 f"*{who}*:\n{telegramify_markdown.convert(text)}",
                 chat_id=reply_id.chat.id,
                 message_id=reply_id.message_id,
                 parse_mode="MarkdownV2",
             )
-            return
+            return True
 
         # Need a split of message
         msgs = smart_split(text, BOT_MESSAGE_LENGTH)
@@ -57,6 +59,8 @@ def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> 
                 f"*{who}* \[{i+1}/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[i])}",
                 parse_mode="MarkdownV2",
             )
+
+        return True
     except Exception as e:
         print(traceback.format_exc())
         # print(f"wrong markdown format: {text}")
@@ -65,6 +69,7 @@ def bot_reply_markdown(reply_id: Message, who: str, text: str, bot: TeleBot) -> 
             chat_id=reply_id.chat.id,
             message_id=reply_id.message_id,
         )
+        return False
 
 
 def extract_prompt(message: str, bot_name: str) -> str:
