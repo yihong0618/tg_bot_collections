@@ -7,8 +7,10 @@ from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
 from telebot.types import Message
 
+import requests
 from telegramify_markdown import convert
 from telegramify_markdown.customize import markdown_symbol
+from urlextract import URLExtract
 
 from . import *
 
@@ -35,6 +37,22 @@ safety_settings = [
 # Global history cache
 gemini_player_dict = {}
 gemini_pro_player_dict = {}
+gemini_file_player_dict = {}
+
+
+def extract_url_from_text(text: str) -> list[str]:
+    extractor = URLExtract()
+    urls = extractor.find_urls(text)
+    return urls
+
+
+def get_text_from_jina_reader(url: str):
+    try:
+        r = requests.get(f"https://r.jina.ai/{url}")
+        return r.text
+    except Exception as e:
+        print(e)
+        return None
 
 
 def make_new_gemini_convo(is_pro=False):
@@ -116,10 +134,24 @@ def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
             "just clear you gemini messages history",
         )
         player.history.clear()
+        # also need to clear the data file
+        if gemini_file_player_dict.get(str(message.from_user.id)):
+            del gemini_file_player_dict[str(message.from_user.id)]
         return
     if m[:4].lower() == "new ":
         m = m[4:].strip()
         player.history.clear()
+    urls = extract_url_from_text(m)
+    if urls:
+        m = m + "\n" + "Content: \n"
+        for u in urls:
+            # remove the url from the text tricky to lie to the model
+            m = m.replace(u, "")
+            try:
+                m += get_text_from_jina_reader(u)
+            except Exception as e:
+                # just ignore the error
+                pass
 
     who = "Gemini Pro"
     # show something, make it more responsible
@@ -130,6 +162,8 @@ def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
         player.history = player.history[2:]
 
     try:
+        if path := gemini_file_player_dict.get(str(message.from_user.id)):
+            m = [m, path]
         r = player.send_message(m, stream=True)
         s = ""
         start = time.time()
@@ -186,6 +220,52 @@ def gemini_photo_handler(message: Message, bot: TeleBot) -> None:
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
 
 
+def gemini_audio_handler(message: Message, bot: TeleBot) -> None:
+    s = message.caption
+    prompt = s.strip()
+    who = "Gemini File Audio"
+    player = None
+    # restart will lose all TODO
+    if str(message.from_user.id) not in gemini_pro_player_dict:
+        player = make_new_gemini_convo(is_pro=True)
+        gemini_pro_player_dict[str(message.from_user.id)] = player
+    else:
+        player = gemini_pro_player_dict[str(message.from_user.id)]
+    file_path = None
+    # restart will lose all TODO
+    # for file handler like {user_id: [player, file_path], user_id2: [player, file_path]}
+    reply_id = bot_reply_first(message, who, bot)
+    file_path = bot.get_file(message.audio.file_id).file_path
+    downloaded_file = bot.download_file(file_path)
+    path = f"{str(message.from_user.id)}_gemini.mp3"
+    with open(path, "wb") as temp_file:
+        temp_file.write(downloaded_file)
+    gemini_mp3_file = genai.upload_file(path=path)
+    r = player.send_message([prompt, gemini_mp3_file], stream=True)
+    # need set it for the conversation
+    gemini_file_player_dict[str(message.from_user.id)] = gemini_mp3_file
+    try:
+        s = ""
+        start = time.time()
+        for e in r:
+            s += e.text
+            print(s)
+            if time.time() - start > 1.7:
+                start = time.time()
+                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+
+        if not bot_reply_markdown(reply_id, who, s, bot):
+            # maybe not complete
+            # maybe the same message
+            player.history.clear()
+            return
+    except Exception as e:
+        print(e)
+        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        player.history.clear()
+        return
+
+
 def register(bot: TeleBot) -> None:
     bot.register_message_handler(gemini_handler, commands=["gemini"], pass_bot=True)
     bot.register_message_handler(gemini_handler, regexp="^gemini:", pass_bot=True)
@@ -198,6 +278,12 @@ def register(bot: TeleBot) -> None:
     bot.register_message_handler(
         gemini_photo_handler,
         content_types=["photo"],
+        func=lambda m: m.caption and m.caption.startswith(("gemini:", "/gemini")),
+        pass_bot=True,
+    )
+    bot.register_message_handler(
+        gemini_audio_handler,
+        content_types=["audio"],
         func=lambda m: m.caption and m.caption.startswith(("gemini:", "/gemini")),
         pass_bot=True,
     )
