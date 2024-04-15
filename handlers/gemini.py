@@ -7,10 +7,8 @@ from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
 from telebot.types import Message
 
-import requests
 from telegramify_markdown import convert
 from telegramify_markdown.customize import markdown_symbol
-from urlextract import URLExtract
 
 from . import *
 
@@ -38,21 +36,6 @@ safety_settings = [
 gemini_player_dict = {}
 gemini_pro_player_dict = {}
 gemini_file_player_dict = {}
-
-
-def extract_url_from_text(text: str) -> list[str]:
-    extractor = URLExtract()
-    urls = extractor.find_urls(text)
-    return urls
-
-
-def get_text_from_jina_reader(url: str):
-    try:
-        r = requests.get(f"https://r.jina.ai/{url}")
-        return r.text
-    except Exception as e:
-        print(e)
-        return None
 
 
 def make_new_gemini_convo(is_pro=False):
@@ -89,6 +72,7 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
     if m[:4].lower() == "new ":
         m = m[4:].strip()
         player.history.clear()
+    m = enrich_text_with_urls(m)
 
     who = "Gemini"
     # show something, make it more responsible
@@ -141,17 +125,9 @@ def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
     if m[:4].lower() == "new ":
         m = m[4:].strip()
         player.history.clear()
-    urls = extract_url_from_text(m)
-    if urls:
-        m = m + "\n" + "Content: \n"
-        for u in urls:
-            # remove the url from the text tricky to lie to the model
-            m = m.replace(u, "")
-            try:
-                m += get_text_from_jina_reader(u)
-            except Exception as e:
-                # just ignore the error
-                pass
+        if gemini_file_player_dict.get(str(message.from_user.id)):
+            del gemini_file_player_dict[str(message.from_user.id)]
+    m = enrich_text_with_urls(m)
 
     who = "Gemini Pro"
     # show something, make it more responsible
