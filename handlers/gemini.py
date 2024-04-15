@@ -68,6 +68,9 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
         )
         player.history.clear()
         return
+    if m[:4].lower() == "new ":
+        m = m[4:].strip()
+        player.history.clear()
 
     who = "Gemini"
     # show something, make it more responsible
@@ -114,6 +117,9 @@ def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
         )
         player.history.clear()
         return
+    if m[:4].lower() == "new ":
+        m = m[4:].strip()
+        player.history.clear()
 
     who = "Gemini Pro"
     # show something, make it more responsible
