@@ -48,6 +48,9 @@ def chatgpt_handler(message: Message, bot: TeleBot) -> None:
         )
         player_message.clear()
         return
+    if m[:4].lower() == "new ":
+        m = m[4:].strip()
+        player_message.clear()
 
     who = "ChatGPT"
     # show something, make it more responsible
@@ -106,6 +109,9 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
         )
         player_message.clear()
         return
+    if m[:4].lower() == "new ":
+        m = m[4:].strip()
+        player_message.clear()
 
     who = "ChatGPT Pro"
     reply_id = bot_reply_first(message, who, bot)
@@ -128,7 +134,7 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
             if chunk.choices[0].delta.content is None:
                 break
             s += chunk.choices[0].delta.content
-            if time.time() - start > 1.7:
+            if time.time() - start > 2.0:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
 
@@ -193,7 +199,7 @@ def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
             if chunk.choices[0].delta.content is None:
                 break
             s += chunk.choices[0].delta.content
-            if time.time() - start > 1.7:
+            if time.time() - start > 2.0:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
 
