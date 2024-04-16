@@ -11,7 +11,7 @@ from . import *
 
 YI_BASE_URL = environ.get("YI_BASE_URL")
 YI_API_KEY = environ.get("YI_API_KEY")
-YI_MODEL = "yi-34b-chat-0205"  # also support yi-34b-chat-200k
+YI_MODEL = "yi-34b-chat-200k"  # also support yi-34b-chat-200k
 
 client = OpenAI(
     # defaults to os.environ.get("OPENAI_API_KEY")
