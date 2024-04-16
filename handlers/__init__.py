@@ -7,11 +7,13 @@ from functools import update_wrapper
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
+import requests
 from telebot import TeleBot
 from telebot.types import BotCommand, Message
 from telebot.util import smart_split
 import telegramify_markdown
 from telegramify_markdown.customize import markdown_symbol
+from urlextract import URLExtract
 
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
@@ -155,5 +157,34 @@ def list_available_commands() -> list[str]:
     return commands
 
 
+def extract_url_from_text(text: str) -> list[str]:
+    extractor = URLExtract()
+    urls = extractor.find_urls(text)
+    return urls
+
+
+def get_text_from_jina_reader(url: str):
+    try:
+        r = requests.get(f"https://r.jina.ai/{url}")
+        return r.text
+    except Exception as e:
+        print(e)
+        return None
+
+
+def enrich_text_with_urls(text: str) -> str:
+    urls = extract_url_from_text(text)
+    for u in urls:
+        try:
+            url_text = get_text_from_jina_reader(u)
+            url_text = f"\n```markdown\n{url_text}\n```\n"
+            text = text.replace(u, url_text)
+        except Exception as e:
+            # just ignore the error
+            pass
+
+    return text
+
+
 # `import *` will give you these
-__all__ = ["bot_reply_first", "bot_reply_markdown"]
+__all__ = ["bot_reply_first", "bot_reply_markdown", "enrich_text_with_urls"]

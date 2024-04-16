@@ -48,6 +48,7 @@ def claude_handler(message: Message, bot: TeleBot) -> None:
     if m[:4].lower() == "new ":
         m = m[4:].strip()
         player_message.clear()
+    m = enrich_text_with_urls(m)
 
     who = "Claude"
     # show something, make it more responsible
@@ -109,6 +110,7 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
     if m[:4].lower() == "new ":
         m = m[4:].strip()
         player_message.clear()
+    m = enrich_text_with_urls(m)
 
     who = "Claude Pro"
     # show something, make it more responsible

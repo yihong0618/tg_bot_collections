@@ -45,6 +45,7 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
     if m[:4].lower() == "new ":
         m = m[4:].strip()
         player_message.clear()
+    m = enrich_text_with_urls(m)
 
     who = "Yi"
     # show something, make it more responsible
