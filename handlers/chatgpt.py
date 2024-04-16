@@ -51,6 +51,7 @@ def chatgpt_handler(message: Message, bot: TeleBot) -> None:
     if m[:4].lower() == "new ":
         m = m[4:].strip()
         player_message.clear()
+    m = enrich_text_with_urls(m)
 
     who = "ChatGPT"
     # show something, make it more responsible
@@ -112,6 +113,7 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
     if m[:4].lower() == "new ":
         m = m[4:].strip()
         player_message.clear()
+    m = enrich_text_with_urls(m)
 
     who = "ChatGPT Pro"
     reply_id = bot_reply_first(message, who, bot)
