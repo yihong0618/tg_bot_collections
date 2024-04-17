@@ -1,6 +1,4 @@
-import base64
 from os import environ
-from pathlib import Path
 import time
 
 from openai import OpenAI
@@ -172,9 +170,7 @@ def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
     downloaded_file = bot.download_file(file_path)
     with open("chatgpt_temp.jpg", "wb") as temp_file:
         temp_file.write(downloaded_file)
-    with open("chatgpt_temp.jpg", "rb") as image_file:
-        image_data = image_file.read()
-    base64_image_data = base64.b64encode(image_data).decode("utf-8")
+
     try:
         r = client.chat.completions.create(
             max_tokens=1024,
@@ -185,9 +181,7 @@ def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
                         {"type": "text", "text": prompt},
                         {
                             "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image_data}"
-                            },
+                            "image_url": {"url": image_to_data_uri("chatgpt_temp.jpg")},
                         },
                     ],
                 }
