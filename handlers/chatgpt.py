@@ -173,7 +173,7 @@ def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
 
     try:
         r = client.chat.completions.create(
-            max_tokens=1024,
+            max_tokens=2048,
             messages=[
                 {
                     "role": "user",
