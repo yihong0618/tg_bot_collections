@@ -8,3 +8,4 @@ telegramify-markdown
 openai
 requests
 urlextract
+requests

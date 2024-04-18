@@ -28,7 +28,7 @@ chatgpt_pro_player_dict = {}
 
 
 def chatgpt_handler(message: Message, bot: TeleBot) -> None:
-    """chatgpt : /chatgpt <question>"""
+    """gpt : /gpt <question>"""
     m = message.text.strip()
 
     player_message = []
@@ -90,7 +90,7 @@ def chatgpt_handler(message: Message, bot: TeleBot) -> None:
 
 
 def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
-    """chatgpt_pro : /chatgpt_pro <question>"""
+    """gpt_pro : /gpt_pro <question>"""
     m = message.text.strip()
 
     player_message = []
@@ -206,17 +206,15 @@ def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
 
 
 def register(bot: TeleBot) -> None:
-    bot.register_message_handler(chatgpt_handler, commands=["chatgpt"], pass_bot=True)
-    bot.register_message_handler(chatgpt_handler, regexp="^chatgpt:", pass_bot=True)
+    bot.register_message_handler(chatgpt_handler, commands=["gpt"], pass_bot=True)
+    bot.register_message_handler(chatgpt_handler, regexp="^gpt:", pass_bot=True)
     bot.register_message_handler(
-        chatgpt_pro_handler, commands=["chatgpt_pro"], pass_bot=True
+        chatgpt_pro_handler, commands=["gpt_pro"], pass_bot=True
     )
-    bot.register_message_handler(
-        chatgpt_pro_handler, regexp="^chatgpt_pro:", pass_bot=True
-    )
+    bot.register_message_handler(chatgpt_pro_handler, regexp="^gpt_pro:", pass_bot=True)
     bot.register_message_handler(
         chatgpt_photo_handler,
         content_types=["photo"],
-        func=lambda m: m.caption and m.caption.startswith(("chatgpt:", "/chatgpt")),
+        func=lambda m: m.caption and m.caption.startswith(("gpt:", "/gpt")),
         pass_bot=True,
     )

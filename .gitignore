@@ -160,6 +160,7 @@ cython_debug/
 #.idea/
 *.jpg
 *.png
+*.jpeg
 OUT_FOLDER/
 cache/
 nohup.out

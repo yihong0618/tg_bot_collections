@@ -225,7 +225,6 @@ def gemini_audio_handler(message: Message, bot: TeleBot) -> None:
         start = time.time()
         for e in r:
             s += e.text
-            print(s)
             if time.time() - start > 1.7:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)

@@ -45,7 +45,7 @@ Note, if you are using third party service, you need to `export ANTHROPIC_BASE_U
 
 1. visit https://platform.openai.com/account/api-keys get the key
 2. export OPENAI_API_KEY=${the_key}
-3. use `chatgpt: ${message}` to ask
+3. use `gpt: ${message}` to ask
 
 Note, if you are using third party service, you need to `export OPENAI_API_BASE=${the_url}` to change the url.
 
