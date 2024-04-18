@@ -117,8 +117,9 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
     reply_id = bot_reply_first(message, who, bot)
 
     player_message.append({"role": "user", "content": m})
-    # keep the last 5, every has two ask and answer.
-    if len(player_message) > 10:
+    # keep the last 2, every has two ask and answer.
+    # its too expensive
+    if len(player_message) > 4:
         player_message = player_message[2:]
 
     try:

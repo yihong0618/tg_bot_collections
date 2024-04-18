@@ -16,7 +16,7 @@ markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 CHATGPT_API_KEY = environ.get("OPENAI_API_KEY")
 CHATGPT_BASE_URL = environ.get("OPENAI_API_BASE") or "https://api.openai.com/v1"
 CHATGPT_MODEL = "gpt-3.5-turbo"
-CHATGPT_PRO_MODEL = "gpt-4-turbo"
+CHATGPT_PRO_MODEL = "gpt-4-turbo-2024-04-09"
 
 
 client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL, timeout=20)
