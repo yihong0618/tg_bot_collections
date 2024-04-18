@@ -1,6 +1,4 @@
-import base64
 from os import environ
-from pathlib import Path
 
 from openai import OpenAI
 import requests
@@ -88,12 +86,6 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
     bot_reply_markdown(reply_id, who, yi_reply_text, bot)
 
 
-def _image_to_data_uri(file_path):
-    with open(file_path, "rb") as image_file:
-        encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
-        return f"data:image/png;base64,{encoded_image}"
-
-
 def yi_photo_handler(message: Message, bot: TeleBot) -> None:
     s = message.caption
     prompt = s.strip()
@@ -121,7 +113,7 @@ def yi_photo_handler(message: Message, bot: TeleBot) -> None:
                     {"type": "text", "text": prompt},
                     {
                         "type": "image_url",
-                        "image_url": {"url": _image_to_data_uri("yi_temp.jpg")},
+                        "image_url": {"url": image_to_data_uri("yi_temp.jpg")},
                     },
                 ],
             }

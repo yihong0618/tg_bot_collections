@@ -41,6 +41,15 @@ Note, if you are using third party service, you need to `export ANTHROPIC_BASE_U
 ![image](https://github.com/yihong0618/tg_bot_collections/assets/15976103/11d96dde-447b-4b7e-886d-c3564e27b0d6)
 
 
+## Bot -> ChatGPT
+
+1. visit https://platform.openai.com/account/api-keys get the key
+2. export OPENAI_API_KEY=${the_key}
+3. use `chatgpt: ${message}` to ask
+
+Note, if you are using third party service, you need to `export OPENAI_API_BASE=${the_url}` to change the url.
+
+
 ## HOW TO Install and Run
 
 ### Manually install 
@@ -58,7 +67,8 @@ Note, if you are using third party service, you need to `export ANTHROPIC_BASE_U
 `docker run -d --name tg_bot_collections -e ANTHROPIC_API_KEY='${ANTHROPIC_API_KEY}' -e TELEGRAM_BOT_TOKEN='${TELEGRAM_BOT_TOKEN}' --network host tg_bot_collections`
 #### Run lingyiwanwu
 `docker run -d --name tg_bot_collections -e YI_API_KEY='${YI_API_KEY}' -e YI_BASE_URL='${YI_BASE_URL}' -e TELEGRAM_BOT_TOKEN='${TELEGRAM_BOT_TOKEN}' --network host tg_bot_collections`
-
+#### Run ChatGPT
+`docker run -d --name tg_bot_collections -e OPENAI_API_KEY='${CHATGPT_API_KEY}' -e TELEGRAM_BOT_TOKEN='${TELEGRAM_BOT_TOKEN}' --network host tg_bot_collections`
 
 ### Run as shell
 
@@ -86,6 +96,7 @@ Note, this may break your system config -> check this https://github.com/yihong0
 - Gemini use -> https://github.com/google/generative-ai-python
 - Telegram markdownV2 change code copy from https://github.com/yym68686/md2tgmd/blob/main/src/md2tgmd.py thanks a lot.
 - Telegram markdownV2 change to telegramify-markdown
+- ChatGPT use -> https://github.com/openai/openai-python
 
 ## Appreciation
 

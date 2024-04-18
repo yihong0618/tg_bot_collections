@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import importlib
 import re
 import traceback
@@ -186,5 +187,16 @@ def enrich_text_with_urls(text: str) -> str:
     return text
 
 
+def image_to_data_uri(file_path):
+    with open(file_path, "rb") as image_file:
+        encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+        return f"data:image/png;base64,{encoded_image}"
+
+
 # `import *` will give you these
-__all__ = ["bot_reply_first", "bot_reply_markdown", "enrich_text_with_urls"]
+__all__ = [
+    "bot_reply_first",
+    "bot_reply_markdown",
+    "enrich_text_with_urls",
+    "image_to_data_uri",
+]
