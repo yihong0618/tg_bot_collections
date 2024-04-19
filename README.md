@@ -49,6 +49,12 @@ Note, if you are using third party service, you need to `export ANTHROPIC_BASE_U
 
 Note, if you are using third party service, you need to `export OPENAI_API_BASE=${the_url}` to change the url.
 
+## Bot -> llama3
+
+1. visit https://console.groq.com/docs/quickstart get the key
+2. export GROQ_API_KEY=${the_key}
+3. use `llama_pro: ${message}` to ask
+
 
 ## HOW TO Install and Run
 

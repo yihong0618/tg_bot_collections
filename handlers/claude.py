@@ -19,7 +19,13 @@ ANTHROPIC_BASE_URL = environ.get("ANTHROPIC_BASE_URL")
 ANTHROPIC_MODEL = "claude-3-haiku-20240307"
 ANTHROPIC_PRO_MODEL = "claude-3-opus-20240229"
 
-client = Anthropic(base_url=ANTHROPIC_BASE_URL, api_key=ANTHROPIC_API_KEY, timeout=20)
+if environ.get("ANTHROPIC_BASE_URL"):
+    client = Anthropic(
+        base_url=ANTHROPIC_BASE_URL, api_key=ANTHROPIC_API_KEY, timeout=20
+    )
+else:
+    client = Anthropic(api_key=ANTHROPIC_API_KEY, timeout=20)
+
 
 # Global history cache
 claude_player_dict = {}
@@ -217,18 +223,20 @@ def claude_photo_handler(message: Message, bot: TeleBot) -> None:
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
 
 
-def register(bot: TeleBot) -> None:
-    bot.register_message_handler(claude_handler, commands=["claude"], pass_bot=True)
-    bot.register_message_handler(claude_handler, regexp="^claude:", pass_bot=True)
-    bot.register_message_handler(
-        claude_pro_handler, commands=["claude_pro"], pass_bot=True
-    )
-    bot.register_message_handler(
-        claude_pro_handler, regexp="^claude_pro:", pass_bot=True
-    )
-    bot.register_message_handler(
-        claude_photo_handler,
-        content_types=["photo"],
-        func=lambda m: m.caption and m.caption.startswith(("claude:", "/claude")),
-        pass_bot=True,
-    )
+if ANTHROPIC_API_KEY:
+
+    def register(bot: TeleBot) -> None:
+        bot.register_message_handler(claude_handler, commands=["claude"], pass_bot=True)
+        bot.register_message_handler(claude_handler, regexp="^claude:", pass_bot=True)
+        bot.register_message_handler(
+            claude_pro_handler, commands=["claude_pro"], pass_bot=True
+        )
+        bot.register_message_handler(
+            claude_pro_handler, regexp="^claude_pro:", pass_bot=True
+        )
+        bot.register_message_handler(
+            claude_photo_handler,
+            content_types=["photo"],
+            func=lambda m: m.caption and m.caption.startswith(("claude:", "/claude")),
+            pass_bot=True,
+        )

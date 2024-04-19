@@ -205,16 +205,20 @@ def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
 
 
-def register(bot: TeleBot) -> None:
-    bot.register_message_handler(chatgpt_handler, commands=["gpt"], pass_bot=True)
-    bot.register_message_handler(chatgpt_handler, regexp="^gpt:", pass_bot=True)
-    bot.register_message_handler(
-        chatgpt_pro_handler, commands=["gpt_pro"], pass_bot=True
-    )
-    bot.register_message_handler(chatgpt_pro_handler, regexp="^gpt_pro:", pass_bot=True)
-    bot.register_message_handler(
-        chatgpt_photo_handler,
-        content_types=["photo"],
-        func=lambda m: m.caption and m.caption.startswith(("gpt:", "/gpt")),
-        pass_bot=True,
-    )
+if CHATGPT_API_KEY:
+
+    def register(bot: TeleBot) -> None:
+        bot.register_message_handler(chatgpt_handler, commands=["gpt"], pass_bot=True)
+        bot.register_message_handler(chatgpt_handler, regexp="^gpt:", pass_bot=True)
+        bot.register_message_handler(
+            chatgpt_pro_handler, commands=["gpt_pro"], pass_bot=True
+        )
+        bot.register_message_handler(
+            chatgpt_pro_handler, regexp="^gpt_pro:", pass_bot=True
+        )
+        bot.register_message_handler(
+            chatgpt_photo_handler,
+            content_types=["photo"],
+            func=lambda m: m.caption and m.caption.startswith(("gpt:", "/gpt")),
+            pass_bot=True,
+        )

@@ -134,12 +134,14 @@ def yi_photo_handler(message: Message, bot: TeleBot) -> None:
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
 
 
-def register(bot: TeleBot) -> None:
-    bot.register_message_handler(yi_handler, commands=["yi"], pass_bot=True)
-    bot.register_message_handler(yi_handler, regexp="^yi:", pass_bot=True)
-    bot.register_message_handler(
-        yi_photo_handler,
-        content_types=["photo"],
-        func=lambda m: m.caption and m.caption.startswith(("yi:", "/yi")),
-        pass_bot=True,
-    )
+if YI_API_KEY and YI_BASE_URL:
+
+    def register(bot: TeleBot) -> None:
+        bot.register_message_handler(yi_handler, commands=["yi"], pass_bot=True)
+        bot.register_message_handler(yi_handler, regexp="^yi:", pass_bot=True)
+        bot.register_message_handler(
+            yi_photo_handler,
+            content_types=["photo"],
+            func=lambda m: m.caption and m.caption.startswith(("yi:", "/yi")),
+            pass_bot=True,
+        )
