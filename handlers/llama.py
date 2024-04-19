@@ -133,7 +133,8 @@ def llama_pro_handler(message: Message, bot: TeleBot) -> None:
             if chunk.choices[0].delta.content is None:
                 break
             s += chunk.choices[0].delta.content
-            if time.time() - start > 2.0:
+            # 0.7 is enough for llama3 here its very fast
+            if time.time() - start > 0.7:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
 
