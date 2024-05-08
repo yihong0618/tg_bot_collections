@@ -1,0 +1,20 @@
+
+[project]
+# PEP 621 project metadata
+# See https://www.python.org/dev/peps/pep-0621/
+dependencies = [
+    "pyTelegramBotAPI>=4.16",
+    "cairosvg",
+    "github-poster",
+    "prettymapp",
+    "google-generativeai>=0.4",
+    "anthropic",
+    "telegramify-markdown",
+    "openai",
+    "requests",
+    "urlextract",
+    "requests",
+    "groq",
+    "together>=1.1.5",
+]
+requires-python = ">=3.10"

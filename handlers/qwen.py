@@ -1,3 +1,4 @@
+# qwen use https://api.together.xyz
 from os import environ
 import time
 
@@ -6,41 +7,40 @@ from telebot.types import Message
 
 from . import *
 
-from groq import Groq
+from together import Together
 from telegramify_markdown import convert
 from telegramify_markdown.customize import markdown_symbol
 
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
-LLAMA_API_KEY = environ.get("GROQ_API_KEY")
-LLAMA_MODEL = "llama3-8b-8192"
-LLAMA_PRO_MODEL = "llama3-70b-8192"
+QWEN_API_KEY = environ.get("TOGETHER_API_KEY")
+QWEN_MODEL = "Qwen/Qwen1.5-110B-Chat"
 
-if LLAMA_API_KEY:
-    client = Groq(api_key=LLAMA_API_KEY)
+if QWEN_API_KEY:
+    client = Together(api_key=QWEN_API_KEY)
 
 # Global history cache
-llama_player_dict = {}
-llama_pro_player_dict = {}
+qwen_player_dict = {}
+qwen_pro_player_dict = {}
 
 
-def llama_handler(message: Message, bot: TeleBot) -> None:
-    """llama : /llama <question>"""
+def qwen_handler(message: Message, bot: TeleBot) -> None:
+    """qwen : /qwen <question>"""
     m = message.text.strip()
 
     player_message = []
     # restart will lose all TODO
-    if str(message.from_user.id) not in llama_player_dict:
-        llama_player_dict[str(message.from_user.id)] = (
+    if str(message.from_user.id) not in qwen_player_dict:
+        qwen_player_dict[str(message.from_user.id)] = (
             player_message  # for the imuutable list
         )
     else:
-        player_message = llama_player_dict[str(message.from_user.id)]
+        player_message = qwen_player_dict[str(message.from_user.id)]
     if m.strip() == "clear":
         bot.reply_to(
             message,
-            "just clear your llama messages history",
+            "just clear your qwen messages history",
         )
         player_message.clear()
         return
@@ -49,7 +49,7 @@ def llama_handler(message: Message, bot: TeleBot) -> None:
         player_message.clear()
     m = enrich_text_with_urls(m)
 
-    who = "llama"
+    who = "qwen"
     # show something, make it more responsible
     reply_id = bot_reply_first(message, who, bot)
 
@@ -58,21 +58,21 @@ def llama_handler(message: Message, bot: TeleBot) -> None:
     if len(player_message) > 10:
         player_message = player_message[2:]
 
-    llama_reply_text = ""
+    qwen_reply_text = ""
     try:
         r = client.chat.completions.create(
-            messages=player_message, max_tokens=8192, model=LLAMA_MODEL
+            messages=player_message, max_tokens=8192, model=QWEN_MODEL
         )
         content = r.choices[0].message.content.encode("utf8").decode()
         if not content:
-            llama_reply_text = f"{who} did not answer."
+            qwen_reply_text = f"{who} did not answer."
             player_message.pop()
         else:
-            llama_reply_text = content
+            qwen_reply_text = content
             player_message.append(
                 {
                     "role": "assistant",
-                    "content": llama_reply_text,
+                    "content": qwen_reply_text,
                 }
             )
 
@@ -84,25 +84,25 @@ def llama_handler(message: Message, bot: TeleBot) -> None:
         return
 
     # reply back as Markdown and fallback to plain text if failed.
-    bot_reply_markdown(reply_id, who, llama_reply_text, bot)
+    bot_reply_markdown(reply_id, who, qwen_reply_text, bot)
 
 
-def llama_pro_handler(message: Message, bot: TeleBot) -> None:
-    """llama_pro : /llama_pro <question>"""
+def qwen_pro_handler(message: Message, bot: TeleBot) -> None:
+    """qwen_pro : /qwen_pro <question>"""
     m = message.text.strip()
 
     player_message = []
     # restart will lose all TODO
-    if str(message.from_user.id) not in llama_player_dict:
-        llama_player_dict[str(message.from_user.id)] = (
+    if str(message.from_user.id) not in qwen_player_dict:
+        qwen_player_dict[str(message.from_user.id)] = (
             player_message  # for the imuutable list
         )
     else:
-        player_message = llama_player_dict[str(message.from_user.id)]
+        player_message = qwen_player_dict[str(message.from_user.id)]
     if m.strip() == "clear":
         bot.reply_to(
             message,
-            "just clear your llama messages history",
+            "just clear your qwen messages history",
         )
         player_message.clear()
         return
@@ -111,7 +111,7 @@ def llama_pro_handler(message: Message, bot: TeleBot) -> None:
         player_message.clear()
     m = enrich_text_with_urls(m)
 
-    who = "llama Pro"
+    who = "qwen Pro"
     reply_id = bot_reply_first(message, who, bot)
 
     player_message.append({"role": "user", "content": m})
@@ -123,7 +123,7 @@ def llama_pro_handler(message: Message, bot: TeleBot) -> None:
         r = client.chat.completions.create(
             messages=player_message,
             max_tokens=8192,
-            model=LLAMA_PRO_MODEL,
+            model=QWEN_MODEL,
             stream=True,
         )
         s = ""
@@ -132,8 +132,7 @@ def llama_pro_handler(message: Message, bot: TeleBot) -> None:
             if chunk.choices[0].delta.content is None:
                 break
             s += chunk.choices[0].delta.content
-            # 0.7 is enough for llama3 here its very fast
-            if time.time() - start > 0.7:
+            if time.time() - start > 1.7:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
 
@@ -157,14 +156,14 @@ def llama_pro_handler(message: Message, bot: TeleBot) -> None:
         return
 
 
-if LLAMA_API_KEY:
+if QWEN_API_KEY:
 
     def register(bot: TeleBot) -> None:
-        bot.register_message_handler(llama_handler, commands=["llama"], pass_bot=True)
-        bot.register_message_handler(llama_handler, regexp="^llama:", pass_bot=True)
+        bot.register_message_handler(qwen_handler, commands=["qwen"], pass_bot=True)
+        bot.register_message_handler(qwen_handler, regexp="^qwen:", pass_bot=True)
         bot.register_message_handler(
-            llama_pro_handler, commands=["llama_pro"], pass_bot=True
+            qwen_pro_handler, commands=["qwen_pro"], pass_bot=True
         )
         bot.register_message_handler(
-            llama_pro_handler, regexp="^llama_pro:", pass_bot=True
+            qwen_pro_handler, regexp="^qwen_pro:", pass_bot=True
         )

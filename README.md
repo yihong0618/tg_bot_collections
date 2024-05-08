@@ -55,6 +55,12 @@ Note, if you are using third party service, you need to `export OPENAI_API_BASE=
 2. export GROQ_API_KEY=${the_key}
 3. use `llama_pro: ${message}` to ask
 
+## Bot -> qwen
+
+1. visit https://api.together.xyz/settings/api-keys get the key
+2. export TOGETHER_API_KEY=${the_key}
+3. use `qwen_pro: ${message}` to ask
+
 
 ## HOW TO Install and Run
 
