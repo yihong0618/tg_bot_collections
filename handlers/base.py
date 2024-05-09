@@ -19,6 +19,9 @@ class BasicTextHandler:
     def __init__(self, bot: TeleBot):
         self.bot = bot
 
+    """
+    as it says, who am i
+    """
     def who_am_i(self) -> str:
         pass
 
@@ -28,6 +31,9 @@ class BasicTextHandler:
             self.bot.register_message_handler(self.handle, commands=[command], pass_bot=True)
             self.bot.register_message_handler(self.handle, regexp=f"^{command}:", pass_bot=True)
 
+    """
+    the command info given telegram bot to construct the user help text showed in telegram APP.
+    """
     @classmethod
     def register_command(cls) -> list[tuple[str, str]]:
         raise Exception("register_command method is not implemented")
@@ -36,7 +42,6 @@ class BasicTextHandler:
     get the user history from the context
     return empty array if there is no history in context
     """
-
     def get_user_context(self, user_id):
 
         user_context = []
@@ -51,15 +56,17 @@ class BasicTextHandler:
 
         return user_context
 
+    """
+    clean user context
+    """
     def clear_user_context(self, user_id):
         user_context = self.get_user_context(user_id)
         user_context.clear()
 
     """
-    precheck the message
+    pre-check the message
     return true to continue the process
     """
-
     def pre_handle(self, message: Message) -> bool:
         try:
             m = ""
@@ -84,6 +91,9 @@ class BasicTextHandler:
             else:
                 self.bot.reply_to(message, "Something wrong, please check the log")
 
+    """
+    accept message coming from telegram bot, and passing the message into [pre_handler], then call LLM model
+    """
     def handle(self, msg: Message, bot: TeleBot):
 
         if not self.pre_handle(msg):
@@ -124,10 +134,12 @@ class BasicTextHandler:
     """
     how to AI agent process msg and return the answer
     """
-
     def process(self, msg: Message, chat_context) -> str:
         raise Exception("process method is not implemented")
 
+    """
+    how we response user after LLM model return an normal response
+    """
     def on_success(self, msg: Message, reply_msg: Message, content):
         user_msg_context = self.get_user_context(msg.from_user.id)
         llama_reply_text = ""
@@ -144,6 +156,10 @@ class BasicTextHandler:
             )
         bot_reply_markdown(reply_msg, self.who_am_i(), llama_reply_text, self.bot)
 
+
+    """
+    how to react to user if the the LLM model raise unexpected response
+    """
     def on_failure(self, msg: Message, reply_msg: Message, e: Exception = None, ):
         # if e is not None:
         print(e)

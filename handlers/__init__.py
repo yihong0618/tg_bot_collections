@@ -139,12 +139,17 @@ def load_handlers(bot: TeleBot, disable_commands: list[str]) -> None:
     all_commands: list[BotCommand] = []
     for handler in bot.message_handlers:
         try:
+
+            # if the handler is coming from the class inherited BasicTextHandler, then retrieve command info from class method [BasicTextHandler::register_command]
+
             handler_class = handler["function"].__self__
             command_infos = handler_class.register_command()
             for command_info in command_infos:
                 all_commands.append(BotCommand(command_info[0], command_info[1]))
         except Exception as e:
-            traceback.print_exc()
+
+            # compatible code
+            # can be removed if all handlers are implemented with BasicTextHandler
             help_text = getattr(handler["function"], "__doc__", "")
             # Add pre-processing and error handling to all callbacks
             handler["function"] = wrap_handler(handler["function"], bot)
