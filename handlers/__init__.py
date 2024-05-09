@@ -16,6 +16,7 @@ import telegramify_markdown
 from telegramify_markdown.customize import markdown_symbol
 from urlextract import URLExtract
 
+
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
@@ -137,11 +138,18 @@ def load_handlers(bot: TeleBot, disable_commands: list[str]) -> None:
 
     all_commands: list[BotCommand] = []
     for handler in bot.message_handlers:
-        help_text = getattr(handler["function"], "__doc__", "")
-        # Add pre-processing and error handling to all callbacks
-        handler["function"] = wrap_handler(handler["function"], bot)
-        for command in handler["filters"].get("commands", []):
-            all_commands.append(BotCommand(command, help_text))
+        try:
+            handler_class = handler["function"].__self__
+            command_infos = handler_class.register_command()
+            for command_info in command_infos:
+                all_commands.append(BotCommand(command_info[0], command_info[1]))
+        except Exception as e:
+            traceback.print_exc()
+            help_text = getattr(handler["function"], "__doc__", "")
+            # Add pre-processing and error handling to all callbacks
+            handler["function"] = wrap_handler(handler["function"], bot)
+            for command in handler["filters"].get("commands", []):
+                all_commands.append(BotCommand(command, help_text or "none"))
 
     if all_commands:
         bot.set_my_commands(all_commands)
