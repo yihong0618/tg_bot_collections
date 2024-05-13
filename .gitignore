@@ -167,3 +167,4 @@ nohup.out
 *.mp3
 *.mp4
 *.pdf
+.pdm-python

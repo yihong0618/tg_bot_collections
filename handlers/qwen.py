@@ -93,12 +93,12 @@ def qwen_pro_handler(message: Message, bot: TeleBot) -> None:
 
     player_message = []
     # restart will lose all TODO
-    if str(message.from_user.id) not in qwen_player_dict:
-        qwen_player_dict[str(message.from_user.id)] = (
+    if str(message.from_user.id) not in qwen_pro_player_dict:
+        qwen_pro_player_dict[str(message.from_user.id)] = (
             player_message  # for the imuutable list
         )
     else:
-        player_message = qwen_player_dict[str(message.from_user.id)]
+        player_message = qwen_pro_player_dict[str(message.from_user.id)]
     if m.strip() == "clear":
         bot.reply_to(
             message,

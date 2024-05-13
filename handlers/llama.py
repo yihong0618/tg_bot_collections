@@ -93,12 +93,12 @@ def llama_pro_handler(message: Message, bot: TeleBot) -> None:
 
     player_message = []
     # restart will lose all TODO
-    if str(message.from_user.id) not in llama_player_dict:
-        llama_player_dict[str(message.from_user.id)] = (
+    if str(message.from_user.id) not in llama_pro_player_dict:
+        llama_pro_player_dict[str(message.from_user.id)] = (
             player_message  # for the imuutable list
         )
     else:
-        player_message = llama_player_dict[str(message.from_user.id)]
+        player_message = llama_pro_player_dict[str(message.from_user.id)]
     if m.strip() == "clear":
         bot.reply_to(
             message,
