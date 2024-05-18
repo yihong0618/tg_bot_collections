@@ -3,16 +3,6 @@ from telebot import TeleBot
 
 from handlers import list_available_commands, load_handlers
 
-import socket
-from urllib3.connection import HTTPConnection
-
-HTTPConnection.default_socket_options = HTTPConnection.default_socket_options + [
-    (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
-    (socket.SOL_TCP, socket.TCP_KEEPIDLE, 200),
-    (socket.SOL_TCP, socket.TCP_KEEPINTVL, 45),
-    (socket.SOL_TCP, socket.TCP_KEEPCNT, 20),
-]
-
 
 def main():
     # Init args

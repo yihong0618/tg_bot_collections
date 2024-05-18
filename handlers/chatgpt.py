@@ -117,14 +117,15 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
     reply_id = bot_reply_first(message, who, bot)
 
     player_message.append({"role": "user", "content": m})
-    # keep the last 5, every has two ask and answer.
-    if len(player_message) > 10:
+    # keep the last 3, every has two ask and answer.
+    # save me some money
+    if len(player_message) > 6:
         player_message = player_message[2:]
 
     try:
         r = client.chat.completions.create(
             messages=player_message,
-            max_tokens=2048,
+            max_tokens=8192,
             model=CHATGPT_PRO_MODEL,
             stream=True,
         )
@@ -134,7 +135,7 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
             if chunk.choices[0].delta.content is None:
                 break
             s += chunk.choices[0].delta.content
-            if time.time() - start > 2.0:
+            if time.time() - start > 1.7:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
 

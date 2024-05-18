@@ -40,7 +40,7 @@ gemini_file_player_dict = {}
 
 
 def make_new_gemini_convo(is_pro=False) -> ChatSession:
-    model_name = "models/gemini-1.0-pro-latest"
+    model_name = "gemini-1.5-flash-latest"
     if is_pro:
         model_name = "models/gemini-1.5-pro-latest"
 
