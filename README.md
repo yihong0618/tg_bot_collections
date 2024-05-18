@@ -61,6 +61,13 @@ Note, if you are using third party service, you need to `export OPENAI_API_BASE=
 2. export TOGETHER_API_KEY=${the_key}
 3. use `qwen_pro: ${message}` to ask
 
+## Bot -> dify
+
+1. visit https://cloud.dify.ai/ get selected Chatbot's API Secret key
+2. export DIFY_API_KEY=${the_key}
+3. use `dify: ${message}` to ask
+
+Note, currently its support dify Chatbot with instructions(System prompt) and different MODEL with its parameters.
 
 ## HOW TO Install and Run
 
