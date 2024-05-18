@@ -125,7 +125,7 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
     try:
         r = client.chat.completions.create(
             messages=player_message,
-            max_tokens=8192,
+            max_tokens=4096,
             model=CHATGPT_PRO_MODEL,
             stream=True,
         )
