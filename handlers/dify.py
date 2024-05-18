@@ -23,7 +23,7 @@ if DIFY_API_KEY:
 
 # Global history cache
 dify_player_dict = {}
-dify_player_c = {} # History cache is supported by dify cloud conversation_id.
+dify_player_c = {}  # History cache is supported by dify cloud conversation_id.
 
 
 def dify_handler(message: Message, bot: TeleBot) -> None:
