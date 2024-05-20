@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:41258ffa81dbc6929fd3df114f6a0e063eca63d217411d22cdafdca472e92a1a"
+content_hash = "sha256:ea5932fced9ce9422e0b98c61f6a83026ce71361be5b839f9969277e37bd3dab"
 
 [[package]]
 name = "aiohttp"
@@ -97,7 +97,7 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.25.9"
+version = "0.26.0"
 requires_python = ">=3.7"
 summary = "The official Python library for the anthropic API"
 groups = ["default"]
@@ -111,8 +111,8 @@ dependencies = [
     "typing-extensions<5,>=4.7",
 ]
 files = [
-    {file = "anthropic-0.25.9-py3-none-any.whl", hash = "sha256:d0b17d442160356a531593b237de55d3125cc6fa708f1268c214107e61c81c57"},
-    {file = "anthropic-0.25.9.tar.gz", hash = "sha256:a4ec810b1cfbf3340af99b6f5bf599a83d66986e0f572a5f3bc4ebcab284f629"},
+    {file = "anthropic-0.26.0-py3-none-any.whl", hash = "sha256:38fc415561d71dcf263b89da0cc6ecec498379b56256fc4242e9128bc707b283"},
+    {file = "anthropic-0.26.0.tar.gz", hash = "sha256:6aaffeb05d515cf9788eef57150a5f827f3786883628ccac71dbe5671ab6f44e"},
 ]
 
 [[package]]
@@ -457,6 +457,20 @@ files = [
 ]
 
 [[package]]
+name = "dify-client"
+version = "0.1.10"
+requires_python = ">=3.6"
+summary = "A package for interacting with the Dify Service-API"
+groups = ["default"]
+dependencies = [
+    "requests",
+]
+files = [
+    {file = "dify-client-0.1.10.tar.gz", hash = "sha256:117d7a61e221a95d12fa3eaf6e4f0563720a050ea4f1cbf849af44760307bf49"},
+    {file = "dify_client-0.1.10-py3-none-any.whl", hash = "sha256:7888536866591c5f42f9cae5275807c17d60f38467ee340a536eaed02314deb7"},
+]
+
+[[package]]
 name = "distro"
 version = "1.9.0"
 requires_python = ">=3.6"
@@ -681,7 +695,7 @@ files = [
 
 [[package]]
 name = "google-ai-generativelanguage"
-version = "0.6.3"
+version = "0.6.4"
 requires_python = ">=3.7"
 summary = "Google Ai Generativelanguage API client library"
 groups = ["default"]
@@ -692,8 +706,8 @@ dependencies = [
     "protobuf!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev,>=3.19.5",
 ]
 files = [
-    {file = "google-ai-generativelanguage-0.6.3.tar.gz", hash = "sha256:10a11f1e1bb8470ff50030c1acd729b3aba7a29ade2c30cf1d1c917291366c67"},
-    {file = "google_ai_generativelanguage-0.6.3-py3-none-any.whl", hash = "sha256:55a6698f6c9cbbfde5f9cd288073b6941dd9e3e6dc2176dfa3197f9a4c489895"},
+    {file = "google-ai-generativelanguage-0.6.4.tar.gz", hash = "sha256:1750848c12af96cb24ae1c3dd05e4bfe24867dc4577009ed03e1042d8421e874"},
+    {file = "google_ai_generativelanguage-0.6.4-py3-none-any.whl", hash = "sha256:730e471aa549797118fb1c88421ba1957741433ada575cf5dd08d3aebf903ab1"},
 ]
 
 [[package]]
@@ -783,12 +797,12 @@ files = [
 
 [[package]]
 name = "google-generativeai"
-version = "0.5.3"
+version = "0.5.4"
 requires_python = ">=3.9"
 summary = "Google Generative AI High level API client library and tools."
 groups = ["default"]
 dependencies = [
-    "google-ai-generativelanguage==0.6.3",
+    "google-ai-generativelanguage==0.6.4",
     "google-api-core",
     "google-api-python-client",
     "google-auth>=2.15.0",
@@ -798,7 +812,7 @@ dependencies = [
     "typing-extensions",
 ]
 files = [
-    {file = "google_generativeai-0.5.3-py3-none-any.whl", hash = "sha256:a74509ee219601c74c0561eb4e1c9af6a88594c7dd098d30a18c6592afe62bd9"},
+    {file = "google_generativeai-0.5.4-py3-none-any.whl", hash = "sha256:036d63ee35e7c8aedceda4f81c390a5102808af09ff3a6e57e27ed0be0708f3c"},
 ]
 
 [[package]]
@@ -817,7 +831,7 @@ files = [
 
 [[package]]
 name = "groq"
-version = "0.5.0"
+version = "0.6.0"
 requires_python = ">=3.7"
 summary = "The official Python library for the groq API"
 groups = ["default"]
@@ -830,8 +844,8 @@ dependencies = [
     "typing-extensions<5,>=4.7",
 ]
 files = [
-    {file = "groq-0.5.0-py3-none-any.whl", hash = "sha256:a7e6be1118bcdfea3ed071ec00f505a34d4e6ec28c435adb5a5afd33545683a1"},
-    {file = "groq-0.5.0.tar.gz", hash = "sha256:d476cdc3383b45d2a4dc1876142a9542e663ea1029f9e07a05de24f895cae48c"},
+    {file = "groq-0.6.0-py3-none-any.whl", hash = "sha256:99e2e5ea48df074c09bffcc349b049d3573d9cb35da872d4acbbe50a4b266414"},
+    {file = "groq-0.6.0.tar.gz", hash = "sha256:a96f3a49a0d4119a1bec7f6352af0a87733a2865d464da34a4eb27bfe8068c7e"},
 ]
 
 [[package]]
@@ -1741,7 +1755,7 @@ files = [
 
 [[package]]
 name = "pytelegrambotapi"
-version = "4.18.0"
+version = "4.18.1"
 requires_python = ">=3.8"
 summary = "Python Telegram bot api."
 groups = ["default"]
@@ -1749,8 +1763,8 @@ dependencies = [
     "requests",
 ]
 files = [
-    {file = "pytelegrambotapi-4.18.0-py3-none-any.whl", hash = "sha256:88a980ed75f3ea611c97fcb375fc787fc6ef4f1e2f61ae59a14d7377058376a1"},
-    {file = "pytelegrambotapi-4.18.0.tar.gz", hash = "sha256:a8a18c1fe847d1dc2622279d21ec591e47e0c067278eeb2275c759dfbc9522d5"},
+    {file = "pytelegrambotapi-4.18.1-py3-none-any.whl", hash = "sha256:07951383c5831b1f810edaf01e06ee95a40253486d725780cf88de15aa0893ce"},
+    {file = "pytelegrambotapi-4.18.1.tar.gz", hash = "sha256:6bf79a726624441e84724d933312edb3138ad22906ffea2fee09ee6846236ac0"},
 ]
 
 [[package]]
