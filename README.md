@@ -13,6 +13,12 @@ for yihong0618's channel: https://t.me/hyi0618
 ![image](https://github.com/yihong0618/tg_bot_collections/assets/15976103/29848d22-5289-4953-8ab0-4e84c16f79e3)
 
 
+## Bot -> [ChatTTS](https://github.com/2noise/ChatTTS)
+
+2. export USE_CHATTTS=true
+3. use `tts: ${message}` to generate
+
+
 ## Bot -> Gemini player
 
 1. visit https://makersuite.google.com/app/apikey get the key

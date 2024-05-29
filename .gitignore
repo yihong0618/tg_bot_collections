@@ -168,3 +168,4 @@ nohup.out
 *.mp4
 *.pdf
 .pdm-python
+tts.wav
