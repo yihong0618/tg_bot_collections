@@ -16,18 +16,21 @@ if USE_CHATTTS:
     chat.load_models()
     lock = threading.Lock()  # Initialize a lock
 
-
     def generate_tts_wav(prompt):
-        texts = [prompt,]
+        texts = [
+            prompt,
+        ]
         wavs = chat.infer(texts, use_decoder=True)
-        output_filename = 'tts.wav'
-        audio_data = np.array(wavs[0], dtype=np.float32)  # Ensure the data type is correct
+        output_filename = "tts.wav"
+        audio_data = np.array(
+            wavs[0], dtype=np.float32
+        )  # Ensure the data type is correct
         sample_rate = 24000
         # Normalize the audio data to 16-bit PCM range
         audio_data = (audio_data * 32767).astype(np.int16)
 
         # Open a .wav file to write into
-        with wave.open(output_filename, 'w') as wf:
+        with wave.open(output_filename, "w") as wf:
             wf.setnchannels(1)  # Mono channel
             wf.setsampwidth(2)  # 2 bytes per sample
             wf.setframerate(sample_rate)
@@ -35,12 +38,10 @@ if USE_CHATTTS:
 
         print(f"Audio has been saved to {output_filename}")
 
-
     def tts_handler(message: Message, bot: TeleBot):
         """pretty tts: /tts <address>"""
         bot.reply_to(
-            message,
-            f"Generating ChatTTS may take some time please wait some time." 
+            message, f"Generating ChatTTS may take some time please wait some time."
         )
         m = message.text.strip()
         prompt = m.strip()
@@ -57,8 +58,6 @@ if USE_CHATTTS:
         except Exception as e:
             print(e)
             bot.reply_to(message, "tts error")
-
-
 
     def register(bot: TeleBot) -> None:
         bot.register_message_handler(tts_handler, commands=["tts"], pass_bot=True)
