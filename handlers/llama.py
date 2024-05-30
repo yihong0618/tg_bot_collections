@@ -1,14 +1,14 @@
-from os import environ
 import time
-
-from telebot import TeleBot
-from telebot.types import Message
-
-from . import *
+from os import environ
 
 from groq import Groq
+from telebot import TeleBot
+from telebot.types import Message
 from telegramify_markdown import convert
 from telegramify_markdown.customize import markdown_symbol
+
+from . import *
+from .base import BasicTextHandler
 
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
@@ -23,69 +23,6 @@ if LLAMA_API_KEY:
 # Global history cache
 llama_player_dict = {}
 llama_pro_player_dict = {}
-
-
-def llama_handler(message: Message, bot: TeleBot) -> None:
-    """llama : /llama <question>"""
-    m = message.text.strip()
-
-    player_message = []
-    # restart will lose all TODO
-    if str(message.from_user.id) not in llama_player_dict:
-        llama_player_dict[str(message.from_user.id)] = (
-            player_message  # for the imuutable list
-        )
-    else:
-        player_message = llama_player_dict[str(message.from_user.id)]
-    if m.strip() == "clear":
-        bot.reply_to(
-            message,
-            "just clear your llama messages history",
-        )
-        player_message.clear()
-        return
-    if m[:4].lower() == "new ":
-        m = m[4:].strip()
-        player_message.clear()
-    m = enrich_text_with_urls(m)
-
-    who = "llama"
-    # show something, make it more responsible
-    reply_id = bot_reply_first(message, who, bot)
-
-    player_message.append({"role": "user", "content": m})
-    # keep the last 5, every has two ask and answer.
-    if len(player_message) > 10:
-        player_message = player_message[2:]
-
-    llama_reply_text = ""
-    try:
-        r = client.chat.completions.create(
-            messages=player_message, max_tokens=8192, model=LLAMA_MODEL
-        )
-        content = r.choices[0].message.content.encode("utf8").decode()
-        if not content:
-            llama_reply_text = f"{who} did not answer."
-            player_message.pop()
-        else:
-            llama_reply_text = content
-            player_message.append(
-                {
-                    "role": "assistant",
-                    "content": llama_reply_text,
-                }
-            )
-
-    except Exception as e:
-        print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
-        # pop my user
-        player_message.pop()
-        return
-
-    # reply back as Markdown and fallback to plain text if failed.
-    bot_reply_markdown(reply_id, who, llama_reply_text, bot)
-
 
 def llama_pro_handler(message: Message, bot: TeleBot) -> None:
     """llama_pro : /llama_pro <question>"""
@@ -157,11 +94,29 @@ def llama_pro_handler(message: Message, bot: TeleBot) -> None:
         return
 
 
+class LlamaHandler(BasicTextHandler):
+    @classmethod
+    def register_command(cls) -> list[tuple[str, str]]:
+        return [
+            ("llama", "llama description")
+        ]
+
+    def process(self, msg: Message, chat_context) -> str:
+
+        r = client.chat.completions.create(
+            messages=chat_context, max_tokens=8192, model=LLAMA_MODEL
+        )
+        content = r.choices[0].message.content.encode("utf8").decode()
+        return content
+
+    def who_am_i(self) -> str:
+        return 'llama'
+
+
 if LLAMA_API_KEY:
 
     def register(bot: TeleBot) -> None:
-        bot.register_message_handler(llama_handler, commands=["llama"], pass_bot=True)
-        bot.register_message_handler(llama_handler, regexp="^llama:", pass_bot=True)
+        LlamaHandler(bot).register()
         bot.register_message_handler(
             llama_pro_handler, commands=["llama_pro"], pass_bot=True
         )
