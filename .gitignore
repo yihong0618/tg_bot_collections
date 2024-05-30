@@ -169,3 +169,4 @@ nohup.out
 *.pdf
 .pdm-python
 tts.wav
+tts_pro.wav
