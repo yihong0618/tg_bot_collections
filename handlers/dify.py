@@ -1,8 +1,8 @@
 from os import environ
-import time
 
 from telebot import TeleBot
 from telebot.types import Message
+from expiringdict import ExpiringDict
 
 from . import *
 
@@ -22,8 +22,10 @@ if DIFY_API_KEY:
     client = ChatClient(api_key=DIFY_API_KEY)
 
 # Global history cache
-dify_player_dict = {}
-dify_player_c = {}  # History cache is supported by dify cloud conversation_id.
+dify_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+dify_player_c = ExpiringDict(
+    max_len=1000, max_age_seconds=300
+)  # History cache is supported by dify cloud conversation_id.
 
 
 def dify_handler(message: Message, bot: TeleBot) -> None:

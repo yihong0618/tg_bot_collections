@@ -4,6 +4,7 @@ import time
 
 from telebot import TeleBot
 from telebot.types import Message
+from expiringdict import ExpiringDict
 
 from . import *
 
@@ -15,14 +16,14 @@ markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 QWEN_API_KEY = environ.get("TOGETHER_API_KEY")
-QWEN_MODEL = "Qwen/Qwen1.5-110B-Chat"
+QWEN_MODEL = "Qwen/Qwen2-72B-Instruct"
 
 if QWEN_API_KEY:
     client = Together(api_key=QWEN_API_KEY)
 
 # Global history cache
-qwen_player_dict = {}
-qwen_pro_player_dict = {}
+qwen_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+qwen_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
 
 
 def qwen_handler(message: Message, bot: TeleBot) -> None:

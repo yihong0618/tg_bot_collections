@@ -5,6 +5,7 @@ import time
 from anthropic import Anthropic, APITimeoutError
 from telebot import TeleBot
 from telebot.types import Message
+from expiringdict import ExpiringDict
 
 from . import *
 
@@ -28,8 +29,8 @@ else:
 
 
 # Global history cache
-claude_player_dict = {}
-claude_pro_player_dict = {}
+claude_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+claude_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
 
 
 def claude_handler(message: Message, bot: TeleBot) -> None:

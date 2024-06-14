@@ -6,6 +6,7 @@ import requests
 from telebot import TeleBot
 from telebot.types import Message
 from telegramify_markdown import convert
+from expiringdict import ExpiringDict
 
 from . import *
 
@@ -21,7 +22,8 @@ client = OpenAI(
 )
 
 # Global history cache
-yi_player_dict = {}
+yi_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+yi_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
 
 
 def yi_handler(message: Message, bot: TeleBot) -> None:
@@ -95,12 +97,12 @@ def yi_pro_handler(message: Message, bot: TeleBot) -> None:
 
     player_message = []
     # restart will lose all TODO
-    if str(message.from_user.id) not in yi_player_dict:
-        yi_player_dict[str(message.from_user.id)] = (
+    if str(message.from_user.id) not in yi_pro_player_dict:
+        yi_pro_player_dict[str(message.from_user.id)] = (
             player_message  # for the imuutable list
         )
     else:
-        player_message = yi_player_dict[str(message.from_user.id)]
+        player_message = yi_pro_player_dict[str(message.from_user.id)]
     if m.strip() == "clear":
         bot.reply_to(
             message,

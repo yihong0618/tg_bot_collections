@@ -7,8 +7,8 @@ from google.generativeai import ChatSession
 from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
 from telebot.types import Message
+from expiringdict import ExpiringDict
 
-from telegramify_markdown import convert
 from telegramify_markdown.customize import markdown_symbol
 
 from . import *
@@ -34,9 +34,9 @@ safety_settings = [
 ]
 
 # Global history cache
-gemini_player_dict = {}
-gemini_pro_player_dict = {}
-gemini_file_player_dict = {}
+gemini_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+gemini_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+gemini_file_player_dict = ExpiringDict(max_len=100, max_age_seconds=300)
 
 
 def make_new_gemini_convo(is_pro=False) -> ChatSession:

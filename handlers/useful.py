@@ -9,7 +9,7 @@ from . import *
 
 def md_handler(message: Message, bot: TeleBot):
     """pretty md: /md <address>"""
-    who = "Markdown"
+    who = ""
     reply_id = bot_reply_first(message, who, bot)
     bot_reply_markdown(reply_id, who, message.text.strip(), bot)
 

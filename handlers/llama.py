@@ -3,6 +3,7 @@ import time
 
 from telebot import TeleBot
 from telebot.types import Message
+from expiringdict import ExpiringDict
 
 from . import *
 
@@ -21,8 +22,8 @@ if LLAMA_API_KEY:
     client = Groq(api_key=LLAMA_API_KEY)
 
 # Global history cache
-llama_player_dict = {}
-llama_pro_player_dict = {}
+llama_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+llama_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
 
 
 def llama_handler(message: Message, bot: TeleBot) -> None:

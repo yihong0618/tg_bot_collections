@@ -4,6 +4,7 @@ import time
 from openai import OpenAI
 from telebot import TeleBot
 from telebot.types import Message
+from expiringdict import ExpiringDict
 
 from . import *
 
@@ -23,8 +24,8 @@ client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL, timeout=20)
 
 
 # Global history cache
-chatgpt_player_dict = {}
-chatgpt_pro_player_dict = {}
+chatgpt_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+chatgpt_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
 
 
 def chatgpt_handler(message: Message, bot: TeleBot) -> None:

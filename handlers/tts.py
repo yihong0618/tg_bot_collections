@@ -1,5 +1,7 @@
+import glob
 import threading
-from os import environ
+import subprocess
+from os import environ, remove
 
 from telebot import TeleBot
 from telebot.types import Message
@@ -10,6 +12,21 @@ import wave
 import numpy as np
 from ChatTTS import Chat
 
+
+def check_ffmpeg():
+    try:
+        subprocess.run(
+            ["ffmpeg", "-version"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+HAS_FFMPEG = check_ffmpeg()
 USE_CHATTTS = environ.get("USE_CHATTTS")
 if USE_CHATTTS:
     chat = Chat()
@@ -25,7 +42,7 @@ if USE_CHATTTS:
             wf.setframerate(sample_rate)
             wf.writeframes(data.tobytes())
 
-    def generate_tts_wav(prompt, seed=None):
+    def generate_tts_wav(prompt, output_filename, seed=None):
         texts = [
             prompt,
         ]
@@ -40,10 +57,8 @@ if USE_CHATTTS:
             wavs = chat.infer(
                 texts, use_decoder=True, params_infer_code=params_infer_code
             )
-            output_filename = "tts_pro.wav"
         else:
             wavs = chat.infer(texts, use_decoder=True)
-            output_filename = "tts.wav"
 
         audio_data = np.array(
             wavs[0], dtype=np.float32
@@ -69,7 +84,7 @@ if USE_CHATTTS:
             return
         try:
             with lock:
-                generate_tts_wav(prompt)
+                generate_tts_wav(prompt, "tts.wav")
             with open(f"tts.wav", "rb") as audio:
                 bot.send_audio(
                     message.chat.id, audio, reply_to_message_id=message.message_id
@@ -91,16 +106,72 @@ if USE_CHATTTS:
             bot.reply_to(message, "first argument must be a number")
             return
         prompt = prompt[len(str(seed)) + 1 :]
-        if len(prompt) > 150:
-            bot.reply_to(message, "prompt too long must length < 150")
-            return
+        # split the prompt by 100 characters
+        prompt_split = [prompt[i : i + 50] for i in range(0, len(prompt), 50)]
+        if not HAS_FFMPEG:
+            if len(prompt) > 150:
+                bot.reply_to(message, "prompt too long must length < 150")
+                return
         try:
             with lock:
-                generate_tts_wav(prompt, seed)
-            with open(f"tts_pro.wav", "rb") as audio:
-                bot.send_audio(
-                    message.chat.id, audio, reply_to_message_id=message.message_id
-                )
+                if len(prompt_split) > 1:
+                    bot.reply_to(
+                        message,
+                        "Will split the text and use the same to generate the audio and use ffmpeg to combin them pleas wait more time",
+                    )
+                    for k, v in enumerate(prompt_split):
+                        generate_tts_wav(v, f"{k}.wav", seed)
+                        with open("input.txt", "a") as f:
+                            f.write(f"file {k}.wav\n")
+                    output_file = "tts_pro.wav"
+                    # Run the FFmpeg command
+                    try:
+                        # make sure remove it
+                        try:
+                            remove("tts_pro.wav")
+                        except:
+                            pass
+                        subprocess.run(
+                            [
+                                "ffmpeg",
+                                "-f",
+                                "concat",
+                                "-safe",
+                                "0",
+                                "-i",
+                                "input.txt",
+                                "-c",
+                                "copy",
+                                "tts_pro.wav",
+                            ],
+                            check=True,
+                        )
+                    except Exception as e:
+                        print(f"Error combining audio files, {e}")
+                        bot.reply_to(message, "tts error please check the log")
+                        remove("input.txt")
+                        return
+                    print(f"Combined audio saved as {output_file}")
+                    with open(f"tts_pro.wav", "rb") as audio:
+                        bot.send_audio(
+                            message.chat.id,
+                            audio,
+                            reply_to_message_id=message.message_id,
+                        )
+                    remove("input.txt")
+                    for file in glob.glob("*.wav"):
+                        try:
+                            remove(file)
+                        except OSError as e:
+                            print(e)
+                else:
+                    generate_tts_wav(prompt, "tts_pro.wav", seed)
+                    with open(f"tts_pro.wav", "rb") as audio:
+                        bot.send_audio(
+                            message.chat.id,
+                            audio,
+                            reply_to_message_id=message.message_id,
+                        )
         except Exception as e:
             print(e)
             bot.reply_to(message, "tts error")

@@ -33,6 +33,7 @@ emoji==2.11.1
 encodec==0.1.1
 eval-type-backport==0.2.0
 exceptiongroup==1.2.1; python_version < "3.11"
+expiringdict==1.2.2
 filelock==3.14.0
 fiona==1.9.6
 fonttools==4.51.0
