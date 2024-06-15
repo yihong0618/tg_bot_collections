@@ -100,7 +100,7 @@ def wrap_handler(handler: T, bot: TeleBot) -> T:
     def wrapper(message: Message, *args: Any, **kwargs: Any) -> None:
         try:
             m = ""
-            if message.text == "/answer_it":
+            if message.text.find("answer_it") != -1:
                 # for answer_it no args
                 return handler(message, *args, **kwargs)
             elif message.text is not None:

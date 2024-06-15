@@ -66,7 +66,13 @@ def md_handler(message: Message, bot: TeleBot):
 def latest_handle_messages(message: Message, bot: TeleBot):
     """ignore"""
     chat_id = message.chat.id
-    chat_message_dict[chat_id] = message
+    # if is bot command, ignore
+    if message.text.startswith("/"):
+        return
+    elif message.text.startswith(("md", "chatgpt", "gemini", "qwen", "map", "github", "claude", "llama", "dify", "tts", "sd", "map", "yi")):
+        return
+    else:
+        chat_message_dict[chat_id] = message
 
 
 def answer_it_handler(message: Message, bot: TeleBot):
