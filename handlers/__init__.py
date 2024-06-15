@@ -100,7 +100,10 @@ def wrap_handler(handler: T, bot: TeleBot) -> T:
     def wrapper(message: Message, *args: Any, **kwargs: Any) -> None:
         try:
             m = ""
-            if message.text is not None:
+            if message.text == "/answer_it":
+                # for answer_it no args
+                return handler(message, *args, **kwargs)
+            elif message.text is not None:
                 m = message.text = extract_prompt(message.text, bot.get_me().username)
             elif message.caption is not None:
                 m = message.caption = extract_prompt(
@@ -138,6 +141,9 @@ def load_handlers(bot: TeleBot, disable_commands: list[str]) -> None:
     all_commands: list[BotCommand] = []
     for handler in bot.message_handlers:
         help_text = getattr(handler["function"], "__doc__", "")
+        # tricky ignore the latest_handle_messages
+        if help_text and help_text == "ignore":
+            continue
         # Add pre-processing and error handling to all callbacks
         handler["function"] = wrap_handler(handler["function"], bot)
         for command in handler["filters"].get("commands", []):

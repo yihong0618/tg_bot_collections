@@ -136,15 +136,14 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
             if chunk.choices[0].delta.content is None:
                 break
             s += chunk.choices[0].delta.content
-            if time.time() - start > 1.7:
+            if time.time() - start > 1.2:
                 start = time.time()
-                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
-
-        if not bot_reply_markdown(reply_id, who, s, bot):
-            # maybe not complete
-            # maybe the same message
-            player_message.clear()
-            return
+                bot_reply_markdown(reply_id, who, s, bot, split_text=True)
+        # maybe not complete
+        try:
+            bot_reply_markdown(reply_id, who, s, bot, split_text=True)
+        except:
+            pass
 
         player_message.append(
             {

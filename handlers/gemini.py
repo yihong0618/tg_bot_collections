@@ -247,24 +247,26 @@ def gemini_audio_handler(message: Message, bot: TeleBot) -> None:
         return
 
 
-def register(bot: TeleBot) -> None:
-    bot.register_message_handler(gemini_handler, commands=["gemini"], pass_bot=True)
-    bot.register_message_handler(gemini_handler, regexp="^gemini:", pass_bot=True)
-    bot.register_message_handler(
-        gemini_pro_handler, commands=["gemini_pro"], pass_bot=True
-    )
-    bot.register_message_handler(
-        gemini_pro_handler, regexp="^gemini_pro:", pass_bot=True
-    )
-    bot.register_message_handler(
-        gemini_photo_handler,
-        content_types=["photo"],
-        func=lambda m: m.caption and m.caption.startswith(("gemini:", "/gemini")),
-        pass_bot=True,
-    )
-    bot.register_message_handler(
-        gemini_audio_handler,
-        content_types=["audio"],
-        func=lambda m: m.caption and m.caption.startswith(("gemini:", "/gemini")),
-        pass_bot=True,
-    )
+if GOOGLE_GEMINI_KEY:
+
+    def register(bot: TeleBot) -> None:
+        bot.register_message_handler(gemini_handler, commands=["gemini"], pass_bot=True)
+        bot.register_message_handler(gemini_handler, regexp="^gemini:", pass_bot=True)
+        bot.register_message_handler(
+            gemini_pro_handler, commands=["gemini_pro"], pass_bot=True
+        )
+        bot.register_message_handler(
+            gemini_pro_handler, regexp="^gemini_pro:", pass_bot=True
+        )
+        bot.register_message_handler(
+            gemini_photo_handler,
+            content_types=["photo"],
+            func=lambda m: m.caption and m.caption.startswith(("gemini:", "/gemini")),
+            pass_bot=True,
+        )
+        bot.register_message_handler(
+            gemini_audio_handler,
+            content_types=["audio"],
+            func=lambda m: m.caption and m.caption.startswith(("gemini:", "/gemini")),
+            pass_bot=True,
+        )
