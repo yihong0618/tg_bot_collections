@@ -69,7 +69,30 @@ def latest_handle_messages(message: Message, bot: TeleBot):
     # if is bot command, ignore
     if message.text.startswith("/"):
         return
-    elif message.text.startswith(("md", "chatgpt", "gemini", "qwen", "map", "github", "claude", "llama", "dify", "tts", "sd", "map", "yi")):
+    # start command ignore
+    elif message.text.startswith(
+        (
+            "md",
+            "chatgpt",
+            "gemini",
+            "qwen",
+            "map",
+            "github",
+            "claude",
+            "llama",
+            "dify",
+            "tts",
+            "sd",
+            "map",
+            "yi",
+        )
+    ):
+        return
+    # answer_it command ignore
+    elif message.text.startswith("answer_it"):
+        return
+    # if not text, ignore
+    elif not message.text:
         return
     else:
         chat_message_dict[chat_id] = message
