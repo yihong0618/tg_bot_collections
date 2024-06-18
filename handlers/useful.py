@@ -102,7 +102,8 @@ def latest_handle_messages(message: Message, bot: TeleBot):
         return
     else:
         if chat_user_dict.get(chat_user_id):
-            chat_message_dict[chat_id].text += message.text
+            message.text += chat_message_dict[chat_id].text
+            chat_message_dict[chat_id] = message
         else:
             chat_message_dict[chat_id] = message
         chat_user_dict[chat_user_id] = True
@@ -171,7 +172,6 @@ def answer_it_handler(message: Message, bot: TeleBot):
     except Exception as e:
         print(e)
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
-        return
 
     ##### Qwen #####
     who = "Qwen Pro"
@@ -204,7 +204,6 @@ def answer_it_handler(message: Message, bot: TeleBot):
     except Exception as e:
         print(e)
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
-        return
 
 
 if GOOGLE_GEMINI_KEY and CHATGPT_API_KEY and QWEN_API_KEY:
