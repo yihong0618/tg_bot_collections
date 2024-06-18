@@ -11,13 +11,15 @@ import google.generativeai as genai
 from google.generativeai import ChatSession
 from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
+from together import Together
 from telebot.types import Message
 
 from . import *
 
 from telegramify_markdown.customize import markdown_symbol
 
-chat_message_dict = ExpiringDict(max_len=100, max_age_seconds=300)
+chat_message_dict = ExpiringDict(max_len=100, max_age_seconds=120)
+chat_user_dict = ExpiringDict(max_len=100, max_age_seconds=20)
 
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
@@ -50,10 +52,13 @@ convo = model.start_chat()
 #### ChatGPT init ####
 CHATGPT_API_KEY = environ.get("OPENAI_API_KEY")
 CHATGPT_BASE_URL = environ.get("OPENAI_API_BASE") or "https://api.openai.com/v1"
+QWEN_API_KEY = environ.get("TOGETHER_API_KEY")
+QWEN_MODEL = "Qwen/Qwen2-72B-Instruct"
 CHATGPT_PRO_MODEL = "gpt-4o-2024-05-13"
 
 
-client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL, timeout=20)
+client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL, timeout=300)
+qwen_client = Together(api_key=QWEN_API_KEY, timeout=300)
 
 
 def md_handler(message: Message, bot: TeleBot):
@@ -66,6 +71,7 @@ def md_handler(message: Message, bot: TeleBot):
 def latest_handle_messages(message: Message, bot: TeleBot):
     """ignore"""
     chat_id = message.chat.id
+    chat_user_id = message.from_user.id
     # if is bot command, ignore
     if message.text.startswith("/"):
         return
@@ -95,7 +101,12 @@ def latest_handle_messages(message: Message, bot: TeleBot):
     elif not message.text:
         return
     else:
-        chat_message_dict[chat_id] = message
+        if chat_user_dict.get(chat_user_id):
+            chat_message_dict[chat_id].text += message.text
+        else:
+            chat_message_dict[chat_id] = message
+        chat_user_dict[chat_user_id] = True
+        print(chat_message_dict[chat_id].text)
 
 
 def answer_it_handler(message: Message, bot: TeleBot):
@@ -122,7 +133,7 @@ def answer_it_handler(message: Message, bot: TeleBot):
             if time.time() - start > 1.7:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
-
+        bot_reply_markdown(reply_id, who, s, bot)
         convo.history.clear()
     except Exception as e:
         print(e)
@@ -150,10 +161,43 @@ def answer_it_handler(message: Message, bot: TeleBot):
             s += chunk.choices[0].delta.content
             if time.time() - start > 1.2:
                 start = time.time()
-                bot_reply_markdown(reply_id, who, s, bot, split_text=True)
+                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
         # maybe not complete
         try:
-            bot_reply_markdown(reply_id, who, s, bot, split_text=True)
+            bot_reply_markdown(reply_id, who, s, bot)
+        except:
+            pass
+
+    except Exception as e:
+        print(e)
+        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        return
+
+    ##### Qwen #####
+    who = "Qwen Pro"
+    reply_id = bot_reply_first(latest_message, who, bot)
+
+    player_message = [{"role": "user", "content": m}]
+
+    try:
+        r = qwen_client.chat.completions.create(
+            messages=player_message,
+            max_tokens=4096,
+            model=QWEN_MODEL,
+            stream=True,
+        )
+        s = ""
+        start = time.time()
+        for chunk in r:
+            if chunk.choices[0].delta.content is None:
+                break
+            s += chunk.choices[0].delta.content
+            if time.time() - start > 1.2:
+                start = time.time()
+                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+        # maybe not complete
+        try:
+            bot_reply_markdown(reply_id, who, s, bot)
         except:
             pass
 
@@ -163,7 +207,7 @@ def answer_it_handler(message: Message, bot: TeleBot):
         return
 
 
-if GOOGLE_GEMINI_KEY and CHATGPT_API_KEY:
+if GOOGLE_GEMINI_KEY and CHATGPT_API_KEY and QWEN_API_KEY:
 
     def register(bot: TeleBot) -> None:
         bot.register_message_handler(md_handler, commands=["md"], pass_bot=True)
