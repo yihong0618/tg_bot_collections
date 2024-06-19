@@ -13,6 +13,10 @@ from telegramify_markdown.customize import markdown_symbol
 
 from . import *
 
+# Init the telegra.ph api
+ph_token = "YOUR_TELEGRAPH"
+ph = TelegraphAPI(ph_token)
+
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
@@ -159,6 +163,10 @@ def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
             if time.time() - start > 1.7:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+        # Write the message to a page by telegra.ph create_page_md
+        # Append the URL to the last line of this message
+        url = ph.create_page_md(title="Gemini Pro", markdown_text=s)
+        s += f"\n\n[View]({url})"
 
         if not bot_reply_markdown(reply_id, who, s, bot):
             # maybe not complete
