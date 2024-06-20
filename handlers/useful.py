@@ -160,39 +160,7 @@ def answer_it_handler(message: Message, bot: TeleBot):
             if chunk.choices[0].delta.content is None:
                 break
             s += chunk.choices[0].delta.content
-            if time.time() - start > 1.2:
-                start = time.time()
-                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
-        # maybe not complete
-        try:
-            bot_reply_markdown(reply_id, who, s, bot)
-        except:
-            pass
-
-    except Exception as e:
-        print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
-
-    ##### Qwen #####
-    who = "Qwen Pro"
-    reply_id = bot_reply_first(latest_message, who, bot)
-
-    player_message = [{"role": "user", "content": m}]
-
-    try:
-        r = qwen_client.chat.completions.create(
-            messages=player_message,
-            max_tokens=4096,
-            model=QWEN_MODEL,
-            stream=True,
-        )
-        s = ""
-        start = time.time()
-        for chunk in r:
-            if chunk.choices[0].delta.content is None:
-                break
-            s += chunk.choices[0].delta.content
-            if time.time() - start > 1.2:
+            if time.time() - start > 1.5:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
         # maybe not complete
@@ -206,7 +174,7 @@ def answer_it_handler(message: Message, bot: TeleBot):
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
 
 
-if GOOGLE_GEMINI_KEY and CHATGPT_API_KEY and QWEN_API_KEY:
+if GOOGLE_GEMINI_KEY and CHATGPT_API_KEY:
 
     def register(bot: TeleBot) -> None:
         bot.register_message_handler(md_handler, commands=["md"], pass_bot=True)

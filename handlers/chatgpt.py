@@ -220,6 +220,7 @@ if CHATGPT_API_KEY:
         bot.register_message_handler(
             chatgpt_photo_handler,
             content_types=["photo"],
-            func=lambda m: m.caption and m.caption.startswith(("gpt:", "/gpt")),
+            func=lambda m: m.caption
+            and m.caption.startswith(("gpt:", "/gpt", "gpt_pro:", "/gpt_pro")),
             pass_bot=True,
         )
