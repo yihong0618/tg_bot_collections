@@ -75,6 +75,22 @@ Note, if you are using third party service, you need to `export OPENAI_API_BASE=
 
 Note, currently its support dify Chatbot with instructions(System prompt) and different MODEL with its parameters.
 
+## Bot -> Cohere
+
+1. visit https://dashboard.cohere.com/api-keys get the key
+2. export COHERE_API_KEY=${the_key}
+3. use `cohere: ${message}` to ask
+
+## Bot -> `Telegra.ph`
+
+1. https://t.me/telegraph Create or login Telegraph account
+2. `Log in as ${Account} on this device`
+3. On Browser at https://telegra.ph/, press F12 or right click and inspect
+4. Go to Application -> Storage -> Cookies -> https://telegra.ph/
+5. The token at `tph_token` is the token for telegra.ph API
+
+Do not share the token with others, it's like a password.
+
 ## HOW TO Install and Run
 
 ### Manually install 
