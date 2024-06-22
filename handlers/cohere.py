@@ -204,8 +204,8 @@ if COHERE_API_KEY:
 
         def register(bot: TeleBot) -> None:
             bot.register_message_handler(
-                cohere_handler_direct, commands=["cohere"], pass_bot=True
+                cohere_handler, commands=["cohere"], pass_bot=True
             )
             bot.register_message_handler(
-                cohere_handler_direct, regexp="^cohere:", pass_bot=True
+                cohere_handler, regexp="^cohere:", pass_bot=True
             )
