@@ -89,7 +89,13 @@ def cohere_handler_direct(message: Message, bot: TeleBot) -> None:
                 s += event.text.encode("utf-8").decode("utf-8")
                 if time.time() - start > 0.4:
                     start = time.time()
-                    bot_reply_markdown(reply_id, who, f"\nStill thinking{len(s)}...", bot, split_text=True)
+                    bot_reply_markdown(
+                        reply_id,
+                        who,
+                        f"\nStill thinking{len(s)}...",
+                        bot,
+                        split_text=True,
+                    )
             elif event.event_type == "stream-end":
                 break
         s += "\n" + source + "\n"
@@ -173,11 +179,24 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
                 s += event.text.encode("utf-8").decode("utf-8")
                 if time.time() - start > 0.4:
                     start = time.time()
-                    bot_reply_markdown(reply_id, who, f"\nStill thinking{len(s)}...", bot, split_text=True)
+                    bot_reply_markdown(
+                        reply_id,
+                        who,
+                        f"\nStill thinking{len(s)}...",
+                        bot,
+                        split_text=True,
+                    )
             elif event.event_type == "stream-end":
                 break
-        content = s + "\n------\n------\n" + source + f"\n------\n------\nLast Update{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        ph_s = ph.create_page_md(title="Cohere", markdown_text=content) # or edit_page with get_page so not producing massive pages
+        content = (
+            s
+            + "\n------\n------\n"
+            + source
+            + f"\n------\n------\nLast Update{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+        ph_s = ph.create_page_md(
+            title="Cohere", markdown_text=content
+        )  # or edit_page with get_page so not producing massive pages
         s += f"\n\n[View]({ph_s})"
 
         try:
