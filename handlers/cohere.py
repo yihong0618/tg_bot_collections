@@ -21,6 +21,11 @@ COHERE_MODEL = "command-r-plus"
 TELEGRA_PH_TOKEN = environ.get("TELEGRA_PH_TOKEN")
 if TELEGRA_PH_TOKEN:
     ph = TelegraphAPI(TELEGRA_PH_TOKEN)
+else:
+    TELEGRA_PH_TOKEN = create_ph_account(
+        short_name="cohere", author_name="A Telegram Bot"
+    )
+    ph = TelegraphAPI(TELEGRA_PH_TOKEN)
 
 if COHERE_API_KEY:
     co = cohere.Client(api_key=COHERE_API_KEY)
@@ -219,22 +224,15 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
 
 
 if COHERE_API_KEY:
-    if not TELEGRA_PH_TOKEN:
 
-        def register(bot: TeleBot) -> None:
-            bot.register_message_handler(
-                cohere_handler_direct, commands=["cohere"], pass_bot=True
-            )
-            bot.register_message_handler(
-                cohere_handler_direct, regexp="^cohere:", pass_bot=True
-            )
+    def register(bot: TeleBot) -> None:
+        bot.register_message_handler(
+            cohere_handler_direct, commands=["cohere_no_ph"], pass_bot=True
+        )
+        bot.register_message_handler(
+            cohere_handler_direct, regexp="^cohere_no_ph:", pass_bot=True
+        )
 
-    else:
-
-        def register(bot: TeleBot) -> None:
-            bot.register_message_handler(
-                cohere_handler, commands=["cohere"], pass_bot=True
-            )
-            bot.register_message_handler(
-                cohere_handler, regexp="^cohere:", pass_bot=True
-            )
+    def register(bot: TeleBot) -> None:
+        bot.register_message_handler(cohere_handler, commands=["cohere"], pass_bot=True)
+        bot.register_message_handler(cohere_handler, regexp="^cohere:", pass_bot=True)

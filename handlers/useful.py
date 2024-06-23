@@ -5,6 +5,7 @@ from telebot.types import Message
 from expiringdict import ExpiringDict
 from os import environ
 import time
+import datetime
 
 from openai import OpenAI
 import google.generativeai as genai
@@ -22,8 +23,15 @@ import cohere
 
 COHERE_API_KEY = environ.get("COHERE_API_KEY")
 TELEGRA_PH_TOKEN = environ.get("TELEGRA_PH_TOKEN")
-co = cohere.Client(api_key=COHERE_API_KEY)
-ph = TelegraphAPI(TELEGRA_PH_TOKEN)
+if COHERE_API_KEY:
+    co = cohere.Client(api_key=COHERE_API_KEY)
+if TELEGRA_PH_TOKEN:
+    ph = TelegraphAPI(TELEGRA_PH_TOKEN)
+else:
+    TELEGRA_PH_TOKEN = create_ph_account(
+        short_name="Answer it", author_name="A Telegram Bot"
+    )
+    ph = TelegraphAPI(TELEGRA_PH_TOKEN)
 COHERE_MODEL = "command-r-plus"
 
 chat_message_dict = ExpiringDict(max_len=100, max_age_seconds=120)
@@ -196,10 +204,7 @@ def answer_it_handler(message: Message, bot: TeleBot):
         pass
 
     ##### Answer #####
-    if TELEGRA_PH_TOKEN:
-        final_answer(latest_message, bot, full, chat_id_list)
-    else:
-        pass
+    final_answer(latest_message, bot, full, chat_id_list)
 
 
 def cohere_answer(latest_message: Message, bot: TeleBot, full, m):
@@ -210,45 +215,60 @@ def cohere_answer(latest_message: Message, bot: TeleBot, full, m):
     player_message = [{"role": "User", "message": m}]
 
     try:
-        r = co.chat_stream(
+        stream = co.chat_stream(
             model=COHERE_MODEL,
             message=m,
-            temperature=0.4,
+            temperature=0.3,
             chat_history=player_message,
             prompt_truncation="AUTO",
             connectors=[{"id": "web-search"}],
-            citation_quality="fast",
+            citation_quality="accurate",
+            preamble=f"You are Command R+, a large language model trained to have polite, helpful, inclusive conversations with people. The current time in Tornoto is {datetime.datetime.now(datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S')}, in Los Angeles is {datetime.datetime.now(datetime.timezone.utc).astimezone().astimezone(datetime.timezone(datetime.timedelta(hours=-7))).strftime('%Y-%m-%d %H:%M:%S')}, and in China is {datetime.datetime.now(datetime.timezone.utc).astimezone(datetime.timezone(datetime.timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')}.",
         )
+
         s = ""
         source = ""
         start = time.time()
-        for event in r:
-            if event.event_type == "text-generation":
-                s += event.text.encode("utf-8").decode("utf-8")
-                if time.time() - start > 1.2:
-                    start = time.time()
-                    bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+        for event in stream:
+            if event.event_type == "stream-start":
+                bot_reply_markdown(reply_id, who, "Thinking...", bot)
+            elif event.event_type == "search-queries-generation":
+                bot_reply_markdown(reply_id, who, "Searching online...", bot)
             elif event.event_type == "search-results":
+                bot_reply_markdown(reply_id, who, "Reading...", bot)
                 for doc in event.documents:
-                    source += f"\n[{doc['title']}]({doc['url']})"
+                    source += f"\n{doc['title']}\n{doc['url']}\n"
+            elif event.event_type == "text-generation":
+                s += event.text.encode("utf-8").decode("utf-8")
+                if time.time() - start > 0.4:
+                    start = time.time()
+                    bot_reply_markdown(
+                        reply_id,
+                        who,
+                        f"\nStill thinking{len(s)}...",
+                        bot,
+                        split_text=True,
+                    )
             elif event.event_type == "stream-end":
                 break
+        content = (
+            s
+            + "\n------\n------\n"
+            + source
+            + f"\n------\n------\nLast Update{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
 
-        # maybe not complete
-        # maybe the same message
         try:
-            bot_reply_markdown(reply_id, who, s, bot)
+            bot_reply_markdown(reply_id, who, s, bot, split_text=True)
         except:
             pass
-
     except Exception as e:
         print(e)
         bot_reply_markdown(reply_id, who, "Answer wrong", bot)
-
-    content = s + "\n------\n" + source
+        player_message.clear()
+        return full, reply_id.message_id
     full += f"\n---\n{who}:\n{content}"
-    chat_id = reply_id.chat.id
-    return full, chat_id
+    return full, reply_id.message_id
 
 
 def final_answer(latest_message: Message, bot: TeleBot, full, list):
@@ -258,9 +278,8 @@ def final_answer(latest_message: Message, bot: TeleBot, full, list):
     ph_s = ph.create_page_md(title="Answer it", markdown_text=full)
     bot_reply_markdown(reply_id, who, f"[View]({ph_s})", bot)
     # delete the chat message, only leave a telegra.ph link
-
     # for i in list:
-    #     bot.delete_message(chat_id=chat_id, message_id=i)
+    #     bot.delete_message(latest_message.chat.id, i)
 
 
 if GOOGLE_GEMINI_KEY and CHATGPT_API_KEY:

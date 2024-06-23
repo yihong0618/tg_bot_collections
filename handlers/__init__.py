@@ -206,6 +206,57 @@ import markdown  # pip install Markdown
 from bs4 import BeautifulSoup  # pip install beautifulsoup4
 
 
+def create_ph_account(short_name: str, author_name: str, author_url: str = None) -> str:
+    """
+        Creates a new account on the Telegra.ph platform.
+        If an account already exists (stored in a local JSON file), returns the existing access token.
+        Otherwise, creates a new account and stores the information locally.
+        Sample request
+    https://api.telegra.ph/editAccountInfo?access_token=d3b25feccb89e508a9114afb82aa421fe2a9712b963b387cc5ad71e58722&short_name=Sandbox&author_name=Anonymous
+
+        Args:
+            short_name (str): The short name of the account.
+            author_name (str): The name of the author.
+            author_url (str, optional): The URL of the author's profile. Defaults to None.
+
+        Returns:
+            str: The access token for the account.
+
+        Raises:
+            requests.RequestException: If the API request fails.
+            json.JSONDecodeError: If the API response is not valid JSON.
+            KeyError: If the API response does not contain the expected data.
+    """
+    TELEGRAPH_API_URL = "https://api.telegra.ph/createAccount"
+
+    # Try to load existing account information
+    try:
+        with open("telegraph_token.json", "r") as f:
+            account = json.load(f)
+        return account["result"]["access_token"]
+    except FileNotFoundError:
+        # If no existing account, create a new one
+        data = {
+            "short_name": short_name,
+            "author_name": author_name,
+        }
+        if author_url:
+            data["author_url"] = author_url
+
+        # Make API request
+        response = requests.post(TELEGRAPH_API_URL, data=data)
+        response.raise_for_status()  # Raises an HTTPError for bad responses
+
+        account = response.json()
+        access_token = account["result"]["access_token"]
+
+        # Store the new account information
+        with open("telegraph_token.json", "w") as f:
+            json.dump(account, f)
+
+        return access_token
+
+
 class TelegraphAPI:
     def __init__(self, access_token):
         self.access_token = access_token
@@ -457,4 +508,5 @@ __all__ = [
     "enrich_text_with_urls",
     "image_to_data_uri",
     "TelegraphAPI",
+    "create_ph_account",
 ]
