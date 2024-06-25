@@ -5,6 +5,7 @@ from telebot.types import Message
 from expiringdict import ExpiringDict
 from os import environ
 import time
+import datetime
 
 from openai import OpenAI
 import google.generativeai as genai
@@ -17,6 +18,21 @@ from telebot.types import Message
 from . import *
 
 from telegramify_markdown.customize import markdown_symbol
+
+#### Cohere init ####
+import cohere
+
+COHERE_API_KEY = environ.get("COHERE_API_KEY")
+COHERE_MODEL = "command-r-plus"
+# if you want to use cohere for answer it, set it to True
+USE_CHHERE = False
+if COHERE_API_KEY:
+    co = cohere.Client(api_key=COHERE_API_KEY)
+
+#### Telegraph init ####
+TELEGRA_PH_TOKEN = environ.get("TELEGRA_PH_TOKEN")
+ph = TelegraphAPI(TELEGRA_PH_TOKEN)
+#### Telegraph done ####
 
 chat_message_dict = ExpiringDict(max_len=100, max_age_seconds=120)
 chat_user_dict = ExpiringDict(max_len=100, max_age_seconds=20)
@@ -91,6 +107,7 @@ def latest_handle_messages(message: Message, bot: TeleBot):
             "sd",
             "map",
             "yi",
+            "cohere",
         )
     ):
         return
@@ -120,6 +137,7 @@ def answer_it_handler(message: Message, bot: TeleBot):
     latest_message = chat_message_dict.get(chat_id)
     m = latest_message.text.strip()
     m = enrich_text_with_urls(m)
+    full = ""
     ##### Gemini #####
     who = "Gemini Pro"
     # show something, make it more responsible
@@ -141,6 +159,8 @@ def answer_it_handler(message: Message, bot: TeleBot):
         convo.history.clear()
         bot_reply_markdown(reply_id, who, "Error", bot)
 
+    full += f"{who}:\n{s}"
+    chat_id_list = [reply_id.message_id]
     ##### ChatGPT #####
     who = "ChatGPT Pro"
     reply_id = bot_reply_first(latest_message, who, bot)
@@ -172,6 +192,94 @@ def answer_it_handler(message: Message, bot: TeleBot):
     except Exception as e:
         print(e)
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
+
+    full += f"\n---\n{who}:\n{s}"
+    chat_id_list.append(reply_id.message_id)
+
+    ##### Cohere #####
+    if USE_CHHERE and COHERE_API_KEY:
+        full, chat_id = cohere_answer(latest_message, bot, full, m)
+        chat_id_list.append(chat_id)
+    else:
+        pass
+
+    ##### Telegraph #####
+    final_answer(latest_message, bot, full, chat_id_list)
+
+
+def cohere_answer(latest_message: Message, bot: TeleBot, full, m):
+    """cohere answer"""
+    who = "Command R Plus"
+    reply_id = bot_reply_first(latest_message, who, bot)
+
+    player_message = [{"role": "User", "message": m}]
+
+    try:
+        stream = co.chat_stream(
+            model=COHERE_MODEL,
+            message=m,
+            temperature=0.3,
+            chat_history=player_message,
+            prompt_truncation="AUTO",
+            connectors=[{"id": "web-search"}],
+            citation_quality="accurate",
+            preamble=f"You are Command R+, a large language model trained to have polite, helpful, inclusive conversations with people. The current time in Tornoto is {datetime.datetime.now(datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S')}, in Los Angeles is {datetime.datetime.now(datetime.timezone.utc).astimezone().astimezone(datetime.timezone(datetime.timedelta(hours=-7))).strftime('%Y-%m-%d %H:%M:%S')}, and in China is {datetime.datetime.now(datetime.timezone.utc).astimezone(datetime.timezone(datetime.timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')}.",
+        )
+
+        s = ""
+        source = ""
+        start = time.time()
+        for event in stream:
+            if event.event_type == "stream-start":
+                bot_reply_markdown(reply_id, who, "Thinking...", bot)
+            elif event.event_type == "search-queries-generation":
+                bot_reply_markdown(reply_id, who, "Searching online...", bot)
+            elif event.event_type == "search-results":
+                bot_reply_markdown(reply_id, who, "Reading...", bot)
+                for doc in event.documents:
+                    source += f"\n{doc['title']}\n{doc['url']}\n"
+            elif event.event_type == "text-generation":
+                s += event.text.encode("utf-8").decode("utf-8")
+                if time.time() - start > 0.4:
+                    start = time.time()
+                    bot_reply_markdown(
+                        reply_id,
+                        who,
+                        f"\nStill thinking{len(s)}...",
+                        bot,
+                        split_text=True,
+                    )
+            elif event.event_type == "stream-end":
+                break
+        content = (
+            s
+            + "\n------\n------\n"
+            + source
+            + f"\n------\n------\nLast Update{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+
+        try:
+            bot_reply_markdown(reply_id, who, s, bot, split_text=True)
+        except:
+            pass
+    except Exception as e:
+        print(e)
+        bot_reply_markdown(reply_id, who, "Answer wrong", bot)
+        player_message.clear()
+        return full, reply_id.message_id
+    full += f"\n---\n{who}:\n{content}"
+    return full, reply_id.message_id
+
+
+def final_answer(latest_message: Message, bot: TeleBot, full, answers_list):
+    """final answer"""
+    who = "Answer"
+    reply_id = bot_reply_first(latest_message, who, bot)
+    ph_s = ph.create_page_md(title="Answer it", markdown_text=full)
+    bot_reply_markdown(reply_id, who, f"[View]({ph_s})", bot)
+    # delete the chat message, only leave a telegra.ph link
+    for i in answers_list:
+        bot.delete_message(latest_message.chat.id, i)
 
 
 if GOOGLE_GEMINI_KEY and CHATGPT_API_KEY:

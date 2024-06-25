@@ -75,6 +75,34 @@ Note, if you are using third party service, you need to `export OPENAI_API_BASE=
 
 Note, currently its support dify Chatbot with instructions(System prompt) and different MODEL with its parameters.
 
+## Bot -> Cohere
+
+1. visit https://dashboard.cohere.com/api-keys get the key
+2. export COHERE_API_KEY=${the_key}
+3. use `cohere: ${message}` to ask
+
+## Function -> Telegraph
+
+### Skip token (default)
+
+You do not need to do anything.
+
+But you may not be able to edit any generated post since you do not have the token.
+
+### Store token (recommended)
+
+Change "Store_Token" to "True" in "handlers/__init__.py" TelegraphAPI/_create_ph_account. It will store the token in "token_key.json".
+
+### Get token manually from Telegram account
+
+1. https://t.me/telegraph Create or login Telegraph account
+2. `Log in as ${Account} on this device`
+3. On Browser at https://telegra.ph/, press F12 or right click and inspect
+4. Go to Application -> Storage -> Cookies -> https://telegra.ph/
+5. The token at `tph_token` is the token for telegra.ph API
+
+Do not share the token with others, it's like a password.
+
 ## HOW TO Install and Run
 
 ### Manually install 
