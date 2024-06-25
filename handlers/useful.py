@@ -24,6 +24,8 @@ import cohere
 
 COHERE_API_KEY = environ.get("COHERE_API_KEY")
 COHERE_MODEL = "command-r-plus"
+# if you want to use cohere for answer it, set it to True
+USE_CHHERE = False
 if COHERE_API_KEY:
     co = cohere.Client(api_key=COHERE_API_KEY)
 
@@ -195,7 +197,7 @@ def answer_it_handler(message: Message, bot: TeleBot):
     chat_id_list.append(reply_id.message_id)
 
     ##### Cohere #####
-    if COHERE_API_KEY:
+    if USE_CHHERE and COHERE_API_KEY:
         full, chat_id = cohere_answer(latest_message, bot, full, m)
         chat_id_list.append(chat_id)
     else:
@@ -269,15 +271,15 @@ def cohere_answer(latest_message: Message, bot: TeleBot, full, m):
     return full, reply_id.message_id
 
 
-def final_answer(latest_message: Message, bot: TeleBot, full, list):
+def final_answer(latest_message: Message, bot: TeleBot, full, answers_list):
     """final answer"""
     who = "Answer"
     reply_id = bot_reply_first(latest_message, who, bot)
     ph_s = ph.create_page_md(title="Answer it", markdown_text=full)
     bot_reply_markdown(reply_id, who, f"[View]({ph_s})", bot)
     # delete the chat message, only leave a telegra.ph link
-    # for i in list:
-    #     bot.delete_message(latest_message.chat.id, i)
+    for i in answers_list:
+        bot.delete_message(latest_message.chat.id, i)
 
 
 if GOOGLE_GEMINI_KEY and CHATGPT_API_KEY:
