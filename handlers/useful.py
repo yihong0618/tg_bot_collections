@@ -19,20 +19,18 @@ from . import *
 
 from telegramify_markdown.customize import markdown_symbol
 
+#### Cohere init ####
 import cohere
 
 COHERE_API_KEY = environ.get("COHERE_API_KEY")
-TELEGRA_PH_TOKEN = environ.get("TELEGRA_PH_TOKEN")
+COHERE_MODEL = "command-r-plus"
 if COHERE_API_KEY:
     co = cohere.Client(api_key=COHERE_API_KEY)
-if TELEGRA_PH_TOKEN:
-    ph = TelegraphAPI(TELEGRA_PH_TOKEN)
-else:
-    TELEGRA_PH_TOKEN = create_ph_account(
-        short_name="Answer it", author_name="A Telegram Bot"
-    )
-    ph = TelegraphAPI(TELEGRA_PH_TOKEN)
-COHERE_MODEL = "command-r-plus"
+
+#### Telegraph init ####
+TELEGRA_PH_TOKEN = environ.get("TELEGRA_PH_TOKEN")
+ph = TelegraphAPI(TELEGRA_PH_TOKEN)
+#### Telegraph done ####
 
 chat_message_dict = ExpiringDict(max_len=100, max_age_seconds=120)
 chat_user_dict = ExpiringDict(max_len=100, max_age_seconds=20)
@@ -203,7 +201,7 @@ def answer_it_handler(message: Message, bot: TeleBot):
     else:
         pass
 
-    ##### Answer #####
+    ##### Telegraph #####
     final_answer(latest_message, bot, full, chat_id_list)
 
 

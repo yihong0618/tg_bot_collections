@@ -81,7 +81,19 @@ Note, currently its support dify Chatbot with instructions(System prompt) and di
 2. export COHERE_API_KEY=${the_key}
 3. use `cohere: ${message}` to ask
 
-## Bot -> `Telegra.ph`
+## Function -> Telegraph
+
+### Skip token (default)
+
+You do not need to do anything.
+
+But you may not be able to edit any generated post since you do not have the token.
+
+### Store token (recommended)
+
+Change "Store_Token" to "True" in "handlers/__init__.py" TelegraphAPI/_create_ph_account. It will store the token in "token_key.json".
+
+### Get token manually from Telegram account
 
 1. https://t.me/telegraph Create or login Telegraph account
 2. `Log in as ${Account} on this device`

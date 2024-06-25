@@ -169,4 +169,4 @@ nohup.out
 *.pdf
 .pdm-python
 *.wav
-telegraph_token.json
+token_key.json

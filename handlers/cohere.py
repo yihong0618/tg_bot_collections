@@ -17,18 +17,11 @@ markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 COHERE_API_KEY = environ.get("COHERE_API_KEY")
 COHERE_MODEL = "command-r-plus"
-
-TELEGRA_PH_TOKEN = environ.get("TELEGRA_PH_TOKEN")
-if TELEGRA_PH_TOKEN:
-    ph = TelegraphAPI(TELEGRA_PH_TOKEN)
-else:
-    TELEGRA_PH_TOKEN = create_ph_account(
-        short_name="cohere", author_name="A Telegram Bot"
-    )
-    ph = TelegraphAPI(TELEGRA_PH_TOKEN)
-
 if COHERE_API_KEY:
     co = cohere.Client(api_key=COHERE_API_KEY)
+
+TELEGRA_PH_TOKEN = environ.get("TELEGRA_PH_TOKEN")
+ph = TelegraphAPI(TELEGRA_PH_TOKEN)
 
 # Global history cache
 cohere_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
