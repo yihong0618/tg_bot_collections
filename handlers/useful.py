@@ -6,6 +6,8 @@ from expiringdict import ExpiringDict
 from os import environ
 import time
 import datetime
+import threading
+import queue
 
 from openai import OpenAI
 import google.generativeai as genai
@@ -26,6 +28,7 @@ COHERE_API_KEY = environ.get("COHERE_API_KEY")
 COHERE_MODEL = "command-r-plus"
 # if you want to use cohere for answer it, set it to True
 USE_CHHERE = False
+USE_CLAUDE = True
 if COHERE_API_KEY:
     co = cohere.Client(api_key=COHERE_API_KEY)
 
@@ -63,7 +66,6 @@ model = genai.GenerativeModel(
     generation_config=generation_config,
     safety_settings=safety_settings,
 )
-convo = model.start_chat()
 
 #### ChatGPT init ####
 CHATGPT_API_KEY = environ.get("OPENAI_API_KEY")
@@ -72,9 +74,37 @@ QWEN_API_KEY = environ.get("TOGETHER_API_KEY")
 QWEN_MODEL = "Qwen/Qwen2-72B-Instruct"
 CHATGPT_PRO_MODEL = "gpt-4o-2024-05-13"
 
+#### CLAUDE ####
+ANTHROPIC_API_KEY = environ.get("ANTHROPIC_API_KEY")
+ANTHROPIC_BASE_URL = environ.get("ANTHROPIC_BASE_URL")
+ANTHROPIC_MODEL = "claude-3-5-sonnet-20240620"
+# use openai for claude
+claude_client = OpenAI(
+    api_key=ANTHROPIC_API_KEY, base_url=ANTHROPIC_BASE_URL, timeout=20
+)
 
 client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL, timeout=300)
 qwen_client = Together(api_key=QWEN_API_KEY, timeout=300)
+
+
+def _run_in_thread(func, *args, **kwargs):
+    result_queue = queue.Queue()
+
+    def wrapper():
+        try:
+            result = func(*args, **kwargs)
+            result_queue.put(result)
+        except Exception as e:
+            result_queue.put(e)
+
+    thread = threading.Thread(target=wrapper)
+    thread.start()
+    thread.join()
+
+    result = result_queue.get()
+    if isinstance(result, Exception):
+        raise result
+    return result
 
 
 def md_handler(message: Message, bot: TeleBot):
@@ -89,7 +119,7 @@ def latest_handle_messages(message: Message, bot: TeleBot):
     chat_id = message.chat.id
     chat_user_id = message.from_user.id
     # if is bot command, ignore
-    if message.text.startswith("/"):
+    if message.text and message.text.startswith("/"):
         return
     # start command ignore
     elif message.text.startswith(
@@ -127,6 +157,34 @@ def latest_handle_messages(message: Message, bot: TeleBot):
         print(chat_message_dict[chat_id].text)
 
 
+def get_gpt_answer(message):
+    chatgpt_reply_text = ""
+    player_message = [{"role": "user", "content": message}]
+    try:
+        r = client.chat.completions.create(
+            messages=player_message, max_tokens=4096, model=CHATGPT_PRO_MODEL
+        )
+        chatgpt_reply_text = r.choices[0].message.content.encode("utf8").decode()
+    except Exception as e:
+        print(e)
+        chatgpt_reply_text = "answer wrong"
+    return chatgpt_reply_text
+
+
+def get_claude_answer(message):
+    chatgpt_reply_text = ""
+    player_message = [{"role": "user", "content": message}]
+    try:
+        r = claude_client.chat.completions.create(
+            messages=player_message, max_tokens=4096, model=ANTHROPIC_MODEL
+        )
+        chatgpt_reply_text = r.choices[0].message.content.encode("utf8").decode()
+    except Exception as e:
+        print(e)
+        chatgpt_reply_text = "answer wrong"
+    return chatgpt_reply_text
+
+
 def answer_it_handler(message: Message, bot: TeleBot):
     """answer_it: /answer_it"""
     # answer the last message in the chat group
@@ -137,14 +195,19 @@ def answer_it_handler(message: Message, bot: TeleBot):
     latest_message = chat_message_dict.get(chat_id)
     m = latest_message.text.strip()
     m = enrich_text_with_urls(m)
-    full = ""
+    full = "Question:\n" + m + "\n---\n"
     ##### Gemini #####
     who = "Gemini Pro"
     # show something, make it more responsible
     reply_id = bot_reply_first(latest_message, who, bot)
+    chatgpt_answer = _run_in_thread(get_gpt_answer, m)
+
+    claude_answer = ""
+    if ANTHROPIC_API_KEY:
+        claude_answer = _run_in_thread(get_claude_answer, m)
 
     try:
-        r = convo.send_message(m, stream=True)
+        r = model.generate_content(m, stream=True)
         s = ""
         start = time.time()
         for e in r:
@@ -153,48 +216,31 @@ def answer_it_handler(message: Message, bot: TeleBot):
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
         bot_reply_markdown(reply_id, who, s, bot)
-        convo.history.clear()
     except Exception as e:
         print(e)
-        convo.history.clear()
         bot_reply_markdown(reply_id, who, "Error", bot)
 
     full += f"{who}:\n{s}"
     chat_id_list = [reply_id.message_id]
+
     ##### ChatGPT #####
     who = "ChatGPT Pro"
     reply_id = bot_reply_first(latest_message, who, bot)
+    # get gpt answer using thread
 
-    player_message = [{"role": "user", "content": m}]
+    bot_reply_markdown(reply_id, who, chatgpt_answer, bot)
 
-    try:
-        r = client.chat.completions.create(
-            messages=player_message,
-            max_tokens=4096,
-            model=CHATGPT_PRO_MODEL,
-            stream=True,
-        )
-        s = ""
-        start = time.time()
-        for chunk in r:
-            if chunk.choices[0].delta.content is None:
-                break
-            s += chunk.choices[0].delta.content
-            if time.time() - start > 1.5:
-                start = time.time()
-                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
-        # maybe not complete
-        try:
-            bot_reply_markdown(reply_id, who, s, bot)
-        except:
-            pass
-
-    except Exception as e:
-        print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
-
-    full += f"\n---\n{who}:\n{s}"
+    full += f"\n---\n{who}:\n{chatgpt_answer}"
     chat_id_list.append(reply_id.message_id)
+
+    ##### Claude #####
+    if USE_CLAUDE and ANTHROPIC_API_KEY:
+        who = "Claude Pro"
+        reply_id = bot_reply_first(latest_message, who, bot)
+        bot_reply_markdown(reply_id, who, claude_answer, bot)
+
+        full += f"\n---\n{who}:\n{claude_answer}"
+        chat_id_list.append(reply_id.message_id)
 
     ##### Cohere #####
     if USE_CHHERE and COHERE_API_KEY:

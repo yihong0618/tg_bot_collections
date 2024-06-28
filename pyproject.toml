@@ -19,5 +19,8 @@ dependencies = [
     "dify-client>=0.1.10",
     "chattts-fork>=0.0.1",
     "expiringdict>=1.2.2",
+    "beautifulsoup4>=4.12.3",
+    "Markdown>=3.6",
+    "cohere>=5.5.8",
 ]
 requires-python = ">=3.10"

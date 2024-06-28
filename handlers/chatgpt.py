@@ -96,12 +96,12 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
 
     player_message = []
     # restart will lose all TODO
-    if str(message.from_user.id) not in chatgpt_player_dict:
-        chatgpt_player_dict[str(message.from_user.id)] = (
+    if str(message.from_user.id) not in chatgpt_pro_player_dict:
+        chatgpt_pro_player_dict[str(message.from_user.id)] = (
             player_message  # for the imuutable list
         )
     else:
-        player_message = chatgpt_player_dict[str(message.from_user.id)]
+        player_message = chatgpt_pro_player_dict[str(message.from_user.id)]
     if m.strip() == "clear":
         bot.reply_to(
             message,
