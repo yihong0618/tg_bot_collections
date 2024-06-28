@@ -7,6 +7,7 @@ import traceback
 from functools import update_wrapper
 from pathlib import Path
 from typing import Any, Callable, TypeVar
+from expiringdict import ExpiringDict
 
 import requests
 from telebot import TeleBot
@@ -22,6 +23,8 @@ markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 T = TypeVar("T", bound=Callable)
 
 BOT_MESSAGE_LENGTH = 4000
+
+REPLY_MESSAGE_CACHE = ExpiringDict(max_len=1000, max_age_seconds=300)
 
 
 def bot_reply_first(message: Message, who: str, bot: TeleBot) -> Message:
@@ -39,6 +42,11 @@ def bot_reply_markdown(
     it will fallback to plain text in case of any failure
     """
     try:
+        cache_key = f"{reply_id.chat.id}_{reply_id.message_id}"
+        if cache_key in REPLY_MESSAGE_CACHE and REPLY_MESSAGE_CACHE[cache_key] == text:
+            print(f"Skipping duplicate message for {cache_key}")
+            return True
+        REPLY_MESSAGE_CACHE[cache_key] = text
         if len(text.encode("utf-8")) <= BOT_MESSAGE_LENGTH or not split_text:
             bot.edit_message_text(
                 f"*{who}*:\n{telegramify_markdown.convert(text)}",
