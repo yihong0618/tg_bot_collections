@@ -278,7 +278,7 @@ class TelegraphAPI:
         data = {
             "access_token": self.access_token,
             "title": title,
-            "content": json.dumps(content),
+            "content": json.dumps(content, ensure_ascii=False),
             "return_content": return_content,
             "author_name": author_name if author_name else self.author_name,
             "author_url": author_url if author_url else self.author_url,

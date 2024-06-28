@@ -6,13 +6,10 @@ from expiringdict import ExpiringDict
 from os import environ
 import time
 import datetime
-import threading
-import queue
+from concurrent.futures import ThreadPoolExecutor
 
 from openai import OpenAI
 import google.generativeai as genai
-from google.generativeai import ChatSession
-from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
 from together import Together
 from telebot.types import Message
@@ -62,7 +59,7 @@ safety_settings = [
 ]
 
 model = genai.GenerativeModel(
-    model_name="models/gemini-1.5-pro-latest",
+    model_name="gemini-1.5-flash-latest",
     generation_config=generation_config,
     safety_settings=safety_settings,
 )
@@ -85,26 +82,6 @@ claude_client = OpenAI(
 
 client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL, timeout=300)
 qwen_client = Together(api_key=QWEN_API_KEY, timeout=300)
-
-
-def _run_in_thread(func, *args, **kwargs):
-    result_queue = queue.Queue()
-
-    def wrapper():
-        try:
-            result = func(*args, **kwargs)
-            result_queue.put(result)
-        except Exception as e:
-            result_queue.put(e)
-
-    thread = threading.Thread(target=wrapper)
-    thread.start()
-    thread.join()
-
-    result = result_queue.get()
-    if isinstance(result, Exception):
-        raise result
-    return result
 
 
 def md_handler(message: Message, bot: TeleBot):
@@ -198,21 +175,23 @@ def answer_it_handler(message: Message, bot: TeleBot):
     full = "Question:\n" + m + "\n---\n"
     ##### Gemini #####
     who = "Gemini Pro"
-    # show something, make it more responsible
     reply_id = bot_reply_first(latest_message, who, bot)
-    chatgpt_answer = _run_in_thread(get_gpt_answer, m)
+
+    #### excutor thread ####
+    executor = ThreadPoolExecutor(max_workers=5)
+    chatgpt_thread = executor.submit(get_gpt_answer, m)
+    claude_thread = None
 
     claude_answer = ""
     if ANTHROPIC_API_KEY:
-        claude_answer = _run_in_thread(get_claude_answer, m)
-
+        claude_thread = executor.submit(get_claude_answer, m)
     try:
         r = model.generate_content(m, stream=True)
         s = ""
         start = time.time()
         for e in r:
             s += e.text
-            if time.time() - start > 1.7:
+            if time.time() - start > 1.5:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
         bot_reply_markdown(reply_id, who, s, bot)
@@ -227,6 +206,7 @@ def answer_it_handler(message: Message, bot: TeleBot):
     who = "ChatGPT Pro"
     reply_id = bot_reply_first(latest_message, who, bot)
     # get gpt answer using thread
+    chatgpt_answer = chatgpt_thread.result()
 
     bot_reply_markdown(reply_id, who, chatgpt_answer, bot)
 
@@ -236,6 +216,7 @@ def answer_it_handler(message: Message, bot: TeleBot):
     ##### Claude #####
     if USE_CLAUDE and ANTHROPIC_API_KEY:
         who = "Claude Pro"
+        claude_answer = claude_thread.result()
         reply_id = bot_reply_first(latest_message, who, bot)
         bot_reply_markdown(reply_id, who, claude_answer, bot)
 
