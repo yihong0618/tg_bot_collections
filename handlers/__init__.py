@@ -7,7 +7,6 @@ import traceback
 from functools import update_wrapper
 from pathlib import Path
 from typing import Any, Callable, TypeVar
-from expiringdict import ExpiringDict
 
 import requests
 from telebot import TeleBot
@@ -24,8 +23,6 @@ T = TypeVar("T", bound=Callable)
 
 BOT_MESSAGE_LENGTH = 4000
 
-REPLY_MESSAGE_CACHE = ExpiringDict(max_len=1000, max_age_seconds=300)
-
 
 def bot_reply_first(message: Message, who: str, bot: TeleBot) -> Message:
     """Create the first reply message which make user feel the bot is working."""
@@ -35,24 +32,25 @@ def bot_reply_first(message: Message, who: str, bot: TeleBot) -> Message:
 
 
 def bot_reply_markdown(
-    reply_id: Message, who: str, text: str, bot: TeleBot, split_text: bool = True
+    reply_id: Message,
+    who: str,
+    text: str,
+    bot: TeleBot,
+    split_text: bool = True,
+    disable_web_page_preview: bool = False,
 ) -> bool:
     """
     reply the Markdown by take care of the message length.
     it will fallback to plain text in case of any failure
     """
     try:
-        cache_key = f"{reply_id.chat.id}_{reply_id.message_id}"
-        if cache_key in REPLY_MESSAGE_CACHE and REPLY_MESSAGE_CACHE[cache_key] == text:
-            print(f"Skipping duplicate message for {cache_key}")
-            return True
-        REPLY_MESSAGE_CACHE[cache_key] = text
         if len(text.encode("utf-8")) <= BOT_MESSAGE_LENGTH or not split_text:
             bot.edit_message_text(
                 f"*{who}*:\n{telegramify_markdown.convert(text)}",
                 chat_id=reply_id.chat.id,
                 message_id=reply_id.message_id,
                 parse_mode="MarkdownV2",
+                disable_web_page_preview=disable_web_page_preview,
             )
             return True
 
@@ -63,6 +61,7 @@ def bot_reply_markdown(
             chat_id=reply_id.chat.id,
             message_id=reply_id.message_id,
             parse_mode="MarkdownV2",
+            disable_web_page_preview=disable_web_page_preview,
         )
         for i in range(1, len(msgs)):
             bot.reply_to(
@@ -79,6 +78,7 @@ def bot_reply_markdown(
             f"*{who}*:\n{text}",
             chat_id=reply_id.chat.id,
             message_id=reply_id.message_id,
+            disable_web_page_preview=disable_web_page_preview,
         )
         return False
 
@@ -286,7 +286,7 @@ class TelegraphAPI:
         data = {
             "access_token": self.access_token,
             "title": title,
-            "content": json.dumps(content, ensure_ascii=False),
+            "content": json.dumps(content),
             "return_content": return_content,
             "author_name": author_name if author_name else self.author_name,
             "author_url": author_url if author_url else self.author_url,

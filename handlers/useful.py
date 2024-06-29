@@ -31,17 +31,18 @@ Language = "zh-cn"  # "en" or "zh-cn".
 SUMMARY = "gemini"  # "cohere" or "gemini" or None
 General_clean = True  # Will Delete LLM message
 Extra_clean = True  # Will Delete command message too
-
+Link_Clean = False  # True will disable Instant View / Web Preview
 #### LLMs ####
 GEMINI_USE = True
 CHATGPT_USE = True
-COHERE_USE = False  # Slow, but web search
+CLADUE_USE = True
 QWEN_USE = True
-CLADUE_USE = False  # Untested
+
+COHERE_USE = False  # Slow, but web search
 LLAMA_USE = False  # prompted for Language
 
 COHERE_USE_BACKGROUND = True  # Only display in telegra.ph
-LLAMA_USE_BACKGROUND = True
+LLAMA_USE_BACKGROUND = True  # But telegra.ph's **instant view** may not up to date
 
 #### LLMs init ####
 #### OpenAI init ####
@@ -542,23 +543,31 @@ def final_answer(latest_message: Message, bot: TeleBot, full_answer: str, answer
     #### Summary ####
     if SUMMARY == None:
         pass
-    elif COHERE_USE and COHERE_API_KEY and SUMMARY == "cohere":
-        summary_cohere(bot, full_answer, ph_s, reply_id)
-    elif GEMINI_USE and GOOGLE_GEMINI_KEY and SUMMARY == "gemini":
-        summary_gemini(bot, full_answer, ph_s, reply_id)
     else:
-        pass
+        s = llm_summary(bot, full_answer, ph_s, reply_id)
+        bot_reply_markdown(reply_id, who, s, bot, disable_web_page_preview=True)
 
     #### Background LLM ####
-    # Run background llm, no show to telegram, just update the page, Good for slow llm
+    # Run background llm, no show to telegram, just update the ph page, Good for slow llm
     if LLAMA_USE_BACKGROUND and LLAMA_API_KEY:
         llama_b_m = background_llama(latest_message.text)
-        print(llama_b_m)
         full_answer = llm_background(ph_s, full_answer, llama_b_m)
+
     if COHERE_USE_BACKGROUND and COHERE_API_KEY:
         cohere_b_m = background_cohere(latest_message.text)
-        print(cohere_b_m)
         full_answer = llm_background(ph_s, full_answer, cohere_b_m)
+
+
+def llm_summary(bot, full_answer, ph_s, reply_id) -> str:
+    """llm summary return the summary of the full answer."""
+    if SUMMARY == "gemini":
+        s = summary_gemini(bot, full_answer, ph_s, reply_id)
+    elif SUMMARY == "cohere":
+        s = summary_cohere(bot, full_answer, ph_s, reply_id)
+    else:
+        print(f"\n---\nSummary Fail\n---\n")
+        s = f"**[Full Answer]({ph_s})**\n~~Summary Answer Wrong~~\n"
+    return s
 
 
 def background_cohere(m: str) -> str:
@@ -621,7 +630,7 @@ def background_llama(m: str) -> str:
     return llm_answer(who, s)
 
 
-def summary_cohere(bot: TeleBot, full_answer: str, ph_s: str, reply_id: int) -> None:
+def summary_cohere(bot: TeleBot, full_answer: str, ph_s: str, reply_id: int) -> str:
     """Receive the full text, and the final_answer's chat_id, update with a summary."""
     who = "Answer it"
 
@@ -674,6 +683,7 @@ Start with "Summary:" or "总结:"
             bot_reply_markdown(reply_id, who, s, bot)
         except:
             pass
+        return s
 
     except Exception as e:
         if Language == "zh-cn":
@@ -689,9 +699,9 @@ def summary_gemini(bot: TeleBot, full_answer: str, ph_s: str, reply_id: int) -> 
 
     # inherit
     if Language == "zh-cn":
-        s = f"**[全文]({ph_s})** | "
+        s = f"**[🔗全文]({ph_s})** | "
     elif Language == "en":
-        s = f"**[Full Answer]({ph_s})** | "
+        s = f"**[🔗Full Answer]({ph_s})** | "
 
     try:
         r = convo_summary.send_message(full_answer, stream=True)
@@ -703,6 +713,7 @@ def summary_gemini(bot: TeleBot, full_answer: str, ph_s: str, reply_id: int) -> 
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
         bot_reply_markdown(reply_id, who, s, bot)
         convo_summary.history.clear()
+        return s
     except Exception as e:
         if Language == "zh-cn":
             bot_reply_markdown(reply_id, who, f"[全文]({ph_s})", bot)
