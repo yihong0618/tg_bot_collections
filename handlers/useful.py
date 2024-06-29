@@ -7,6 +7,7 @@ from os import environ
 import time
 import datetime
 from concurrent.futures import ThreadPoolExecutor
+import re
 
 from . import *
 
@@ -18,24 +19,29 @@ markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 chat_message_dict = ExpiringDict(max_len=100, max_age_seconds=120)
 chat_user_dict = ExpiringDict(max_len=100, max_age_seconds=20)
 
-
-#### Customization ####
-Language = "zh-cn"  # "en" or "zh-cn".
-SUMMARY = "gemini"  # "cohere" or "gemini" or None
-Extra_clean = True  # Will Delete command message
-GEMINI_USE = True
-CHATGPT_USE = True
-COHERE_USE = True
-QWEN_USE = True
-CLADUE_USE = True
-LLAMA_USE = True
-
 #### Telegra.ph init ####
 # Will auto generate a token if not provided, restart will lose all TODO
 TELEGRA_PH_TOKEN = environ.get("TELEGRA_PH_TOKEN")
 # Edit "Store_Token = False" in "__init__.py" to True to store it
 ph = TelegraphAPI(TELEGRA_PH_TOKEN)
 
+
+#### Customization ####
+Language = "zh-cn"  # "en" or "zh-cn".
+SUMMARY = "gemini"  # "cohere" or "gemini" or None
+General_clean = True  # Will Delete LLM message
+Extra_clean = True  # Will Delete command message too
+
+#### LLMs ####
+GEMINI_USE = True
+CHATGPT_USE = True
+COHERE_USE = False  # Slow, but web search
+QWEN_USE = True
+CLADUE_USE = False  # Untested
+LLAMA_USE = False  # prompted for Language
+
+COHERE_USE_BACKGROUND = True  # Only display in telegra.ph
+LLAMA_USE_BACKGROUND = True
 
 #### LLMs init ####
 #### OpenAI init ####
@@ -72,7 +78,7 @@ if GEMINI_USE and GOOGLE_GEMINI_KEY:
     ]
 
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash-latest",
+        model_name="gemini-1.5-pro-latest",
         generation_config=generation_config,
         safety_settings=safety_settings,
     )
@@ -84,9 +90,9 @@ if GEMINI_USE and GOOGLE_GEMINI_KEY:
 The user asked a question, and multiple AI have given answers to the same question.
 Your task is to summarize the responses from them in a concise and clear manner.
 The summary should:
-In one to two short sentences, as less as possible, and should not exceed 150 characters.
+In one to three short sentences, as less as possible.
 Your must use language of {Language} to respond.
-Start with "Summary:" or "总结:"
+Start with "Summary:" or"总结:"
 """,
     )
     convo = model.start_chat()
@@ -96,7 +102,7 @@ Start with "Summary:" or "总结:"
 #### Cohere init ####
 COHERE_API_KEY = environ.get("COHERE_API_KEY")
 
-if COHERE_USE and COHERE_API_KEY:
+if (COHERE_USE or COHERE_USE_BACKGROUND) and COHERE_API_KEY:
     import cohere
 
     COHERE_MODEL = "command-r-plus"
@@ -124,11 +130,11 @@ if CLADUE_USE and ANTHROPIC_API_KEY:
 
 #### llama init ####
 LLAMA_API_KEY = environ.get("GROQ_API_KEY")
-if LLAMA_USE and LLAMA_API_KEY:
+if (LLAMA_USE or LLAMA_USE_BACKGROUND) and LLAMA_API_KEY:
     from groq import Groq
 
     llama_client = Groq(api_key=LLAMA_API_KEY)
-    LLAMA_MODEL = "llama3-8b-8192"
+    LLAMA_MODEL = "llama3-70b-8192"
 
 
 #### init end ####
@@ -194,7 +200,9 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
     latest_message = chat_message_dict.get(chat_id)
     m = latest_message.text.strip()
     m = enrich_text_with_urls(m)
-    full_answer = f"Question:\n{m}\n---\n"
+    full_answer = f"Question:\n{m}\n" if len(m) < 300 else ""
+    if Extra_clean:  # delete the command message
+        bot.delete_message(chat_id, message.message_id)
 
     #### Answers Thread ####
     executor = ThreadPoolExecutor(max_workers=5)
@@ -240,53 +248,32 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
 
     print(full_chat_id_list)
 
+    if len(m) > 300:
+        full_answer += llm_answer("Question", m)
+
     ##### Telegraph #####
     final_answer(latest_message, bot, full_answer, full_chat_id_list)
-    if Extra_clean:
-        bot.delete_message(chat_id, message.message_id)
 
 
-# def thread_answers(latest_message: Message, bot: TeleBot, m: str):
-#     #### answers function init ####
-#     USE = {
-#         "gemini_answer": GEMINI_USE and GOOGLE_GEMINI_KEY,
-#         "chatgpt_answer": CHATGPT_USE and CHATGPT_API_KEY,
-#         "cohere_answer": COHERE_USE and COHERE_API_KEY,
-#         "qwen_answer": QWEN_USE and QWEN_API_KEY,
-#         # More LLMs
-#     }
+def update_time():
+    """Return the current time in UTC+8. Good for testing completion of content."""
+    return f"\nLast Update{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} at UTC+8\n"
 
 
-#     results = []
-#     full_chat_id_list = []
+def llm_answer(who: str, s: str) -> str:
+    """Universal llm answer format for telegra.ph. Use title so 'link#title' can be used."""
+    return f"\n\n---\n## {who}\n{s}"
 
-#     with ThreadPoolExecutor(max_workers=5) as executor:
-#         futures = {
-#             executor.submit(func, latest_message, bot, m): func
-#             for func, use in USE.items()
-#             if use
-#         }
 
-#         for future in as_completed(futures):
-#             try:
-#                 answer, message_id = future.result()
-#                 # Store the answer and message_id
-#                 results.append((message_id, answer))
-#                 full_chat_id_list.append(message_id)
-#             except Exception as e:
-#                 print(f"\n------\nthread_answers Error:\n{e}\n------\n")
-#                 continue
-
-#     # rank the results by message_id
-#     sorted_results = sorted(results)
-#     full_chat_id_list.sort()
-
-#     # final answer
-#     full_answer = f"Question:\n{m}\n---\n"
-#     for _, answer in sorted_results:
-#         full_answer += answer
-
-#     return full_answer, full_chat_id_list
+def llm_background(path: str, full_answer: str, m: str) -> str:
+    """Update the telegra.ph page with background answer result. Return new full answer."""
+    ph_path = re.search(r"https?://telegra\.ph/(.+)", path).group(1)
+    full_answer += m + update_time()
+    try:
+        ph.edit_page_md(path=ph_path, title="Answer it", markdown_text=full_answer)
+    except Exception as e:
+        print(f"\n------\nllm_background Error:\n{e}\n------\n")
+    return full_answer
 
 
 def gemini_answer(latest_message: Message, bot: TeleBot, m):
@@ -312,8 +299,7 @@ def gemini_answer(latest_message: Message, bot: TeleBot, m):
         bot_reply_markdown(reply_id, who, "Error", bot)
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
 
-    answer = f"\n---\n{who}:\n{s}"
-    return answer, reply_id.message_id
+    return llm_answer(who, s), reply_id.message_id
 
 
 def chatgpt_answer(latest_message: Message, bot: TeleBot, m):
@@ -350,8 +336,7 @@ def chatgpt_answer(latest_message: Message, bot: TeleBot, m):
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
 
-    answer = f"\n---\n{who}:\n{s}"
-    return answer, reply_id.message_id
+    return llm_answer(who, s), reply_id.message_id
 
 
 def claude_answer(latest_message: Message, bot: TeleBot, m):
@@ -387,7 +372,7 @@ def claude_answer(latest_message: Message, bot: TeleBot, m):
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
 
     answer = f"\n---\n{who}:\n{s}"
-    return answer, reply_id.message_id
+    return llm_answer(who, s), reply_id.message_id
 
 
 def cohere_answer(latest_message: Message, bot: TeleBot, m):
@@ -456,8 +441,8 @@ def cohere_answer(latest_message: Message, bot: TeleBot, m):
         print(f"\n------\n{who} function inner Error:\n{e}\n------\n")
         bot_reply_markdown(reply_id, who, "Answer wrong", bot)
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
-    answer = f"\n---\n{who}:\n{content}"
-    return answer, reply_id.message_id
+
+    return llm_answer(who, content), reply_id.message_id
 
 
 def qwen_answer(latest_message: Message, bot: TeleBot, m):
@@ -491,8 +476,7 @@ def qwen_answer(latest_message: Message, bot: TeleBot, m):
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
 
-    answer = f"\n---\n{who}:\n{s}"
-    return answer, reply_id.message_id
+    return llm_answer(who, s), reply_id.message_id
 
 
 def llama_answer(latest_message: Message, bot: TeleBot, m):
@@ -503,9 +487,10 @@ def llama_answer(latest_message: Message, bot: TeleBot, m):
         r = llama_client.chat.completions.create(
             messages=[
                 {
-                    "role": "user",
-                    "content": f"{m}\nMotes: You must use language of {Language} to respond.",
-                }
+                    "role": "system",
+                    "content": f"You must use language of {Language} to respond.",
+                },
+                {"role": "user", "content": m},
             ],
             max_tokens=8192,
             model=LLAMA_MODEL,
@@ -531,8 +516,7 @@ def llama_answer(latest_message: Message, bot: TeleBot, m):
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
 
-    answer = f"\n---\n{who}:\n{s}"
-    return answer, reply_id.message_id
+    return llm_answer(who, s), reply_id.message_id
 
 
 # TODO: Perplexity looks good. `pplx_answer`
@@ -542,11 +526,18 @@ def final_answer(latest_message: Message, bot: TeleBot, full_answer: str, answer
     """final answer"""
     who = "Answer it"
     reply_id = bot_reply_first(latest_message, who, bot)
+
+    # If disappeared means the answer is not complete in telegra.ph
+    full_answer += update_time()
+
+    # greate new telegra.ph page
     ph_s = ph.create_page_md(title="Answer it", markdown_text=full_answer)
     bot_reply_markdown(reply_id, who, f"**[Full Answer]({ph_s})**", bot)
+
     # delete the chat message, only leave a telegra.ph link
-    for i in answers_list:
-        bot.delete_message(latest_message.chat.id, i)
+    if General_clean:
+        for i in answers_list:
+            bot.delete_message(latest_message.chat.id, i)
 
     #### Summary ####
     if SUMMARY == None:
@@ -557,6 +548,77 @@ def final_answer(latest_message: Message, bot: TeleBot, full_answer: str, answer
         summary_gemini(bot, full_answer, ph_s, reply_id)
     else:
         pass
+
+    #### Background LLM ####
+    # Run background llm, no show to telegram, just update the page, Good for slow llm
+    if LLAMA_USE_BACKGROUND and LLAMA_API_KEY:
+        llama_b_m = background_llama(latest_message.text)
+        print(llama_b_m)
+        full_answer = llm_background(ph_s, full_answer, llama_b_m)
+    if COHERE_USE_BACKGROUND and COHERE_API_KEY:
+        cohere_b_m = background_cohere(latest_message.text)
+        print(cohere_b_m)
+        full_answer = llm_background(ph_s, full_answer, cohere_b_m)
+
+
+def background_cohere(m: str) -> str:
+    """we run cohere get the full answer in background"""
+    who = "Command R Plus"
+    try:
+        stream = co.chat_stream(
+            model=COHERE_MODEL,
+            message=m,
+            temperature=0.8,
+            chat_history=[],  # One time, so no need for chat history
+            prompt_truncation="AUTO",
+            connectors=[{"id": "web-search"}],
+            citation_quality="accurate",
+            preamble="",
+        )
+        s = ""
+        source = ""
+        for event in stream:
+            if event.event_type == "search-results":
+                for doc in event.documents:
+                    source += f"\n{doc['title']}\n{doc['url']}\n"
+            elif event.event_type == "text-generation":
+                s += event.text.encode("utf-8").decode("utf-8", "ignore")
+            elif event.event_type == "stream-end":
+                break
+        content = llm_answer(who, f"{s}\n\n---\n{source}")
+
+    except Exception as e:
+        print(f"\n------\nbackground_cohere Error:\n{e}\n------\n")
+        content = llm_answer(who, "Background Answer wrong")
+    return content
+
+
+def background_llama(m: str) -> str:
+    """we run llama get the full answer in background"""
+    who = "llama"
+    try:
+        r = llama_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"You must use language of {Language} to respond.",
+                },
+                {"role": "user", "content": m},
+            ],
+            max_tokens=8192,
+            model=LLAMA_MODEL,
+            stream=True,
+        )
+        s = ""
+        for chunk in r:
+            if chunk.choices[0].delta.content is None:
+                break
+            s += chunk.choices[0].delta.content
+
+    except Exception as e:
+        print(f"\n------\nbackground_llama Error:\n{e}\n------\n")
+        s = "Background Answer wrong"
+    return llm_answer(who, s)
 
 
 def summary_cohere(bot: TeleBot, full_answer: str, ph_s: str, reply_id: int) -> None:
