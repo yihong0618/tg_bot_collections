@@ -1,6 +1,7 @@
 from os import environ
 import time
 import datetime
+import re
 
 from telebot import TeleBot
 from telebot.types import Message
@@ -16,7 +17,7 @@ markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 COHERE_API_KEY = environ.get("COHERE_API_KEY")
-COHERE_MODEL = "command-r-plus"
+COHERE_MODEL = "command-r-plus"  # command-r may cause Chinese garbled code, and non stream mode also may cause garbled code.
 if COHERE_API_KEY:
     co = cohere.Client(api_key=COHERE_API_KEY)
 
@@ -27,98 +28,27 @@ ph = TelegraphAPI(TELEGRA_PH_TOKEN)
 cohere_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
 
 
-def cohere_handler_direct(message: Message, bot: TeleBot) -> None:
-    """cohere : /cohere <question>"""
-    m = message.text.strip()
+def clean_text(text):
+    """Clean up the garbled code in the UTF-8 encoded Chinese string.
 
-    player_message = []
-    if str(message.from_user.id) not in cohere_player_dict:
-        cohere_player_dict[str(message.from_user.id)] = player_message
+    Args:
+      text: String that needs to be cleaned.
+
+    Returns:
+      The cleaned string, if garbled code is detected, a prompt message is added at the end.
+    """
+    if "�" in text:
+        # Use re.sub to clean up garbled code
+        cleaned_text = re.sub(r"�.*?([，。！？；：]|$)", r"\1", text)
+        cleaned_text = re.sub(r"\s+", " ", cleaned_text).strip()
+        print(f"\n---------\nOriginal text:\n{text}\n---------")
+        return cleaned_text + "\n\n~~(乱码已去除，可能存在错误，请注意)~~"
     else:
-        player_message = cohere_player_dict[str(message.from_user.id)]
-
-    if m.strip() == "clear":
-        bot.reply_to(
-            message,
-            "Just cleared your Cohere messages history",
-        )
-        player_message.clear()
-        return
-
-    if m[:4].lower() == "new ":
-        m = m[4:].strip()
-        player_message.clear()
-
-    m = enrich_text_with_urls(m)
-
-    who = "Command R Plus"
-    reply_id = bot_reply_first(message, who, bot)
-
-    player_message.append({"role": "User", "message": m})
-    # keep the last 5, every has two ask and answer.
-    if len(player_message) > 10:
-        player_message = player_message[2:]
-
-    try:
-        stream = co.chat_stream(
-            model=COHERE_MODEL,
-            message=m,
-            temperature=0.8,
-            chat_history=player_message,
-            prompt_truncation="AUTO",
-            connectors=[{"id": "web-search"}],
-            citation_quality="accurate",
-            preamble=f"You are Command R+, a large language model trained to have polite, helpful, inclusive conversations with people. The current time in Tornoto is {datetime.datetime.now(datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S')}, in Los Angeles is {datetime.datetime.now(datetime.timezone.utc).astimezone().astimezone(datetime.timezone(datetime.timedelta(hours=-7))).strftime('%Y-%m-%d %H:%M:%S')}, and in China is {datetime.datetime.now(datetime.timezone.utc).astimezone(datetime.timezone(datetime.timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')}.",
-        )
-
-        s = ""
-        source = ""
-        start = time.time()
-        for event in stream:
-            if event.event_type == "stream-start":
-                bot_reply_markdown(reply_id, who, "Thinking...", bot)
-            elif event.event_type == "search-queries-generation":
-                bot_reply_markdown(reply_id, who, "Searching online...", bot)
-            elif event.event_type == "search-results":
-                bot_reply_markdown(reply_id, who, "Reading...", bot)
-                for doc in event.documents:
-                    source += f"\n[{doc['title']}]({doc['url']})"
-            elif event.event_type == "text-generation":
-                s += event.text.encode("utf-8").decode("utf-8")
-                if time.time() - start > 0.4:
-                    start = time.time()
-                    bot_reply_markdown(
-                        reply_id,
-                        who,
-                        f"\nStill thinking{len(s)}...",
-                        bot,
-                        split_text=True,
-                    )
-            elif event.event_type == "stream-end":
-                break
-        s += "\n" + source + "\n"
-
-        try:
-            bot_reply_markdown(reply_id, who, s, bot, split_text=True)
-        except:
-            pass
-
-        player_message.append(
-            {
-                "role": "Chatbot",
-                "message": convert(s),
-            }
-        )
-
-    except Exception as e:
-        print(e)
-        bot_reply_markdown(reply_id, who, "Answer wrong", bot)
-        player_message.clear()
-        return
+        return text
 
 
 def cohere_handler(message: Message, bot: TeleBot) -> None:
-    """cohere : /cohere <question> This will return a telegraph link"""
+    """cohere : /cohere_pro <question> Come with a telegraph link"""
     m = message.text.strip()
 
     player_message = []
@@ -150,6 +80,14 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
         player_message = player_message[2:]
 
     try:
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        preamble = (
+            f"You are Command, a large language model trained to have polite, helpful, and inclusive conversations with people. Your responses should be accurate and graceful in user's original language."
+            f"The current UTC time is {current_time.strftime('%Y-%m-%d %H:%M:%S')}, "
+            f"UTC-4 (e.g. New York) is {current_time.astimezone(datetime.timezone(datetime.timedelta(hours=-4))).strftime('%Y-%m-%d %H:%M:%S')}, "
+            f"UTC-7 (e.g. Los Angeles) is {current_time.astimezone(datetime.timezone(datetime.timedelta(hours=-7))).strftime('%Y-%m-%d %H:%M:%S')}, "
+            f"and UTC+8 (e.g. Beijing) is {current_time.astimezone(datetime.timezone(datetime.timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')}."
+        )
         stream = co.chat_stream(
             model=COHERE_MODEL,
             message=m,
@@ -158,7 +96,7 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
             prompt_truncation="AUTO",
             connectors=[{"id": "web-search"}],
             citation_quality="accurate",
-            preamble=f"You are Command R+, a large language model trained to have polite, helpful, inclusive conversations with people. The current time in Tornoto is {datetime.datetime.now(datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S')}, in Los Angeles is {datetime.datetime.now(datetime.timezone.utc).astimezone().astimezone(datetime.timezone(datetime.timedelta(hours=-7))).strftime('%Y-%m-%d %H:%M:%S')}, and in China is {datetime.datetime.now(datetime.timezone.utc).astimezone(datetime.timezone(datetime.timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')}.",
+            preamble=preamble,
         )
 
         s = ""
@@ -175,22 +113,32 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
                     source += f"\n{doc['title']}\n{doc['url']}\n"
             elif event.event_type == "text-generation":
                 s += event.text.encode("utf-8").decode("utf-8")
-                if time.time() - start > 0.4:
+                if time.time() - start > 1.4:
                     start = time.time()
-                    bot_reply_markdown(
-                        reply_id,
-                        who,
-                        f"\nStill thinking{len(s)}...",
-                        bot,
-                        split_text=True,
-                    )
+                    s = clean_text(s)
+                    if len(s) > 3900:
+                        bot_reply_markdown(
+                            reply_id,
+                            who,
+                            f"\nStill thinking{len(s)}...\n",
+                            bot,
+                            split_text=True,
+                        )
+                    else:
+                        bot_reply_markdown(
+                            reply_id,
+                            who,
+                            f"\nStill thinking{len(s)}...\n{s}",
+                            bot,
+                            split_text=True,
+                        )
             elif event.event_type == "stream-end":
                 break
         content = (
             s
             + "\n------\n------\n"
             + source
-            + f"\n------\n------\nLast Update{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            + f"\nLast Update{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} at UTC+8\n"
         )
         ph_s = ph.create_page_md(
             title="Cohere", markdown_text=content
@@ -217,14 +165,6 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
 
 
 if COHERE_API_KEY:
-
-    def register(bot: TeleBot) -> None:
-        bot.register_message_handler(
-            cohere_handler_direct, commands=["cohere_no_ph"], pass_bot=True
-        )
-        bot.register_message_handler(
-            cohere_handler_direct, regexp="^cohere_no_ph:", pass_bot=True
-        )
 
     def register(bot: TeleBot) -> None:
         bot.register_message_handler(cohere_handler, commands=["cohere"], pass_bot=True)
