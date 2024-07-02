@@ -25,30 +25,39 @@ TELEGRA_PH_TOKEN = environ.get("TELEGRA_PH_TOKEN")
 # Edit "Store_Token = False" in "__init__.py" to True to store it
 ph = TelegraphAPI(TELEGRA_PH_TOKEN)
 
-
-#### Customization ####
+#####################################################################
+#### Customization ##################################################
 Language = "zh-cn"  # "en" or "zh-cn".
-SUMMARY = "gemini"  # "cohere" or "gemini" or None
+SUMMARY = None  # "cohere" or "gemini" or None
 General_clean = True  # Will Delete LLM message
 Extra_clean = True  # Will Delete command message too
 Link_Clean = False  # True will disable Instant View / Web Preview
+Stream_Thread = 2  # How many stream LLM will stream at the same time
+Complete_Thread = 3  # How many non-stream LLM will run at the same time
+Stream_Timeout = 45  # If not complete in 45s, will stop wait or raise Exception timeout
 #### LLMs ####
 GEMINI_USE = True
-CHATGPT_USE = True
-CLADUE_USE = True
+CHATGPT_USE = False
+CLADUE_USE = False
 QWEN_USE = True
-
 COHERE_USE = False  # Slow, but web search
 LLAMA_USE = False  # prompted for Language
 
-COHERE_USE_BACKGROUND = True  # Only display in telegra.ph
-LLAMA_USE_BACKGROUND = True  # But telegra.ph's **instant view** may not up to date
+CHATGPT_COMPLETE = True  # sync mode
+CLADUE_COMPLETE = True  # Only display in telegra.ph
+COHERE_COMPLETE = False
+LLAMA_COMPLETE = False
+
+COHERE_APPEND = True  # Update later to ph, for extremely long content
+
+#### Customization End ##############################################
+#####################################################################
 
 #### LLMs init ####
 #### OpenAI init ####
 CHATGPT_API_KEY = environ.get("OPENAI_API_KEY")
 CHATGPT_BASE_URL = environ.get("OPENAI_API_BASE") or "https://api.openai.com/v1"
-if CHATGPT_USE and CHATGPT_API_KEY:
+if (CHATGPT_USE or CHATGPT_COMPLETE) and CHATGPT_API_KEY:
     from openai import OpenAI
 
     CHATGPT_PRO_MODEL = "gpt-4o-2024-05-13"
@@ -79,7 +88,7 @@ if GEMINI_USE and GOOGLE_GEMINI_KEY:
     ]
 
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-pro-latest",
+        model_name="gemini-1.5-flash-latest",
         generation_config=generation_config,
         safety_settings=safety_settings,
     )
@@ -103,7 +112,7 @@ Start with "Summary:" or"总结:"
 #### Cohere init ####
 COHERE_API_KEY = environ.get("COHERE_API_KEY")
 
-if (COHERE_USE or COHERE_USE_BACKGROUND) and COHERE_API_KEY:
+if (COHERE_USE or COHERE_COMPLETE or COHERE_APPEND) and COHERE_API_KEY:
     import cohere
 
     COHERE_MODEL = "command-r-plus"
@@ -122,7 +131,7 @@ if QWEN_USE and QWEN_API_KEY:
 #### Claude init ####
 ANTHROPIC_API_KEY = environ.get("ANTHROPIC_API_KEY")
 # use openai for claude
-if CLADUE_USE and ANTHROPIC_API_KEY:
+if (CLADUE_USE or CLADUE_COMPLETE) and ANTHROPIC_API_KEY:
     ANTHROPIC_BASE_URL = environ.get("ANTHROPIC_BASE_URL")
     ANTHROPIC_MODEL = "claude-3-5-sonnet-20240620"
     claude_client = OpenAI(
@@ -131,7 +140,7 @@ if CLADUE_USE and ANTHROPIC_API_KEY:
 
 #### llama init ####
 LLAMA_API_KEY = environ.get("GROQ_API_KEY")
-if (LLAMA_USE or LLAMA_USE_BACKGROUND) and LLAMA_API_KEY:
+if (LLAMA_USE or LLAMA_COMPLETE) and LLAMA_API_KEY:
     from groq import Groq
 
     llama_client = Groq(api_key=LLAMA_API_KEY)
@@ -206,7 +215,7 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         bot.delete_message(chat_id, message.message_id)
 
     #### Answers Thread ####
-    executor = ThreadPoolExecutor(max_workers=5)
+    executor = ThreadPoolExecutor(max_workers=Stream_Thread)
     if GEMINI_USE and GOOGLE_GEMINI_KEY:
         gemini_future = executor.submit(gemini_answer, latest_message, bot, m)
     if CHATGPT_USE and CHATGPT_API_KEY:
@@ -219,6 +228,17 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         claude_future = executor.submit(claude_answer, latest_message, bot, m)
     if LLAMA_USE and LLAMA_API_KEY:
         llama_future = executor.submit(llama_answer, latest_message, bot, m)
+
+    #### Complete Message Thread ####
+    executor2 = ThreadPoolExecutor(max_workers=Complete_Thread)
+    if CHATGPT_COMPLETE and CHATGPT_API_KEY:
+        complete_chatgpt_future = executor2.submit(complete_chatgpt, m)
+    if CLADUE_COMPLETE and ANTHROPIC_API_KEY:
+        complete_claude_future = executor2.submit(complete_claude, m)
+    if LLAMA_COMPLETE and LLAMA_API_KEY:
+        complete_llama_future = executor2.submit(complete_llama, m)
+    if COHERE_COMPLETE and COHERE_API_KEY:
+        complete_cohere_future = executor2.submit(complete_cohere, m)
 
     #### Answers List ####
     full_chat_id_list = []
@@ -247,6 +267,16 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         full_chat_id_list.append(llama_chat_id)
         full_answer += answer_llama
 
+    #### Complete Messages ####
+    if CHATGPT_COMPLETE and CHATGPT_API_KEY:
+        full_answer += complete_chatgpt_future.result()
+    if CLADUE_COMPLETE and ANTHROPIC_API_KEY:
+        full_answer += complete_claude_future.result()
+    if COHERE_COMPLETE and COHERE_API_KEY:
+        full_answer += complete_cohere_future.result()
+    if LLAMA_COMPLETE and LLAMA_API_KEY:
+        full_answer += complete_llama_future.result()
+
     print(full_chat_id_list)
 
     if len(m) > 300:
@@ -266,14 +296,14 @@ def llm_answer(who: str, s: str) -> str:
     return f"\n\n---\n## {who}\n{s}"
 
 
-def llm_background(path: str, full_answer: str, m: str) -> str:
-    """Update the telegra.ph page with background answer result. Return new full answer."""
+def llm_background_ph_update(path: str, full_answer: str, m: str) -> str:
+    """Update the telegra.ph page with Non Stream Answer result. Return new full answer."""
     ph_path = re.search(r"https?://telegra\.ph/(.+)", path).group(1)
     full_answer += m + update_time()
     try:
         ph.edit_page_md(path=ph_path, title="Answer it", markdown_text=full_answer)
     except Exception as e:
-        print(f"\n------\nllm_background Error:\n{e}\n------\n")
+        print(f"\n------\nllm_background_ph_update Error:\n{e}\n------\n")
     return full_answer
 
 
@@ -287,16 +317,31 @@ def gemini_answer(latest_message: Message, bot: TeleBot, m):
         r = convo.send_message(m, stream=True)
         s = ""
         start = time.time()
+        overall_start = time.time()
         for e in r:
             s += e.text
             if time.time() - start > 1.7:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+            if time.time() - overall_start > Stream_Timeout:  # Timeout
+                raise Exception("Gemini Timeout")
         bot_reply_markdown(reply_id, who, s, bot)
-        convo.history.clear()
+        try:
+            convo.history.clear()
+        except:
+            print(
+                f"\n------\n{who} convo.history.clear() Error / Unstoppable\n------\n"
+            )
+            pass
     except Exception as e:
         print(f"\n------\n{who} function inner Error:\n{e}\n------\n")
-        convo.history.clear()
+        try:
+            convo.history.clear()
+        except:
+            print(
+                f"\n------\n{who} convo.history.clear() Error / Unstoppable\n------\n"
+            )
+            pass
         bot_reply_markdown(reply_id, who, "Error", bot)
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
 
@@ -319,6 +364,7 @@ def chatgpt_answer(latest_message: Message, bot: TeleBot, m):
         )
         s = ""
         start = time.time()
+        overall_start = time.time()
         for chunk in r:
             if chunk.choices[0].delta.content is None:
                 break
@@ -326,6 +372,9 @@ def chatgpt_answer(latest_message: Message, bot: TeleBot, m):
             if time.time() - start > 1.5:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+            if time.time() - overall_start > Stream_Timeout:  # Timeout
+                s += "\n\nTimeout"
+                break
         # maybe not complete
         try:
             bot_reply_markdown(reply_id, who, s, bot)
@@ -354,6 +403,7 @@ def claude_answer(latest_message: Message, bot: TeleBot, m):
         )
         s = ""
         start = time.time()
+        overall_start = time.time()
         for chunk in r:
             if chunk.choices[0].delta.content is None:
                 break
@@ -361,6 +411,9 @@ def claude_answer(latest_message: Message, bot: TeleBot, m):
             if time.time() - start > 1.5:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+            if time.time() - overall_start > Stream_Timeout:  # Timeout
+                s += "\n\nTimeout"
+                break
         # maybe not complete
         try:
             bot_reply_markdown(reply_id, who, s, bot)
@@ -405,6 +458,7 @@ def cohere_answer(latest_message: Message, bot: TeleBot, m):
         s = ""
         source = ""
         start = time.time()
+        overall_start = time.time()
         for event in stream:
             if event.event_type == "stream-start":
                 bot_reply_markdown(reply_id, who, "Thinking...", bot)
@@ -425,6 +479,9 @@ def cohere_answer(latest_message: Message, bot: TeleBot, m):
                         bot,
                         split_text=True,
                     )
+                if time.time() - overall_start > Stream_Timeout:  # Timeout
+                    s += "\n\nTimeout"
+                    break
             elif event.event_type == "stream-end":
                 break
         content = (
@@ -459,6 +516,7 @@ def qwen_answer(latest_message: Message, bot: TeleBot, m):
         )
         s = ""
         start = time.time()
+        overall_start = time.time()
         for chunk in r:
             if chunk.choices[0].delta.content is None:
                 break
@@ -466,6 +524,9 @@ def qwen_answer(latest_message: Message, bot: TeleBot, m):
             if time.time() - start > 1.5:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+            if time.time() - overall_start > Stream_Timeout:  # Timeout
+                s += "\n\nTimeout"
+                break
         # maybe not complete
         try:
             bot_reply_markdown(reply_id, who, s, bot)
@@ -499,6 +560,7 @@ def llama_answer(latest_message: Message, bot: TeleBot, m):
         )
         s = ""
         start = time.time()
+        overall_start = time.time()
         for chunk in r:
             if chunk.choices[0].delta.content is None:
                 break
@@ -506,6 +568,8 @@ def llama_answer(latest_message: Message, bot: TeleBot, m):
             if time.time() - start > 1.5:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+            if time.time() - overall_start > Stream_Timeout:  # Timeout
+                raise Exception("Llama Timeout")
         # maybe not complete
         try:
             bot_reply_markdown(reply_id, who, s, bot)
@@ -548,14 +612,11 @@ def final_answer(latest_message: Message, bot: TeleBot, full_answer: str, answer
         bot_reply_markdown(reply_id, who, s, bot, disable_web_page_preview=True)
 
     #### Background LLM ####
-    # Run background llm, no show to telegram, just update the ph page, Good for slow llm
-    if LLAMA_USE_BACKGROUND and LLAMA_API_KEY:
-        llama_b_m = background_llama(latest_message.text)
-        full_answer = llm_background(ph_s, full_answer, llama_b_m)
+    # Run background llm, no show to telegram, just append the ph page, Good for slow llm
 
-    if COHERE_USE_BACKGROUND and COHERE_API_KEY:
-        cohere_b_m = background_cohere(latest_message.text)
-        full_answer = llm_background(ph_s, full_answer, cohere_b_m)
+    if COHERE_APPEND and COHERE_API_KEY:
+        cohere_a = complete_cohere(latest_message.text)
+        full_answer = llm_background_ph_update(ph_s, full_answer, cohere_a)
 
 
 def llm_summary(bot, full_answer, ph_s, reply_id) -> str:
@@ -570,10 +631,45 @@ def llm_summary(bot, full_answer, ph_s, reply_id) -> str:
     return s
 
 
-def background_cohere(m: str) -> str:
-    """we run cohere get the full answer in background"""
+def complete_chatgpt(m: str) -> str:
+    """we run chatgpt get the full answer"""
+    who = "ChatGPT Pro"
+    try:
+        r = client.chat.completions.create(
+            messages=[{"role": "user", "content": m}],
+            max_tokens=4096,
+            model=CHATGPT_PRO_MODEL,
+        )
+        s = r.choices[0].message.content.encode("utf-8").decode()
+        content = llm_answer(who, s)
+    except Exception as e:
+        print(f"\n------\ncomplete_chatgpt Error:\n{e}\n------\n")
+        content = llm_answer(who, "Non Stream Answer wrong")
+    return content
+
+
+def complete_claude(m: str) -> str:
+    """we run claude get the full answer"""
+    who = "Claude Pro"
+    try:
+        r = claude_client.chat.completions.create(
+            messages=[{"role": "user", "content": m}],
+            max_tokens=4096,
+            model=ANTHROPIC_MODEL,
+        )
+        s = r.choices[0].message.content.encode("utf-8").decode()
+        content = llm_answer(who, s)
+    except Exception as e:
+        print(f"\n------\ncomplete_claude Error:\n{e}\n------\n")
+        content = llm_answer(who, "Non Stream Answer wrong")
+    return content
+
+
+def complete_cohere(m: str) -> str:
+    """we run cohere get the full answer"""
     who = "Command R Plus"
     try:
+        overall_start = time.time()
         stream = co.chat_stream(
             model=COHERE_MODEL,
             message=m,
@@ -594,18 +690,22 @@ def background_cohere(m: str) -> str:
                 s += event.text.encode("utf-8").decode("utf-8", "ignore")
             elif event.event_type == "stream-end":
                 break
+            if time.time() - overall_start > Stream_Timeout:  # Timeout
+                s += "\n\nTimeout"
+                break
         content = llm_answer(who, f"{s}\n\n---\n{source}")
 
     except Exception as e:
-        print(f"\n------\nbackground_cohere Error:\n{e}\n------\n")
-        content = llm_answer(who, "Background Answer wrong")
+        print(f"\n------\ncomplete_cohere Error:\n{e}\n------\n")
+        content = llm_answer(who, "Non Stream Answer wrong")
     return content
 
 
-def background_llama(m: str) -> str:
-    """we run llama get the full answer in background"""
+def complete_llama(m: str) -> str:
+    """we run llama get the full answer"""
     who = "llama"
     try:
+        overall_start = time.time()
         r = llama_client.chat.completions.create(
             messages=[
                 {
@@ -623,10 +723,12 @@ def background_llama(m: str) -> str:
             if chunk.choices[0].delta.content is None:
                 break
             s += chunk.choices[0].delta.content
+            if time.time() - overall_start > Stream_Timeout:  # Timeout
+                raise Exception("Llama complete Running Timeout")
 
     except Exception as e:
-        print(f"\n------\nbackground_llama Error:\n{e}\n------\n")
-        s = "Background Answer wrong"
+        print(f"\n------\ncomplete_llama Error:\n{e}\n------\n")
+        s = "Non Stream Answer wrong"
     return llm_answer(who, s)
 
 
@@ -668,6 +770,7 @@ Start with "Summary:" or "总结:"
         )
 
         start = time.time()
+        overall_start = time.time()
         for event in stream:
             if event.event_type == "stream-start":
                 bot_reply_markdown(reply_id, who, f"{s}Summarizing...", bot)
@@ -677,6 +780,9 @@ Start with "Summary:" or "总结:"
                     start = time.time()
                     bot_reply_markdown(reply_id, who, s, bot)
             elif event.event_type == "stream-end":
+                break
+            if time.time() - overall_start > Stream_Timeout:
+                s += "\n\nTimeout"
                 break
 
         try:
@@ -706,11 +812,14 @@ def summary_gemini(bot: TeleBot, full_answer: str, ph_s: str, reply_id: int) -> 
     try:
         r = convo_summary.send_message(full_answer, stream=True)
         start = time.time()
+        overall_start = time.time()
         for e in r:
             s += e.text
             if time.time() - start > 0.4:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+            if time.time() - overall_start > Stream_Timeout:
+                raise Exception("Gemini Summary Timeout")
         bot_reply_markdown(reply_id, who, s, bot)
         convo_summary.history.clear()
         return s
@@ -719,6 +828,13 @@ def summary_gemini(bot: TeleBot, full_answer: str, ph_s: str, reply_id: int) -> 
             bot_reply_markdown(reply_id, who, f"[全文]({ph_s})", bot)
         elif Language == "en":
             bot_reply_markdown(reply_id, who, f"[Full Answer]({ph_s})", bot)
+        try:
+            convo.history.clear()
+        except:
+            print(
+                f"\n------\n{who} convo.history.clear() Error / Unstoppable\n------\n"
+            )
+            pass
         print(f"\n------\nsummary_gemini function inner Error:\n{e}\n------\n")
         bot_reply_markdown(reply_id, who, f"{s}Error", bot)
 
