@@ -168,7 +168,10 @@ def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
     except Exception as e:
         print(e)
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
-        player.history.clear()
+        try:
+            player.history.clear()
+        except:
+            print(f"\n------\n{who} history.clear() Error / Unstoppable\n------\n")
         return
 
 
@@ -243,7 +246,10 @@ def gemini_audio_handler(message: Message, bot: TeleBot) -> None:
     except Exception as e:
         print(e)
         bot_reply_markdown(reply_id, who, "answer wrong", bot)
-        player.history.clear()
+        try:
+            player.history.clear()
+        except:
+            print(f"\n------\n{who} history.clear() Error / Unstoppable\n------\n")
         return
 
 
