@@ -48,6 +48,8 @@ CLADUE_COMPLETE = True  # Only display in telegra.ph
 COHERE_COMPLETE = False
 LLAMA_COMPLETE = False
 
+GEMINI_USE_THREAD = False  # Maybe not work
+
 COHERE_APPEND = True  # Update later to ph, for extremely long content
 
 #### Customization End ##############################################
@@ -66,7 +68,7 @@ if (CHATGPT_USE or CHATGPT_COMPLETE) and CHATGPT_API_KEY:
 
 #### Gemini init ####
 GOOGLE_GEMINI_KEY = environ.get("GOOGLE_GEMINI_KEY")
-if GEMINI_USE and GOOGLE_GEMINI_KEY:
+if (GEMINI_USE or GEMINI_USE_THREAD)and GOOGLE_GEMINI_KEY:
     import google.generativeai as genai
     from google.generativeai import ChatSession
     from google.generativeai.types.generation_types import StopCandidateException
@@ -211,12 +213,13 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
     m = latest_message.text.strip()
     m = enrich_text_with_urls(m)
     full_answer = f"Question:\n{m}\n" if len(m) < 300 else ""
+    full_chat_id_list = []
     if Extra_clean:  # delete the command message
         bot.delete_message(chat_id, message.message_id)
 
     #### Answers Thread ####
     executor = ThreadPoolExecutor(max_workers=Stream_Thread)
-    if GEMINI_USE and GOOGLE_GEMINI_KEY:
+    if GEMINI_USE_THREAD and GOOGLE_GEMINI_KEY:
         gemini_future = executor.submit(gemini_answer, latest_message, bot, m)
     if CHATGPT_USE and CHATGPT_API_KEY:
         chatgpt_future = executor.submit(chatgpt_answer, latest_message, bot, m)
@@ -240,9 +243,49 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
     if COHERE_COMPLETE and COHERE_API_KEY:
         complete_cohere_future = executor2.submit(complete_cohere, m)
 
-    #### Answers List ####
-    full_chat_id_list = []
+    #### Gemini Answer Individual ####
     if GEMINI_USE and GOOGLE_GEMINI_KEY:
+        g_who = "Gemini Pro"
+        g_s = ""
+        g_reply_id = bot_reply_first(latest_message, g_who, bot)
+        try:
+            g_r = convo.send_message(m, stream=True)
+            g_start = time.time()
+            g_overall_start = time.time()
+            for e in g_r:
+                g_s += e.text
+                if time.time() - g_start > 1.7:
+                    g_start = time.time()
+                    bot_reply_markdown(g_reply_id, g_who, g_s, bot, split_text=False)
+                if time.time() - g_overall_start > Stream_Timeout:
+                    raise Exception("Gemini Timeout")
+            bot_reply_markdown(g_reply_id, g_who, g_s, bot)
+            try:
+                convo.history.clear()
+            except:
+                print(
+                    f"\n------\n{g_who} convo.history.clear() Error / Unstoppable\n------\n"
+                )
+                pass
+        except Exception as e:
+            print(f"\n------\n{g_who} function gemini outter Error:\n{e}\n------\n")
+            try:
+                convo.history.clear()
+            except:
+                print(
+                    f"\n------\n{g_who} convo.history.clear() Error / Unstoppable\n------\n"
+                )
+                pass
+            bot_reply_markdown(g_reply_id, g_who, "Error", bot)
+            full_answer += f"\n---\n{g_who}:\nAnswer wrong"
+        full_chat_id_list.append(g_reply_id.message_id)
+        full_answer += llm_answer(g_who, g_s)
+    else:
+        pass
+
+    #### Answers List ####
+
+    if GEMINI_USE_THREAD and GOOGLE_GEMINI_KEY:
         answer_gemini, gemini_chat_id = gemini_future.result()
         full_chat_id_list.append(gemini_chat_id)
         full_answer += answer_gemini
