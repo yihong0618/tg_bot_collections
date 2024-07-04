@@ -35,6 +35,12 @@ Link_Clean = False  # True will disable Instant View / Web Preview
 Stream_Thread = 2  # How many stream LLM will stream at the same time
 Complete_Thread = 3  # How many non-stream LLM will run at the same time
 Stream_Timeout = 45  # If not complete in 45s, will stop wait or raise Exception timeout
+MESSAGE_MAX_LENGTH = 4096  # Message after url enrich may too long
+Hint = (
+    "\n(Try /answer_it after non-command messages)"
+    if Language == "en"
+    else "\n(在消息后发送 '/answer_it')"
+)
 #### LLMs ####
 GEMINI_USE = True
 CHATGPT_USE = False
@@ -93,6 +99,26 @@ if (GEMINI_USE or GEMINI_USE_THREAD) and GOOGLE_GEMINI_KEY:
         model_name="gemini-1.5-flash-latest",
         generation_config=generation_config,
         safety_settings=safety_settings,
+        system_instruction=f"""
+You are an AI assistant added to a group chat to provide help or answer questions. You only have access to the most recent message in the chat, which will be the next message you receive after this system prompt. Your task is to provide a helpful and relevant response based on this information.
+
+Please adhere to these guidelines when formulating your response:
+
+1. Address the content of the message directly and proactively.
+2. If the message is a question or request, provide a comprehensive answer or assistance to the best of your ability.
+3. Use your general knowledge and capabilities to fill in gaps where context might be missing.
+4. Keep your response concise yet informative, appropriate for a group chat setting.
+5. Maintain a friendly, helpful, and confident tone throughout.
+6. If the message is unclear:
+   - Make reasonable assumptions to provide a useful response.
+   - If necessary, offer multiple interpretations or answers to cover possible scenarios.
+7. Aim to make your response as complete and helpful as possible, even with limited context.
+8. You must respond in {Language}.
+
+Your response should be natural and fitting for a group chat context. While you only have access to this single message, use your broad knowledge base to provide informative and helpful answers. Be confident in your responses, but if you're making assumptions, briefly acknowledge this fact.
+
+Remember, the group administrator has approved your participation and will review responses as needed, so focus on being as helpful as possible rather than being overly cautious.
+""",
     )
     model_flash = genai.GenerativeModel(
         model_name="gemini-1.5-flash-latest",
@@ -210,12 +236,18 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
 
     chat_id = message.chat.id
     latest_message = chat_message_dict.get(chat_id)
-    m = latest_message.text.strip()
+    m = original_m = latest_message.text.strip()
     m = enrich_text_with_urls(m)
     full_answer = f"Question:\n{m}\n" if len(m) < 300 else ""
+    if len(m) > MESSAGE_MAX_LENGTH:
+        a = (
+            "The message is too long, please shorten it."
+            if Language == "en"
+            else "消息太长，请缩短。"
+        )
+        bot.reply_to(message, a)
+        return
     full_chat_id_list = []
-    if Extra_clean:  # delete the command message
-        bot.delete_message(chat_id, message.message_id)
 
     #### Answers Thread ####
     executor = ThreadPoolExecutor(max_workers=Stream_Thread)
@@ -245,7 +277,7 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
 
     #### Gemini Answer Individual ####
     if GEMINI_USE and GOOGLE_GEMINI_KEY:
-        g_who = "Gemini Pro"
+        g_who = "Gemini"
         g_s = ""
         g_reply_id = bot_reply_first(latest_message, g_who, bot)
         try:
@@ -323,10 +355,16 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
     print(full_chat_id_list)
 
     if len(m) > 300:
-        full_answer += llm_answer("Question", m)
+        full_answer = f"{llm_answer('Question', original_m)}{full_answer}{llm_answer('Question', m)}"
 
     ##### Telegraph #####
-    final_answer(latest_message, bot, full_answer, full_chat_id_list)
+    if full_chat_id_list == []:
+        bot.reply_to(message, "No Any Answer, Please check log.")
+    else:
+        final_answer(latest_message, bot, full_answer, full_chat_id_list)
+
+    if Extra_clean:  # delete the command message
+        bot.delete_message(chat_id, message.message_id)
 
 
 def update_time():
@@ -640,7 +678,7 @@ def final_answer(latest_message: Message, bot: TeleBot, full_answer: str, answer
 
     # greate new telegra.ph page
     ph_s = ph.create_page_md(title="Answer it", markdown_text=full_answer)
-    bot_reply_markdown(reply_id, who, f"**[Full Answer]({ph_s})**", bot)
+    bot_reply_markdown(reply_id, who, f"**[Full Answer]({ph_s})**\n{Hint}", bot)
 
     # delete the chat message, only leave a telegra.ph link
     if General_clean:
@@ -781,9 +819,9 @@ def summary_cohere(bot: TeleBot, full_answer: str, ph_s: str, reply_id: int) -> 
 
     # inherit
     if Language == "zh-cn":
-        s = f"**[全文]({ph_s})** | "
+        s = f"**[全文]({ph_s})**{Hint}\n"
     elif Language == "en":
-        s = f"**[Full Answer]({ph_s})** | "
+        s = f"**[Full Answer]({ph_s})**{Hint}\n"
 
     # filter
     length = len(full_answer)  # max 128,000 tokens...
@@ -848,9 +886,9 @@ def summary_gemini(bot: TeleBot, full_answer: str, ph_s: str, reply_id: int) -> 
 
     # inherit
     if Language == "zh-cn":
-        s = f"**[🔗全文]({ph_s})** | "
+        s = f"**[🔗全文]({ph_s})**{Hint}\n"
     elif Language == "en":
-        s = f"**[🔗Full Answer]({ph_s})** | "
+        s = f"**[🔗Full Answer]({ph_s})**{Hint}\n"
 
     try:
         r = convo_summary.send_message(full_answer, stream=True)
@@ -868,9 +906,9 @@ def summary_gemini(bot: TeleBot, full_answer: str, ph_s: str, reply_id: int) -> 
         return s
     except Exception as e:
         if Language == "zh-cn":
-            bot_reply_markdown(reply_id, who, f"[全文]({ph_s})", bot)
+            bot_reply_markdown(reply_id, who, f"[全文]({ph_s}){Hint}", bot)
         elif Language == "en":
-            bot_reply_markdown(reply_id, who, f"[Full Answer]({ph_s})", bot)
+            bot_reply_markdown(reply_id, who, f"[Full Answer]({ph_s}){Hint}", bot)
         try:
             convo.history.clear()
         except:
