@@ -300,11 +300,19 @@ class TelegraphAPI:
             "author_url": author_url if author_url else self.author_url,
         }
 
-        response = requests.post(url, data=data)
-        response.raise_for_status()
-        response = response.json()
-        page_url = response["result"]["url"]
-        return page_url
+        # Max 65,536 characters/64KB.
+        if len(json.dumps(content)) > 65536:
+            content = content[:64000]
+            data["content"] = json.dumps(content)
+
+        try:
+            response = requests.post(url, data=data)
+            response.raise_for_status()
+            response = response.json()
+            page_url = response["result"]["url"]
+            return page_url
+        except:
+            return "https://telegra.ph/api"
 
     def get_account_info(self):
         url = f'{self.base_url}/getAccountInfo?access_token={self.access_token}&fields=["short_name","author_name","author_url","auth_url"]'
