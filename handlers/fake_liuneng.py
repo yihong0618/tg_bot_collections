@@ -8,7 +8,7 @@ import re
 from . import *
 
 
-def split_lines(text, max_length=18):
+def split_lines(text, max_length=30):
     def split_line(line):
         punctuation = r"[,.!?;，。！？；]"
         parts = re.split(f"({punctuation})", line)
