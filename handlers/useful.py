@@ -13,6 +13,9 @@ from . import *
 
 from telegramify_markdown.customize import markdown_symbol
 
+# Define the load priority, lower numbers have higher priority
+load_priority = 1000
+
 # If you want, Customizing the head level 1 symbol
 markdown_symbol.head_level_1 = "📌"
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
@@ -196,7 +199,7 @@ def latest_handle_messages(message: Message, bot: TeleBot):
     elif message.text.startswith(
         (
             "md",
-            "chatgpt",
+            "gpt",
             "gemini",
             "qwen",
             "map",

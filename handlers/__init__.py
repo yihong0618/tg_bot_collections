@@ -22,6 +22,8 @@ markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 T = TypeVar("T", bound=Callable)
 
+DEFAULT_LOAD_PRIORITY = 10
+
 BOT_MESSAGE_LENGTH = 4000
 
 REPLY_MESSAGE_CACHE = ExpiringDict(max_len=1000, max_age_seconds=300)
@@ -146,12 +148,18 @@ def wrap_handler(handler: T, bot: TeleBot) -> T:
 
 def load_handlers(bot: TeleBot, disable_commands: list[str]) -> None:
     # import all submodules
+    modules_with_priority = []
     for name in list_available_commands():
         if name in disable_commands:
             continue
         module = importlib.import_module(f".{name}", __package__)
+        load_priority = getattr(module, "load_priority", DEFAULT_LOAD_PRIORITY)
+        modules_with_priority.append((module, name, load_priority))
+
+    modules_with_priority.sort(key=lambda x: x[-1])
+    for module, name, priority in modules_with_priority:
         if hasattr(module, "register"):
-            print(f"Loading {name} handlers.")
+            print(f"Loading {name} handlers with priority {priority}.")
             module.register(bot)
     print("Loading handlers done.")
 
