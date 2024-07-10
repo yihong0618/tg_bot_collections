@@ -256,16 +256,15 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         with open(local_image_path, "wb") as temp_file:
             temp_file.write(downloaded_file)
 
-        m = original_m = extract_prompt(
-            latest_message.caption.strip(), bot.get_me().username
-        )
+        m = original_m = remove_prompt_prefix(latest_message.caption.strip())
         ph_image_url = ph.upload_image(local_image_path)
         full_answer += f"\n![Image]({ph_image_url})\n"
     else:
-        # remove command from the reply message if present
-        m = original_m = extract_prompt(
-            latest_message.text.strip(), bot.get_me().username
-        )
+        m = original_m = remove_prompt_prefix(latest_message.text.strip())
+
+    if not m:
+        bot.reply_to(message, "The message was retrieved, but the prompt is empty.")
+        return
 
     m = enrich_text_with_urls(m)
     full_answer += f"Question:\n{m}\n" if len(m) < 300 else ""

@@ -115,6 +115,29 @@ def extract_prompt(message: str, bot_name: str) -> str:
     return message.strip()
 
 
+def remove_prompt_prefix(message: str) -> str:
+    """
+    Remove "/cmd" or "/cmd@bot_name" or "cmd:"
+    """
+    message += " "
+    # Explanation of the regex pattern:
+    # ^                        - Match the start of the string
+    # (                        - Start of the group
+    #   /                      - Literal forward slash
+    #   [a-zA-Z]               - Any letter (start of the command)
+    #   [a-zA-Z0-9_]*          - Any number of letters, digits, or underscores
+    #   (@\w+)?                - Optionally match @ followed by one or more word characters (for bot name)
+    #   \s                     - A single whitespace character (space or newline)
+    # |                        - OR
+    #   [a-zA-Z]               - Any letter (start of the command)
+    #   [a-zA-Z0-9_]*          - Any number of letters, digits, or underscores
+    #   :\s                    - Colon followed by a single whitespace character
+    # )                        - End of the group
+    pattern = r"^(/[a-zA-Z][a-zA-Z0-9_]*(@\w+)?\s|[a-zA-Z][a-zA-Z0-9_]*:\s)"
+
+    return re.sub(pattern, "", message).strip()
+
+
 def wrap_handler(handler: T, bot: TeleBot) -> T:
     def wrapper(message: Message, *args: Any, **kwargs: Any) -> None:
         try:
@@ -478,7 +501,7 @@ class TelegraphAPI:
 __all__ = [
     "bot_reply_first",
     "bot_reply_markdown",
-    "extract_prompt",
+    "remove_prompt_prefix",
     "enrich_text_with_urls",
     "image_to_data_uri",
     "TelegraphAPI",
