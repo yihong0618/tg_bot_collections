@@ -235,16 +235,41 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
     """answer_it: /answer_it"""
     # answer the last message in the chat group
     who = "answer_it"
-    # get the last message in the chat
 
     chat_id = message.chat.id
+    full_answer = ""
+    local_image_path = ""
+    m = ""
+    original_m = ""
+
+    # get the last message in the chat
     if message.reply_to_message is not None:
         latest_message = message.reply_to_message
     else:
         latest_message = chat_message_dict.get(chat_id)
-    m = original_m = latest_message.text.strip()
+
+    if latest_message.photo is not None:
+        max_size_photo = max(latest_message.photo, key=lambda p: p.file_size)
+        image_file = bot.get_file(max_size_photo.file_id).file_path
+        downloaded_file = bot.download_file(image_file)
+        local_image_path = "answer_it_temp.jpg"
+        with open(local_image_path, "wb") as temp_file:
+            temp_file.write(downloaded_file)
+
+        m = original_m = extract_prompt(
+            latest_message.caption.strip(), bot.get_me().username
+        )
+        ph_image_url = ph.upload_image(local_image_path)
+        full_answer += f"\n![Image]({ph_image_url})\n"
+    else:
+        # remove command from the reply message if present
+        m = original_m = extract_prompt(
+            latest_message.text.strip(), bot.get_me().username
+        )
+
     m = enrich_text_with_urls(m)
-    full_answer = f"Question:\n{m}\n" if len(m) < 300 else ""
+    full_answer += f"Question:\n{m}\n" if len(m) < 300 else ""
+
     if len(m) > MESSAGE_MAX_LENGTH:
         a = (
             "The message is too long, please shorten it."
@@ -257,28 +282,32 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
 
     #### Answers Thread ####
     executor = ThreadPoolExecutor(max_workers=Stream_Thread)
-    if GEMINI_USE_THREAD and GOOGLE_GEMINI_KEY:
+    if GEMINI_USE_THREAD and GOOGLE_GEMINI_KEY and not local_image_path:
         gemini_future = executor.submit(gemini_answer, latest_message, bot, m)
     if CHATGPT_USE and CHATGPT_API_KEY:
-        chatgpt_future = executor.submit(chatgpt_answer, latest_message, bot, m)
-    if COHERE_USE and COHERE_API_KEY:
+        chatgpt_future = executor.submit(
+            chatgpt_answer, latest_message, bot, m, local_image_path
+        )
+    if COHERE_USE and COHERE_API_KEY and not local_image_path:
         cohere_future = executor.submit(cohere_answer, latest_message, bot, m)
-    if QWEN_USE and QWEN_API_KEY:
+    if QWEN_USE and QWEN_API_KEY and not local_image_path:
         qwen_future = executor.submit(qwen_answer, latest_message, bot, m)
-    if CLADUE_USE and ANTHROPIC_API_KEY:
+    if CLADUE_USE and ANTHROPIC_API_KEY and not local_image_path:
         claude_future = executor.submit(claude_answer, latest_message, bot, m)
-    if LLAMA_USE and LLAMA_API_KEY:
+    if LLAMA_USE and LLAMA_API_KEY and not local_image_path:
         llama_future = executor.submit(llama_answer, latest_message, bot, m)
 
     #### Complete Message Thread ####
     executor2 = ThreadPoolExecutor(max_workers=Complete_Thread)
     if CHATGPT_COMPLETE and CHATGPT_API_KEY:
-        complete_chatgpt_future = executor2.submit(complete_chatgpt, m)
-    if CLADUE_COMPLETE and ANTHROPIC_API_KEY:
+        complete_chatgpt_future = executor2.submit(
+            complete_chatgpt, m, local_image_path
+        )
+    if CLADUE_COMPLETE and ANTHROPIC_API_KEY and not local_image_path:
         complete_claude_future = executor2.submit(complete_claude, m)
-    if LLAMA_COMPLETE and LLAMA_API_KEY:
+    if LLAMA_COMPLETE and LLAMA_API_KEY and not local_image_path:
         complete_llama_future = executor2.submit(complete_llama, m)
-    if COHERE_COMPLETE and COHERE_API_KEY:
+    if COHERE_COMPLETE and COHERE_API_KEY and not local_image_path:
         complete_cohere_future = executor2.submit(complete_cohere, m)
 
     #### Gemini Answer Individual ####
@@ -287,7 +316,12 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         g_s = ""
         g_reply_id = bot_reply_first(latest_message, g_who, bot)
         try:
-            g_r = convo.send_message(m, stream=True)
+            if not local_image_path:
+                g_r = convo.send_message(m, stream=True)
+            else:
+                gemini_image_file = genai.upload_file(path=local_image_path)
+                g_r = convo.send_message([m, gemini_image_file], stream=True)
+
             g_start = time.time()
             g_overall_start = time.time()
             for e in g_r:
@@ -323,7 +357,7 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
 
     #### Answers List ####
 
-    if GEMINI_USE_THREAD and GOOGLE_GEMINI_KEY:
+    if GEMINI_USE_THREAD and GOOGLE_GEMINI_KEY and not local_image_path:
         answer_gemini, gemini_chat_id = gemini_future.result()
         full_chat_id_list.append(gemini_chat_id)
         full_answer += answer_gemini
@@ -331,19 +365,19 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         anaswer_chatgpt, chatgpt_chat_id = chatgpt_future.result()
         full_chat_id_list.append(chatgpt_chat_id)
         full_answer += anaswer_chatgpt
-    if COHERE_USE and COHERE_API_KEY:
+    if COHERE_USE and COHERE_API_KEY and not local_image_path:
         answer_cohere, cohere_chat_id = cohere_future.result()
         full_chat_id_list.append(cohere_chat_id)
         full_answer += answer_cohere
-    if QWEN_USE and QWEN_API_KEY:
+    if QWEN_USE and QWEN_API_KEY and not local_image_path:
         answer_qwen, qwen_chat_id = qwen_future.result()
         full_chat_id_list.append(qwen_chat_id)
         full_answer += answer_qwen
-    if CLADUE_USE and ANTHROPIC_API_KEY:
+    if CLADUE_USE and ANTHROPIC_API_KEY and not local_image_path:
         answer_claude, claude_chat_id = claude_future.result()
         full_chat_id_list.append(claude_chat_id)
         full_answer += answer_claude
-    if LLAMA_USE and LLAMA_API_KEY:
+    if LLAMA_USE and LLAMA_API_KEY and not local_image_path:
         answer_llama, llama_chat_id = llama_future.result()
         full_chat_id_list.append(llama_chat_id)
         full_answer += answer_llama
@@ -351,11 +385,11 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
     #### Complete Messages ####
     if CHATGPT_COMPLETE and CHATGPT_API_KEY:
         full_answer += complete_chatgpt_future.result()
-    if CLADUE_COMPLETE and ANTHROPIC_API_KEY:
+    if CLADUE_COMPLETE and ANTHROPIC_API_KEY and not local_image_path:
         full_answer += complete_claude_future.result()
-    if COHERE_COMPLETE and COHERE_API_KEY:
+    if COHERE_COMPLETE and COHERE_API_KEY and not local_image_path:
         full_answer += complete_cohere_future.result()
-    if LLAMA_COMPLETE and LLAMA_API_KEY:
+    if LLAMA_COMPLETE and LLAMA_API_KEY and not local_image_path:
         full_answer += complete_llama_future.result()
 
     print(full_chat_id_list)
@@ -435,12 +469,25 @@ def gemini_answer(latest_message: Message, bot: TeleBot, m):
     return llm_answer(who, s), reply_id.message_id
 
 
-def chatgpt_answer(latest_message: Message, bot: TeleBot, m):
+def chatgpt_answer(latest_message: Message, bot: TeleBot, m, local_image_path):
     """chatgpt answer"""
     who = "ChatGPT Pro"
     reply_id = bot_reply_first(latest_message, who, bot)
 
     player_message = [{"role": "user", "content": m}]
+    if local_image_path:
+        player_message = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": m},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": image_to_data_uri(local_image_path)},
+                    },
+                ],
+            }
+        ]
 
     try:
         r = client.chat.completions.create(
@@ -713,12 +760,26 @@ def llm_summary(bot, full_answer, ph_s, reply_id) -> str:
     return s
 
 
-def complete_chatgpt(m: str) -> str:
+def complete_chatgpt(m: str, local_image_path: str) -> str:
     """we run chatgpt get the full answer"""
     who = "ChatGPT Pro"
+    player_message = [{"role": "user", "content": m}]
+    if local_image_path:
+        player_message = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": m},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": image_to_data_uri(local_image_path)},
+                    },
+                ],
+            }
+        ]
     try:
         r = client.chat.completions.create(
-            messages=[{"role": "user", "content": m}],
+            messages=player_message,
             max_tokens=4096,
             model=CHATGPT_PRO_MODEL,
         )

@@ -477,6 +477,7 @@ class TelegraphAPI:
 __all__ = [
     "bot_reply_first",
     "bot_reply_markdown",
+    "extract_prompt",
     "enrich_text_with_urls",
     "image_to_data_uri",
     "TelegraphAPI",
