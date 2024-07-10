@@ -238,7 +238,10 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
     # get the last message in the chat
 
     chat_id = message.chat.id
-    latest_message = chat_message_dict.get(chat_id)
+    if message.reply_to_message is not None:
+        latest_message = message.reply_to_message
+    else:
+        latest_message = chat_message_dict.get(chat_id)
     m = original_m = latest_message.text.strip()
     m = enrich_text_with_urls(m)
     full_answer = f"Question:\n{m}\n" if len(m) < 300 else ""
