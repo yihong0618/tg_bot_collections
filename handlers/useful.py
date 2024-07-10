@@ -292,8 +292,10 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         cohere_future = executor.submit(cohere_answer, latest_message, bot, m)
     if QWEN_USE and QWEN_API_KEY and not local_image_path:
         qwen_future = executor.submit(qwen_answer, latest_message, bot, m)
-    if CLADUE_USE and ANTHROPIC_API_KEY and not local_image_path:
-        claude_future = executor.submit(claude_answer, latest_message, bot, m)
+    if CLADUE_USE and ANTHROPIC_API_KEY:
+        claude_future = executor.submit(
+            claude_answer, latest_message, bot, m, local_image_path
+        )
     if LLAMA_USE and LLAMA_API_KEY and not local_image_path:
         llama_future = executor.submit(llama_answer, latest_message, bot, m)
 
@@ -303,8 +305,8 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         complete_chatgpt_future = executor2.submit(
             complete_chatgpt, m, local_image_path
         )
-    if CLADUE_COMPLETE and ANTHROPIC_API_KEY and not local_image_path:
-        complete_claude_future = executor2.submit(complete_claude, m)
+    if CLADUE_COMPLETE and ANTHROPIC_API_KEY:
+        complete_claude_future = executor2.submit(complete_claude, m, local_image_path)
     if LLAMA_COMPLETE and LLAMA_API_KEY and not local_image_path:
         complete_llama_future = executor2.submit(complete_llama, m)
     if COHERE_COMPLETE and COHERE_API_KEY and not local_image_path:
@@ -373,7 +375,7 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         answer_qwen, qwen_chat_id = qwen_future.result()
         full_chat_id_list.append(qwen_chat_id)
         full_answer += answer_qwen
-    if CLADUE_USE and ANTHROPIC_API_KEY and not local_image_path:
+    if CLADUE_USE and ANTHROPIC_API_KEY:
         answer_claude, claude_chat_id = claude_future.result()
         full_chat_id_list.append(claude_chat_id)
         full_answer += answer_claude
@@ -522,14 +524,29 @@ def chatgpt_answer(latest_message: Message, bot: TeleBot, m, local_image_path):
     return llm_answer(who, s), reply_id.message_id
 
 
-def claude_answer(latest_message: Message, bot: TeleBot, m):
+def claude_answer(latest_message: Message, bot: TeleBot, m, local_image_path):
     """claude answer"""
     who = "Claude Pro"
     reply_id = bot_reply_first(latest_message, who, bot)
 
+    player_message = [{"role": "user", "content": m}]
+    if local_image_path:
+        player_message = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": m},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": image_to_data_uri(local_image_path)},
+                    },
+                ],
+            }
+        ]
+
     try:
         r = claude_client.chat.completions.create(
-            messages=[{"role": "user", "content": m}],
+            messages=player_message,
             max_tokens=4096,
             model=ANTHROPIC_MODEL,
             stream=True,
@@ -791,12 +808,27 @@ def complete_chatgpt(m: str, local_image_path: str) -> str:
     return content
 
 
-def complete_claude(m: str) -> str:
+def complete_claude(m: str, local_image_path: str) -> str:
     """we run claude get the full answer"""
     who = "Claude Pro"
+
+    player_message = [{"role": "user", "content": m}]
+    if local_image_path:
+        player_message = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": m},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": image_to_data_uri(local_image_path)},
+                    },
+                ],
+            }
+        ]
     try:
         r = claude_client.chat.completions.create(
-            messages=[{"role": "user", "content": m}],
+            messages=player_message,
             max_tokens=4096,
             model=ANTHROPIC_MODEL,
         )
