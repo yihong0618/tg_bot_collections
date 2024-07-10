@@ -282,8 +282,10 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
 
     #### Answers Thread ####
     executor = ThreadPoolExecutor(max_workers=Stream_Thread)
-    if GEMINI_USE_THREAD and GOOGLE_GEMINI_KEY and not local_image_path:
-        gemini_future = executor.submit(gemini_answer, latest_message, bot, m)
+    if GEMINI_USE_THREAD and GOOGLE_GEMINI_KEY:
+        gemini_future = executor.submit(
+            gemini_answer, latest_message, bot, m, local_image_path
+        )
     if CHATGPT_USE and CHATGPT_API_KEY:
         chatgpt_future = executor.submit(
             chatgpt_answer, latest_message, bot, m, local_image_path
@@ -318,11 +320,11 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         g_s = ""
         g_reply_id = bot_reply_first(latest_message, g_who, bot)
         try:
-            if not local_image_path:
-                g_r = convo.send_message(m, stream=True)
-            else:
+            if local_image_path:
                 gemini_image_file = genai.upload_file(path=local_image_path)
                 g_r = convo.send_message([m, gemini_image_file], stream=True)
+            else:
+                g_r = convo.send_message(m, stream=True)
 
             g_start = time.time()
             g_overall_start = time.time()
@@ -359,7 +361,7 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
 
     #### Answers List ####
 
-    if GEMINI_USE_THREAD and GOOGLE_GEMINI_KEY and not local_image_path:
+    if GEMINI_USE_THREAD and GOOGLE_GEMINI_KEY:
         answer_gemini, gemini_chat_id = gemini_future.result()
         full_chat_id_list.append(gemini_chat_id)
         full_answer += answer_gemini
@@ -430,14 +432,18 @@ def llm_background_ph_update(path: str, full_answer: str, m: str) -> str:
     return full_answer
 
 
-def gemini_answer(latest_message: Message, bot: TeleBot, m):
+def gemini_answer(latest_message: Message, bot: TeleBot, m, local_image_path):
     """gemini answer"""
     who = "Gemini Pro"
     # show something, make it more responsible
     reply_id = bot_reply_first(latest_message, who, bot)
 
     try:
-        r = convo.send_message(m, stream=True)
+        if local_image_path:
+            gemini_image_file = genai.upload_file(path=local_image_path)
+            r = convo.send_message([m, gemini_image_file], stream=True)
+        else:
+            r = convo.send_message(m, stream=True)
         s = ""
         start = time.time()
         overall_start = time.time()
