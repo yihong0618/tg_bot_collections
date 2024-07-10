@@ -220,9 +220,10 @@ def enrich_text_with_urls(text: str) -> str:
 
 
 def image_to_data_uri(file_path):
+    content_type = guess_type(file_path)[0]
     with open(file_path, "rb") as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
-        return f"data:image/png;base64,{encoded_image}"
+        return f"data:{content_type};base64,{encoded_image}"
 
 
 import json

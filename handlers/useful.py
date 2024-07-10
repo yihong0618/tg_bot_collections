@@ -389,7 +389,7 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
     #### Complete Messages ####
     if CHATGPT_COMPLETE and CHATGPT_API_KEY:
         full_answer += complete_chatgpt_future.result()
-    if CLADUE_COMPLETE and ANTHROPIC_API_KEY and not local_image_path:
+    if CLADUE_COMPLETE and ANTHROPIC_API_KEY:
         full_answer += complete_claude_future.result()
     if COHERE_COMPLETE and COHERE_API_KEY and not local_image_path:
         full_answer += complete_cohere_future.result()
