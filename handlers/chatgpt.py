@@ -24,8 +24,8 @@ client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL, timeout=20)
 
 
 # Global history cache
-chatgpt_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
-chatgpt_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+chatgpt_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
+chatgpt_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
 
 
 def chatgpt_handler(message: Message, bot: TeleBot) -> None:
@@ -81,7 +81,7 @@ def chatgpt_handler(message: Message, bot: TeleBot) -> None:
 
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
         # pop my user
         player_message.pop()
         return
@@ -138,7 +138,7 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
             s += chunk.choices[0].delta.content
             if time.time() - start > 1.2:
                 start = time.time()
-                bot_reply_markdown(reply_id, who, s, bot, split_text=True)
+                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
         # maybe not complete
         try:
             bot_reply_markdown(reply_id, who, s, bot, split_text=True)
@@ -154,7 +154,7 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
 
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        # bot.reply_to(message, "answer wrong maybe up to the max token")
         player_message.clear()
         return
 
@@ -199,11 +199,15 @@ def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
             if time.time() - start > 2.0:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+        # maybe not complete
+        try:
+            bot_reply_markdown(reply_id, who, s, bot)
+        except:
+            pass
 
-        bot_reply_markdown(reply_id, who, s, bot)
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
 
 
 if CHATGPT_API_KEY:

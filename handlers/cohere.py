@@ -25,7 +25,7 @@ TELEGRA_PH_TOKEN = environ.get("TELEGRA_PH_TOKEN")
 ph = TelegraphAPI(TELEGRA_PH_TOKEN)
 
 # Global history cache
-cohere_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+cohere_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
 
 
 def clean_text(text):
@@ -159,7 +159,7 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
 
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "Answer wrong", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
         player_message.clear()
         return
 

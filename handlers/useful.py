@@ -46,8 +46,8 @@ Hint = (
 )
 #### LLMs ####
 GEMINI_USE = True
-CHATGPT_USE = False
-CLADUE_USE = False
+CHATGPT_USE = True
+CLADUE_USE = True
 QWEN_USE = True
 COHERE_USE = False  # Slow, but web search
 LLAMA_USE = False  # prompted for Language
@@ -467,7 +467,6 @@ def chatgpt_answer(latest_message: Message, bot: TeleBot, m):
 
     except Exception as e:
         print(f"\n------\n{who} function inner Error:\n{e}\n------\n")
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
 
     return llm_answer(who, s), reply_id.message_id
@@ -506,7 +505,6 @@ def claude_answer(latest_message: Message, bot: TeleBot, m):
 
     except Exception as e:
         print(f"\n------\n{who} function inner Error:\n{e}\n------\n")
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
 
     answer = f"\n---\n{who}:\n{s}"
@@ -581,7 +579,6 @@ def cohere_answer(latest_message: Message, bot: TeleBot, m):
             pass
     except Exception as e:
         print(f"\n------\n{who} function inner Error:\n{e}\n------\n")
-        bot_reply_markdown(reply_id, who, "Answer wrong", bot)
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
 
     return llm_answer(who, content), reply_id.message_id
@@ -619,7 +616,6 @@ def qwen_answer(latest_message: Message, bot: TeleBot, m):
 
     except Exception as e:
         print(f"\n------\n{who} function inner Error:\n{e}\n------\n")
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
 
     return llm_answer(who, s), reply_id.message_id
@@ -662,7 +658,6 @@ def llama_answer(latest_message: Message, bot: TeleBot, m):
 
     except Exception as e:
         print(f"\n------\n{who} function inner Error:\n{e}\n------\n")
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
         return f"\n---\n{who}:\nAnswer wrong", reply_id.message_id
 
     return llm_answer(who, s), reply_id.message_id

@@ -22,8 +22,8 @@ client = OpenAI(
 )
 
 # Global history cache
-yi_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
-yi_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+yi_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
+yi_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
 
 
 def yi_handler(message: Message, bot: TeleBot) -> None:
@@ -82,7 +82,7 @@ def yi_handler(message: Message, bot: TeleBot) -> None:
 
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
         # pop my user
         player_message.pop()
         return
@@ -156,7 +156,7 @@ def yi_pro_handler(message: Message, bot: TeleBot) -> None:
 
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
         player_message.clear()
         return
 
@@ -206,7 +206,7 @@ def yi_photo_handler(message: Message, bot: TeleBot) -> None:
         bot_reply_markdown(reply_id, who, text, bot)
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
 
 
 if YI_API_KEY and YI_BASE_URL:

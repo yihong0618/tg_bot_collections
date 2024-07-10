@@ -26,7 +26,7 @@ DEFAULT_LOAD_PRIORITY = 10
 
 BOT_MESSAGE_LENGTH = 4000
 
-REPLY_MESSAGE_CACHE = ExpiringDict(max_len=1000, max_age_seconds=300)
+REPLY_MESSAGE_CACHE = ExpiringDict(max_len=1000, max_age_seconds=600)
 
 
 def bot_reply_first(message: Message, who: str, bot: TeleBot) -> Message:

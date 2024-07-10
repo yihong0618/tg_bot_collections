@@ -22,8 +22,8 @@ if LLAMA_API_KEY:
     client = Groq(api_key=LLAMA_API_KEY)
 
 # Global history cache
-llama_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
-llama_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
+llama_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
+llama_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
 
 
 def llama_handler(message: Message, bot: TeleBot) -> None:
@@ -79,7 +79,7 @@ def llama_handler(message: Message, bot: TeleBot) -> None:
 
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
         # pop my user
         player_message.pop()
         return
@@ -153,7 +153,7 @@ def llama_pro_handler(message: Message, bot: TeleBot) -> None:
 
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
         player_message.clear()
         return
 

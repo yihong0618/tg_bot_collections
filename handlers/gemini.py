@@ -34,9 +34,9 @@ safety_settings = [
 ]
 
 # Global history cache
-gemini_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
-gemini_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=300)
-gemini_file_player_dict = ExpiringDict(max_len=100, max_age_seconds=300)
+gemini_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
+gemini_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
+gemini_file_player_dict = ExpiringDict(max_len=100, max_age_seconds=600)
 
 
 def make_new_gemini_convo(is_pro=False) -> ChatSession:
@@ -116,7 +116,7 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
             gemini_reply_text = re.sub(r"\\n", "\n", gemini_reply_text)
         else:
             print("No meaningful text was extracted from the exception.")
-            bot_reply_markdown(reply_id, who, "answer wrong", bot)
+            bot.reply_to(message, "answer wrong maybe up to the max token")
             return
 
     # By default markdown
@@ -167,7 +167,7 @@ def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
             return
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
         try:
             player.history.clear()
         except:
@@ -204,10 +204,14 @@ def gemini_photo_handler(message: Message, bot: TeleBot) -> None:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
 
-        bot_reply_markdown(reply_id, who, s, bot)
+        # maybe not complete
+        try:
+            bot_reply_markdown(reply_id, who, s, bot)
+        except:
+            pass
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
 
 
 def gemini_audio_handler(message: Message, bot: TeleBot) -> None:
@@ -245,7 +249,7 @@ def gemini_audio_handler(message: Message, bot: TeleBot) -> None:
             return
     except Exception as e:
         print(e)
-        bot_reply_markdown(reply_id, who, "answer wrong", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
         try:
             player.history.clear()
         except:
