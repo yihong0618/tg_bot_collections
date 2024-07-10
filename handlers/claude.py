@@ -163,7 +163,7 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
         )
 
     except APITimeoutError:
-        bot_reply_markdown(reply_id, who, "answer timeout", bot)
+        bot.reply_to(message, "answer wrong maybe up to the max token")
         # pop my user
         player_message.clear()
         return
