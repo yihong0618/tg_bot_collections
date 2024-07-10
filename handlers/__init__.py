@@ -5,6 +5,7 @@ import importlib
 import re
 import traceback
 from functools import update_wrapper
+from mimetypes import guess_type
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
@@ -451,6 +452,25 @@ class TelegraphAPI:
                 new_dom.append(parse_element(element))
 
         return new_dom
+
+    def upload_image(self, file_name: str) -> str:
+        base_url = "https://telegra.ph"
+        upload_url = f"{base_url}/upload"
+
+        try:
+            content_type = guess_type(file_name)[0]
+            with open(file_name, "rb") as f:
+                response = requests.post(
+                    upload_url, files={"file": ("blob", f, content_type)}
+                )
+                response.raise_for_status()
+                # [{'src': '/file/xx.jpg'}]
+                response = response.json()
+                image_url = f"{base_url}{response[0]['src']}"
+                return image_url
+        except Exception as e:
+            print(f"upload image: {e}")
+            return "https://telegra.ph/api"
 
 
 # `import *` will give you these
