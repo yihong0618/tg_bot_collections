@@ -192,8 +192,12 @@ def latest_handle_messages(message: Message, bot: TeleBot):
     """ignore"""
     chat_id = message.chat.id
     chat_user_id = message.from_user.id
+    # if not text, ignore
+    if message.text is None:
+        return
+
     # if is bot command, ignore
-    if message.text and message.text.startswith("/"):
+    if message.text.startswith("/"):
         return
     # start command ignore
     elif message.text.startswith(
@@ -217,9 +221,6 @@ def latest_handle_messages(message: Message, bot: TeleBot):
         return
     # answer_it command ignore
     elif message.text.startswith("answer_it"):
-        return
-    # if not text, ignore
-    elif not message.text:
         return
     else:
         if chat_user_dict.get(chat_user_id):
