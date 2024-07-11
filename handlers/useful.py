@@ -302,15 +302,15 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
 
     #### Complete Message Thread ####
     executor2 = ThreadPoolExecutor(max_workers=Complete_Thread)
-    if CHATGPT_COMPLETE and CHATGPT_API_KEY:
+    if not CHATGPT_USE and CHATGPT_COMPLETE and CHATGPT_API_KEY:
         complete_chatgpt_future = executor2.submit(
             complete_chatgpt, m, local_image_path
         )
-    if CLADUE_COMPLETE and ANTHROPIC_API_KEY:
+    if not CLADUE_USE and CLADUE_COMPLETE and ANTHROPIC_API_KEY:
         complete_claude_future = executor2.submit(complete_claude, m, local_image_path)
-    if LLAMA_COMPLETE and LLAMA_API_KEY and not local_image_path:
+    if not LLAMA_USE and LLAMA_COMPLETE and LLAMA_API_KEY and not local_image_path:
         complete_llama_future = executor2.submit(complete_llama, m)
-    if COHERE_COMPLETE and COHERE_API_KEY and not local_image_path:
+    if not COHERE_USE and COHERE_COMPLETE and COHERE_API_KEY and not local_image_path:
         complete_cohere_future = executor2.submit(complete_cohere, m)
 
     #### Gemini Answer Individual ####
@@ -386,13 +386,13 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         full_answer += answer_llama
 
     #### Complete Messages ####
-    if CHATGPT_COMPLETE and CHATGPT_API_KEY:
+    if not CHATGPT_USE and CHATGPT_COMPLETE and CHATGPT_API_KEY:
         full_answer += complete_chatgpt_future.result()
-    if CLADUE_COMPLETE and ANTHROPIC_API_KEY:
+    if not CLADUE_USE and CLADUE_COMPLETE and ANTHROPIC_API_KEY:
         full_answer += complete_claude_future.result()
-    if COHERE_COMPLETE and COHERE_API_KEY and not local_image_path:
+    if not COHERE_USE and COHERE_COMPLETE and COHERE_API_KEY and not local_image_path:
         full_answer += complete_cohere_future.result()
-    if LLAMA_COMPLETE and LLAMA_API_KEY and not local_image_path:
+    if not LLAMA_USE and LLAMA_COMPLETE and LLAMA_API_KEY and not local_image_path:
         full_answer += complete_llama_future.result()
 
     print(full_chat_id_list)
