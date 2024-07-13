@@ -136,7 +136,7 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
                 break
         content = (
             s
-            + "\n------\n------\n"
+            + "\n\n---\n"
             + source
             + f"\nLast Update{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} at UTC+8\n"
         )
@@ -146,7 +146,9 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
         s += f"\n\n[View]({ph_s})"
 
         try:
-            bot_reply_markdown(reply_id, who, s, bot, split_text=True)
+            bot_reply_markdown(
+                reply_id, who, s, bot, split_text=True, disable_web_page_preview=True
+            )
         except:
             pass
 
