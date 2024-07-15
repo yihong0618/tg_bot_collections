@@ -125,6 +125,7 @@ Please adhere to these guidelines when formulating your response:
    - If necessary, offer multiple interpretations or answers to cover possible scenarios.
 7. Aim to make your response as complete and helpful as possible, even with limited context.
 8. You must respond in {Language}.
+9. Limit your response to approximately 500 characters in the target language.
 
 Your response should be natural and fitting for a group chat context. While you only have access to this single message, use your broad knowledge base to provide informative and helpful answers. Be confident in your responses, but if you're making assumptions, briefly acknowledge this fact.
 
@@ -276,17 +277,20 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         return
 
     m = enrich_text_with_urls(m)
-    full_answer += f"Question:\n{m}\n" if len(m) < 300 else ""
 
     if len(m) > MESSAGE_MAX_LENGTH:
         a = (
-            "The message is too long, please shorten it."
+            "The message is too long, please shorten it or try a direct command like `gemini_pro: your question`."
             if Language == "en"
-            else "消息太长，请缩短。"
+            else "消息太长，请缩短或尝试直接指令例如 `gemini_pro: 你的问题` 。"
         )
         bot.reply_to(message, a)
         return
     full_chat_id_list = []
+
+    ##### Telegraph / APPENDS #####
+    ph_executor = ThreadPoolExecutor(max_workers=1)
+    ph_future = ph_executor.submit(final_answer, latest_message, bot, full_answer)
 
     #### Answers Thread ####
     executor = ThreadPoolExecutor(max_workers=Stream_Thread)
@@ -406,14 +410,19 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
 
     print(full_chat_id_list)
 
-    if len(m) > 300:
+    if len(m) < 300:
+        full_answer = f"{llm_answer('Question', original_m)}{full_answer}"
+    else:
         full_answer = f"{llm_answer('Question', original_m)}{full_answer}{llm_answer('Question', m)}"
 
-    ##### Telegraph #####
-    if full_chat_id_list == []:
-        bot.reply_to(message, "No Any Answer, Please check log.")
-    else:
-        final_answer(latest_message, bot, full_answer, full_chat_id_list)
+    # Append the answer to the telegra.ph page at the front
+    ph_s = ph_future.result()
+    append_message_to_ph_front(m=full_answer, path=ph_s)
+
+    # delete the chat message, only leave a telegra.ph link
+    if General_clean:
+        for i in full_chat_id_list:
+            bot.delete_message(chat_id, i)
 
     if Extra_clean:  # delete the command message
         bot.delete_message(chat_id, message.message_id)
@@ -753,7 +762,7 @@ def llama_answer(latest_message: Message, bot: TeleBot, m):
 # TODO: Perplexity looks good. `pplx_answer`
 
 
-def final_answer(latest_message: Message, bot: TeleBot, full_answer: str, answers_list):
+def final_answer(latest_message: Message, bot: TeleBot, full_answer: str):
     """final answer"""
     who = "Answer it"
     reply_id = bot_reply_first(latest_message, who, bot)
@@ -763,13 +772,8 @@ def final_answer(latest_message: Message, bot: TeleBot, full_answer: str, answer
 
     # greate new telegra.ph page
     ph_s = ph.create_page_md(title="Answer it", markdown_text=full_answer)
-    m = f"**[{('🔗Full Answer' if Language == 'en' else '🔗全文')}]({ph_s})**{Hint}\n"
+    m = f"**[{('🔗Full Answer' if Language == 'en' else '🔗全文')}]({ph_s})**{Hint}"
     bot_reply_markdown(reply_id, who, m, bot)
-
-    # delete the chat message, only leave a telegra.ph link
-    if General_clean:
-        for i in answers_list:
-            bot.delete_message(latest_message.chat.id, i)
 
     #### Background LLM ####
     # Run background llm, no show to telegram, just append the ph page, Good for slow llm
@@ -781,8 +785,6 @@ def final_answer(latest_message: Message, bot: TeleBot, full_answer: str, answer
         nonlocal full_answer, m
         with answer_lock:
             full_answer = llm_background_ph_update(ph_s, full_answer, result)
-            m += f"✔️{llm_name}"
-            bot_reply_markdown(reply_id, who, m, bot)
 
     with ThreadPoolExecutor(max_workers=Complete_Thread) as executor:
         futures = []
@@ -806,12 +808,37 @@ def final_answer(latest_message: Message, bot: TeleBot, full_answer: str, answer
                 append_answers(result, api_name)
             except Exception as e:
                 print(f"An API call failed: {e}")
+    
+    m += "✔️"
+    bot_reply_markdown(reply_id, who, m, bot)
 
     if SUMMARY is not None:
         s = llm_summary(bot, full_answer, ph_s, reply_id)
         bot_reply_markdown(reply_id, who, s, bot, disable_web_page_preview=True)
 
-    return full_answer
+    return ph_s
+
+
+def append_message_to_ph_front(m: str, path: str) -> bool:
+    """We append the message to the ph page."""
+    ph_path = re.search(r"https?://telegra\.ph/(.+)", path).group(1)
+    try:
+        content = ph._md_to_dom(m)  # convert to ph dom
+        latest_ph = ph.get_page(
+            ph_path
+        )  # after chatgpt done, we read the latest telegraph
+        if "content" in latest_ph and isinstance(latest_ph["content"], list):
+            new_content = content + latest_ph["content"]
+        else:
+            new_content = content
+        time.sleep(1)
+        ph.edit_page(
+            ph_path, title="Answer it", content=new_content
+        )
+        return True
+    except Exception as e:
+        print(f"\n---\nappend_message_to_ph_front Error:\n{e}\n---\n")
+        return False
 
 
 def append_chatgpt(m: str, ph_path: str) -> bool:

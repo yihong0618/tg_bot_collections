@@ -388,7 +388,7 @@ class TelegraphAPI:
         url = f"{self.base_url}/getPage/{path}?return_content=true"
         response = requests.get(url)
         response.raise_for_status()
-        return response.json()["result"]
+        return response.json()["result"]["content"]
 
     def create_page_md(
         self,
