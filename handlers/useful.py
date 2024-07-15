@@ -6,7 +6,8 @@ from expiringdict import ExpiringDict
 from os import environ
 import time
 import datetime
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
 import re
 
 from . import *
@@ -37,29 +38,36 @@ Extra_clean = True  # Will Delete command message too
 Link_Clean = False  # True will disable Instant View / Web Preview
 Stream_Thread = 2  # How many stream LLM will stream at the same time
 Complete_Thread = 3  # How many non-stream LLM will run at the same time
-Stream_Timeout = 45  # If not complete in 45s, will stop wait or raise Exception timeout
+Stream_Timeout = (
+    240  # If not complete in 4 mins, will stop wait or raise Exception timeout
+)
 MESSAGE_MAX_LENGTH = 4096  # Message after url enrich may too long
 Hint = (
-    "\n(Try /answer_it after non-command messages)"
+    "\n(Need answer? Type or tap /answer_it after a message)"
     if Language == "en"
-    else "\n(在消息后发送 '/answer_it')"
+    else "\n(需要回答? 在一条消息之后, 输入或点击 /answer_it )"
 )
 #### LLMs ####
 GEMINI_USE = True
-CHATGPT_USE = True
-CLADUE_USE = True
-QWEN_USE = True
+
+CHATGPT_USE = False
+CLADUE_USE = False
+QWEN_USE = False
 COHERE_USE = False  # Slow, but web search
 LLAMA_USE = False  # prompted for Language
 
-CHATGPT_COMPLETE = True  # sync mode
-CLADUE_COMPLETE = True  # Only display in telegra.ph
+CHATGPT_COMPLETE = False  # sync mode
+CLADUE_COMPLETE = False  # Only display in telegra.ph
 COHERE_COMPLETE = False
 LLAMA_COMPLETE = False
 
 GEMINI_USE_THREAD = False  # Maybe not work
 
-COHERE_APPEND = True  # Update later to ph, for extremely long content
+CHATGPT_APPEND = True  # Update later to ph
+CLADUE_APPEND = True
+COHERE_APPEND = True
+LLAMA_APPEND = True
+QWEN_APPEND = True
 
 #### Customization End ##############################################
 #####################################################################
@@ -68,7 +76,7 @@ COHERE_APPEND = True  # Update later to ph, for extremely long content
 #### OpenAI init ####
 CHATGPT_API_KEY = environ.get("OPENAI_API_KEY")
 CHATGPT_BASE_URL = environ.get("OPENAI_API_BASE") or "https://api.openai.com/v1"
-if (CHATGPT_USE or CHATGPT_COMPLETE) and CHATGPT_API_KEY:
+if (CHATGPT_USE or CHATGPT_COMPLETE or CHATGPT_APPEND) and CHATGPT_API_KEY:
     from openai import OpenAI
 
     CHATGPT_PRO_MODEL = "gpt-4o-2024-05-13"
@@ -153,7 +161,7 @@ if (COHERE_USE or COHERE_COMPLETE or COHERE_APPEND) and COHERE_API_KEY:
 #### Qwen init ####
 QWEN_API_KEY = environ.get("TOGETHER_API_KEY")
 
-if QWEN_USE and QWEN_API_KEY:
+if (QWEN_USE or QWEN_APPEND) and QWEN_API_KEY:
     from together import Together
 
     QWEN_MODEL = "Qwen/Qwen2-72B-Instruct"
@@ -162,7 +170,7 @@ if QWEN_USE and QWEN_API_KEY:
 #### Claude init ####
 ANTHROPIC_API_KEY = environ.get("ANTHROPIC_API_KEY")
 # use openai for claude
-if (CLADUE_USE or CLADUE_COMPLETE) and ANTHROPIC_API_KEY:
+if (CLADUE_USE or CLADUE_COMPLETE or CLADUE_APPEND) and ANTHROPIC_API_KEY:
     ANTHROPIC_BASE_URL = environ.get("ANTHROPIC_BASE_URL")
     ANTHROPIC_MODEL = "claude-3-5-sonnet-20240620"
     claude_client = OpenAI(
@@ -171,7 +179,7 @@ if (CLADUE_USE or CLADUE_COMPLETE) and ANTHROPIC_API_KEY:
 
 #### llama init ####
 LLAMA_API_KEY = environ.get("GROQ_API_KEY")
-if (LLAMA_USE or LLAMA_COMPLETE) and LLAMA_API_KEY:
+if (LLAMA_USE or LLAMA_COMPLETE or LLAMA_APPEND) and LLAMA_API_KEY:
     from groq import Groq
 
     llama_client = Groq(api_key=LLAMA_API_KEY)
@@ -663,7 +671,13 @@ def qwen_answer(latest_message: Message, bot: TeleBot, m):
     reply_id = bot_reply_first(latest_message, who, bot)
     try:
         r = qwen_client.chat.completions.create(
-            messages=[{"role": "user", "content": m}],
+            messages=[
+                {
+                    "content": f"You are an AI assistant added to a group chat to provide help or answer questions. You only have access to the most recent message in the chat, which will be the next message you receive after this system prompt. Your task is to provide a helpful and relevant response based on this information.\n\nPlease adhere to these guidelines when formulating your response:\n\n1. Address the content of the message directly and proactively.\n2. If the message is a question or request, provide a comprehensive answer or assistance to the best of your ability.\n3. Use your general knowledge and capabilities to fill in gaps where context might be missing.\n4. Keep your response concise yet informative, appropriate for a group chat setting.\n5. Maintain a friendly, helpful, and confident tone throughout.\n6. If the message is unclear:\n   - Make reasonable assumptions to provide a useful response.\n   - If necessary, offer multiple interpretations or answers to cover possible scenarios.\n7. Aim to make your response as complete and helpful as possible, even with limited context.\n8. You must respond in {Language}.\n\nYour response should be natural and fitting for a group chat context. While you only have access to this single message, use your broad knowledge base to provide informative and helpful answers. Be confident in your responses, but if you're making assumptions, briefly acknowledge this fact.\n\nRemember, the group administrator has approved your participation and will review responses as needed, so focus on being as helpful as possible rather than being overly cautious.",
+                    "role": "system",
+                },
+                {"role": "user", "content": m},
+            ],
             max_tokens=8192,
             model=QWEN_MODEL,
             stream=True,
@@ -749,26 +763,73 @@ def final_answer(latest_message: Message, bot: TeleBot, full_answer: str, answer
 
     # greate new telegra.ph page
     ph_s = ph.create_page_md(title="Answer it", markdown_text=full_answer)
-    bot_reply_markdown(reply_id, who, f"**[Full Answer]({ph_s})**\n{Hint}", bot)
+    m = f"**[{('🔗Full Answer' if Language == 'en' else '🔗全文')}]({ph_s})**{Hint}\n"
+    bot_reply_markdown(reply_id, who, m, bot)
 
     # delete the chat message, only leave a telegra.ph link
     if General_clean:
         for i in answers_list:
             bot.delete_message(latest_message.chat.id, i)
 
-    #### Summary ####
-    if SUMMARY == None:
-        pass
-    else:
+    #### Background LLM ####
+    # Run background llm, no show to telegram, just append the ph page, Good for slow llm
+    # Make a thread to run the background llm.
+    # But `append_xxx` with threadpool may cause ph update skip.
+    answer_lock = Lock()
+
+    def append_answers(result, llm_name):
+        nonlocal full_answer, m
+        with answer_lock:
+            full_answer = llm_background_ph_update(ph_s, full_answer, result)
+            m += f"✔️{llm_name}"
+            bot_reply_markdown(reply_id, who, m, bot)
+
+    with ThreadPoolExecutor(max_workers=Complete_Thread) as executor:
+        futures = []
+
+        api_calls = [
+            (CHATGPT_APPEND, CHATGPT_API_KEY, complete_chatgpt, "ChatGPT"),
+            (CLADUE_APPEND, ANTHROPIC_API_KEY, complete_claude, "Claude"),
+            (COHERE_APPEND, COHERE_API_KEY, complete_cohere, "Cohere"),
+            (LLAMA_APPEND, LLAMA_API_KEY, complete_llama, "LLaMA"),
+            (QWEN_APPEND, QWEN_API_KEY, complete_qwen, "Qwen"),
+        ]
+
+        for condition, api_key, func, name in api_calls:
+            if condition and api_key:
+                futures.append(executor.submit(func, latest_message.text))
+
+        for future in as_completed(futures):
+            try:
+                result = future.result(timeout=Stream_Timeout)
+                api_name = api_calls[futures.index(future)][3]
+                append_answers(result, api_name)
+            except Exception as e:
+                print(f"An API call failed: {e}")
+
+    if SUMMARY is not None:
         s = llm_summary(bot, full_answer, ph_s, reply_id)
         bot_reply_markdown(reply_id, who, s, bot, disable_web_page_preview=True)
 
-    #### Background LLM ####
-    # Run background llm, no show to telegram, just append the ph page, Good for slow llm
+    return full_answer
 
-    if COHERE_APPEND and COHERE_API_KEY:
-        cohere_a = complete_cohere(latest_message.text)
-        full_answer = llm_background_ph_update(ph_s, full_answer, cohere_a)
+
+def append_chatgpt(m: str, ph_path: str) -> bool:
+    """we run chatgpt by complete_chatgpt and we append it to the ph page. Return True if success, False if fail like timeout."""
+    try:
+        chatgpt_a = complete_chatgpt(m)  # call chatgpt
+        print(f"\n---\nchatgpt_a:\n{chatgpt_a}\n---\n")
+        content = ph._md_to_dom(chatgpt_a)  # convert to ph dom
+        latest_ph = ph.get_page(
+            ph_path
+        )  # after chatgpt done, we read the latest telegraph
+        new_content = latest_ph + content  # merge the content
+        ph.edit_page(
+            ph_path, title="Answer it", content=new_content
+        )  # update the telegraph TODO: update too fast may cause skip
+        return True
+    except:
+        return False
 
 
 def llm_summary(bot, full_answer, ph_s, reply_id) -> str:
@@ -909,6 +970,36 @@ def complete_llama(m: str) -> str:
 
     except Exception as e:
         print(f"\n------\ncomplete_llama Error:\n{e}\n------\n")
+        s = "Non Stream Answer wrong"
+    return llm_answer(who, s)
+
+
+def complete_qwen(m: str) -> str:
+    """we run qwen get the full answer"""
+    who = "qwen Pro"
+    try:
+        overall_start = time.time()
+        r = qwen_client.chat.completions.create(
+            messages=[
+                {
+                    "content": f"You are an AI assistant added to a group chat to provide help or answer questions. You only have access to the most recent message in the chat, which will be the next message you receive after this system prompt. Your task is to provide a helpful and relevant response based on this information.\n\nPlease adhere to these guidelines when formulating your response:\n\n1. Address the content of the message directly and proactively.\n2. If the message is a question or request, provide a comprehensive answer or assistance to the best of your ability.\n3. Use your general knowledge and capabilities to fill in gaps where context might be missing.\n4. Keep your response concise yet informative, appropriate for a group chat setting.\n5. Maintain a friendly, helpful, and confident tone throughout.\n6. If the message is unclear:\n   - Make reasonable assumptions to provide a useful response.\n   - If necessary, offer multiple interpretations or answers to cover possible scenarios.\n7. Aim to make your response as complete and helpful as possible, even with limited context.\n8. You must respond in {Language}.\n\nYour response should be natural and fitting for a group chat context. While you only have access to this single message, use your broad knowledge base to provide informative and helpful answers. Be confident in your responses, but if you're making assumptions, briefly acknowledge this fact.\n\nRemember, the group administrator has approved your participation and will review responses as needed, so focus on being as helpful as possible rather than being overly cautious.",
+                    "role": "system",
+                },
+                {"role": "user", "content": m},
+            ],
+            max_tokens=8192,
+            model=QWEN_MODEL,
+            stream=True,
+        )
+        s = ""
+        for chunk in r:
+            if chunk.choices[0].delta.content is None:
+                break
+            s += chunk.choices[0].delta.content
+            if time.time() - overall_start > Stream_Timeout:  # Timeout
+                raise Exception("Qwen complete Running Timeout")
+    except Exception as e:
+        print(f"\n------\ncomplete_qwen Error:\n{e}\n------\n")
         s = "Non Stream Answer wrong"
     return llm_answer(who, s)
 
