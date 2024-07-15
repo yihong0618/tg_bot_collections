@@ -808,7 +808,7 @@ def final_answer(latest_message: Message, bot: TeleBot, full_answer: str):
                 append_answers(result, api_name)
             except Exception as e:
                 print(f"An API call failed: {e}")
-    
+
     m += "✔️"
     bot_reply_markdown(reply_id, who, m, bot)
 
@@ -832,9 +832,7 @@ def append_message_to_ph_front(m: str, path: str) -> bool:
         else:
             new_content = content
         time.sleep(1)
-        ph.edit_page(
-            ph_path, title="Answer it", content=new_content
-        )
+        ph.edit_page(ph_path, title="Answer it", content=new_content)
         return True
     except Exception as e:
         print(f"\n---\nappend_message_to_ph_front Error:\n{e}\n---\n")
