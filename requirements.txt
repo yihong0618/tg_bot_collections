@@ -38,6 +38,7 @@ encodec==0.1.1
 eval-type-backport==0.2.0
 exceptiongroup==1.2.1; python_version < "3.11"
 expiringdict==1.2.2
+fake-useragent==1.5.1
 fastavro==1.9.4
 filelock==3.14.0
 fiona==1.9.6
@@ -68,6 +69,7 @@ intel-openmp==2021.4.0; platform_system == "Windows"
 jinja2==3.1.4
 jmespath==1.0.1
 kiwisolver==1.4.5
+kling-creator==0.0.3
 markdown==3.6
 markdown-it-py==3.0.0
 markupsafe==2.1.5
