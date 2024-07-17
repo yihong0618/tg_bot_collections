@@ -21,6 +21,12 @@ for yihong0618's channel: https://t.me/hyi0618
 1. export USE_CHATTTS=true
 2. use `tts: ${message}` to generate
 
+## Bot -> [Kling](https://github.com/yihong0618/klingCreator)
+
+1. export KLING_COOKIE=${cookie}
+2. use `kling: ${message}` to generate images
+3. use `/kling_pro ${message}` to generate videos
+
 
 ## Bot -> Gemini player
 
