@@ -416,8 +416,10 @@ def answer_it_handler(message: Message, bot: TeleBot) -> None:
         full_answer = f"{llm_answer('Question', original_m)}{full_answer}{llm_answer('Question', m)}"
 
     # Append the answer to the telegra.ph page at the front
-    ph_s = ph_future.result()
-    append_message_to_ph_front(m=full_answer, path=ph_s)
+    ph_s, ph_answers = ph_future.result()
+    full_answer = f"{full_answer}\n{ph_answers}"
+    ph_s = re.search(r"https?://telegra\.ph/(.+)", ph_s).group(1)
+    ph.edit_page_md(path=ph_s, title="Answer it", markdown_text=full_answer)
 
     # delete the chat message, only leave a telegra.ph link
     if General_clean:
@@ -816,7 +818,7 @@ def final_answer(latest_message: Message, bot: TeleBot, full_answer: str):
         s = llm_summary(bot, full_answer, ph_s, reply_id)
         bot_reply_markdown(reply_id, who, s, bot, disable_web_page_preview=True)
 
-    return ph_s
+    return ph_s, full_answer
 
 
 def append_message_to_ph_front(m: str, path: str) -> bool:
