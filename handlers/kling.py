@@ -133,13 +133,3 @@ if KLING_COOKIE:
         bot.register_message_handler(
             kling_pro_handler, commands=["kling_pro"], pass_bot=True
         )
-        bot.register_message_handler(
-            kling_pro_handler, regexp="^kling_pro:", pass_bot=True
-        )
-        bot.register_message_handler(
-            kling_photo_handler,
-            content_types=["photo"],
-            func=lambda m: m.caption
-            and m.caption.startswith(("kling:", "/kling", "kling:", "/kling")),
-            pass_bot=True,
-        )

@@ -50,8 +50,8 @@ Hint = (
 #### LLMs ####
 GEMINI_USE = True
 
-CHATGPT_USE = False
-CLADUE_USE = False
+CHATGPT_USE = True
+CLADUE_USE = True
 QWEN_USE = False
 COHERE_USE = False  # Slow, but web search
 LLAMA_USE = False  # prompted for Language

@@ -15,8 +15,8 @@ markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 LLAMA_API_KEY = environ.get("GROQ_API_KEY")
-LLAMA_MODEL = "llama3-8b-8192"
-LLAMA_PRO_MODEL = "llama3-70b-8192"
+LLAMA_MODEL = "llama-3.1-70b-versatile"
+LLAMA_PRO_MODEL = "llama-3.1-70b-versatile"
 
 if LLAMA_API_KEY:
     client = Groq(api_key=LLAMA_API_KEY)
@@ -61,9 +61,7 @@ def llama_handler(message: Message, bot: TeleBot) -> None:
 
     llama_reply_text = ""
     try:
-        r = client.chat.completions.create(
-            messages=player_message, max_tokens=8192, model=LLAMA_MODEL
-        )
+        r = client.chat.completions.create(messages=player_message, model=LLAMA_MODEL)
         content = r.choices[0].message.content.encode("utf8").decode()
         if not content:
             llama_reply_text = f"{who} did not answer."
@@ -123,7 +121,6 @@ def llama_pro_handler(message: Message, bot: TeleBot) -> None:
     try:
         r = client.chat.completions.create(
             messages=player_message,
-            max_tokens=8192,
             model=LLAMA_PRO_MODEL,
             stream=True,
         )
