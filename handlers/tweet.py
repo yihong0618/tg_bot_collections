@@ -16,7 +16,9 @@ def tweet_handler(message: Message, bot: TeleBot):
     if links:
         reply_id = bot_reply_first(message, who, bot)
         processed_links = [
-            link.replace("twitter.com", "fxtwitter.com").replace("x.com", "fixupx.com")
+            link.replace("https://twitter.com", "https://fxtwitter.com").replace(
+                "https://x.com", "https://fixupx.com"
+            )
             for link in links
         ]
         bot_reply_markdown(reply_id, who, "\n".join(processed_links), bot)
