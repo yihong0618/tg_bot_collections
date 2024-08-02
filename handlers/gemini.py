@@ -48,7 +48,6 @@ def make_new_gemini_convo(is_pro=False) -> ChatSession:
         model_name=model_name,
         generation_config=generation_config,
         safety_settings=safety_settings,
-        tools="code_execution",
     )
     convo = model.start_chat()
     return convo
