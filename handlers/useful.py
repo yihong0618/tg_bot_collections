@@ -174,9 +174,7 @@ ANTHROPIC_API_KEY = environ.get("ANTHROPIC_API_KEY")
 if (CLADUE_USE or CLADUE_COMPLETE or CLADUE_APPEND) and ANTHROPIC_API_KEY:
     ANTHROPIC_BASE_URL = environ.get("ANTHROPIC_BASE_URL")
     ANTHROPIC_MODEL = "claude-3-5-sonnet-20240620"
-    claude_client = OpenAI(
-        api_key=ANTHROPIC_API_KEY, base_url=ANTHROPIC_BASE_URL, timeout=20
-    )
+    claude_client = OpenAI(api_key=ANTHROPIC_API_KEY, base_url=ANTHROPIC_BASE_URL)
 
 #### llama init ####
 LLAMA_API_KEY = environ.get("GROQ_API_KEY")

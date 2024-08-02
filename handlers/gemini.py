@@ -42,12 +42,13 @@ gemini_file_player_dict = ExpiringDict(max_len=100, max_age_seconds=600)
 def make_new_gemini_convo(is_pro=False) -> ChatSession:
     model_name = "gemini-1.5-flash-latest"
     if is_pro:
-        model_name = "models/gemini-1.5-pro-latest"
+        model_name = "gemini-1.5-pro-exp-0801"
 
     model = genai.GenerativeModel(
         model_name=model_name,
         generation_config=generation_config,
         safety_settings=safety_settings,
+        tools="code_execution",
     )
     convo = model.start_chat()
     return convo

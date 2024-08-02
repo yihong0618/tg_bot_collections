@@ -20,7 +20,7 @@ CHATGPT_MODEL = "gpt-3.5-turbo"
 CHATGPT_PRO_MODEL = "gpt-4o-2024-05-13"
 
 
-client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL, timeout=20)
+client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL)
 
 
 # Global history cache

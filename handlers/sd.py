@@ -14,7 +14,7 @@ CHATGPT_API_KEY = environ.get("OPENAI_API_KEY")
 CHATGPT_BASE_URL = environ.get("OPENAI_API_BASE") or "https://api.openai.com/v1"
 CHATGPT_PRO_MODEL = "gpt-4o-2024-05-13"
 
-client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL, timeout=20)
+client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL)
 
 
 def get_user_balance():
