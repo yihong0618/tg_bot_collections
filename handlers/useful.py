@@ -80,7 +80,7 @@ if (CHATGPT_USE or CHATGPT_COMPLETE or CHATGPT_APPEND) and CHATGPT_API_KEY:
     from openai import OpenAI
 
     CHATGPT_PRO_MODEL = "gpt-4o-2024-05-13"
-    client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL, timeout=300)
+    client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL)
 
 
 #### Gemini init ####
