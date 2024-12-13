@@ -16,7 +16,7 @@ from . import *
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
-GOOGLE_GEMINI_KEY = environ.get("GOOGLE_GEMINI_KEY")
+GOOGLE_GEMINI_KEY = environ.get("GEMIMI_PRO_KEY")
 
 genai.configure(api_key=GOOGLE_GEMINI_KEY)
 generation_config = {
@@ -40,9 +40,9 @@ gemini_file_player_dict = ExpiringDict(max_len=100, max_age_seconds=600)
 
 
 def make_new_gemini_convo(is_pro=False) -> ChatSession:
-    model_name = "gemini-1.5-flash-latest"
+    model_name = "gemini-1.5-flash-002"
     if is_pro:
-        model_name = "gemini-1.5-pro-exp-0801"
+        model_name = "gemini-2.0-flash-exp"
 
     model = genai.GenerativeModel(
         model_name=model_name,
@@ -188,7 +188,7 @@ def gemini_photo_handler(message: Message, bot: TeleBot) -> None:
     with open("gemini_temp.jpg", "wb") as temp_file:
         temp_file.write(downloaded_file)
 
-    model = genai.GenerativeModel("gemini-pro-vision")
+    model = genai.GenerativeModel("gemini-2.0-flash-exp")
     with open("gemini_temp.jpg", "rb") as image_file:
         image_data = image_file.read()
     contents = {
