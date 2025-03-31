@@ -5,6 +5,7 @@ from openai import OpenAI
 from telebot import TeleBot
 from telebot.types import Message
 from expiringdict import ExpiringDict
+from rich import print
 
 from . import *
 
@@ -16,8 +17,8 @@ markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 CHATGPT_API_KEY = environ.get("OPENAI_API_KEY")
 CHATGPT_BASE_URL = environ.get("OPENAI_API_BASE") or "https://api.openai.com/v1"
-CHATGPT_MODEL = "gpt-3.5-turbo"
-CHATGPT_PRO_MODEL = "gpt-4o-2024-05-13"
+CHATGPT_MODEL = "gpt-4o-mini-2024-07-18"
+CHATGPT_PRO_MODEL = "gpt-4o-mini-2024-07-18"
 
 
 client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL)
@@ -30,6 +31,7 @@ chatgpt_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
 
 def chatgpt_handler(message: Message, bot: TeleBot) -> None:
     """gpt : /gpt <question>"""
+    print(message)
     m = message.text.strip()
 
     player_message = []
@@ -126,19 +128,20 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
     try:
         r = client.chat.completions.create(
             messages=player_message,
-            max_tokens=4096,
             model=CHATGPT_PRO_MODEL,
             stream=True,
         )
         s = ""
         start = time.time()
         for chunk in r:
-            if chunk.choices[0].delta.content is None:
-                break
-            s += chunk.choices[0].delta.content
-            if time.time() - start > 1.2:
-                start = time.time()
-                bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+            print(chunk)
+            if chunk.choices:
+                if chunk.choices[0].delta.content is None:
+                    break
+                s += chunk.choices[0].delta.content
+                if time.time() - start > 1.2:
+                    start = time.time()
+                    bot_reply_markdown(reply_id, who, s, bot, split_text=False)
         # maybe not complete
         try:
             bot_reply_markdown(reply_id, who, s, bot, split_text=True)
