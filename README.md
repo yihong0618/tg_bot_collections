@@ -1,7 +1,7 @@
 # tg_bot_collections
 Collections of yihong0618's telegram bot
 
-for yihong0618's channel: https://t.me/hyi0618
+for yihong0618's channel: https://t.me/protectronnews
 
 
 ## Bot -> poster
