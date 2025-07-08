@@ -1,17 +1,16 @@
-from os import environ
 import re
 import time
+from os import environ
 
 import google.generativeai as genai
+from expiringdict import ExpiringDict
 from google.generativeai import ChatSession
 from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
 from telebot.types import Message
-from expiringdict import ExpiringDict
-
 from telegramify_markdown.customize import markdown_symbol
 
-from . import *
+from ._utils import bot_reply_first, bot_reply_markdown, enrich_text_with_urls, logger
 
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
@@ -166,11 +165,11 @@ def gemini_pro_handler(message: Message, bot: TeleBot) -> None:
             player.history.clear()
             return
     except Exception as e:
-        print(e)
+        logger.exception("Gemini audio handler error")
         bot.reply_to(message, "answer wrong maybe up to the max token")
         try:
             player.history.clear()
-        except:
+        except Exception:
             print(f"\n------\n{who} history.clear() Error / Unstoppable\n------\n")
         return
 
@@ -207,10 +206,10 @@ def gemini_photo_handler(message: Message, bot: TeleBot) -> None:
         # maybe not complete
         try:
             bot_reply_markdown(reply_id, who, s, bot)
-        except:
+        except Exception:
             pass
     except Exception as e:
-        print(e)
+        logger.exception("Gemini photo handler error")
         bot.reply_to(message, "answer wrong maybe up to the max token")
 
 
@@ -248,11 +247,11 @@ def gemini_audio_handler(message: Message, bot: TeleBot) -> None:
             player.history.clear()
             return
     except Exception as e:
-        print(e)
+        logger.exception("Gemini audio handler error")
         bot.reply_to(message, "answer wrong maybe up to the max token")
         try:
             player.history.clear()
-        except:
+        except Exception:
             print(f"\n------\n{who} history.clear() Error / Unstoppable\n------\n")
         return
 

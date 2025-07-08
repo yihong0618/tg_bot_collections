@@ -1,12 +1,11 @@
 import gc
-import shutil
 import random
+import shutil
 from tempfile import SpooledTemporaryFile
 
 import numpy as np
-import PIL
+import PIL.Image
 from matplotlib import figure
-from PIL import Image
 from prettymapp.geo import get_aoi
 from prettymapp.osm import get_osm_geometries
 from prettymapp.plotting import Plot as PrettyPlot
@@ -58,7 +57,7 @@ def sizeof_image(image):
 def compress_image(input_image, output_image, target_size):
     quality = 95
     factor = 1.0
-    with Image.open(input_image) as img:
+    with PIL.Image.open(input_image) as img:
         while sizeof_image(img) > target_size:
             factor -= 0.05
             width, height = img.size

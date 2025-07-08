@@ -5,7 +5,6 @@ aiohttp==3.9.5
 aiosignal==1.3.1
 annotated-types==0.6.0
 anthropic==0.32.0
-antlr4-python3-runtime==4.9.3
 anyio==4.3.0
 async-timeout==4.0.3; python_version < "3.11"
 attrs==23.2.0
@@ -18,7 +17,6 @@ cairosvg==2.7.1
 certifi==2024.2.2
 cffi==1.16.0
 charset-normalizer==3.3.2
-chattts-fork==0.0.8
 click==8.1.7
 click-plugins==1.1.1
 cligj==0.7.2
@@ -31,10 +29,7 @@ cycler==0.12.1
 defusedxml==0.7.1
 dify-client==0.1.10
 distro==1.9.0
-einops==0.8.0
-einx==0.2.2
 emoji==2.11.1
-encodec==0.1.1
 eval-type-backport==0.2.0
 exceptiongroup==1.2.1; python_version < "3.11"
 expiringdict==1.2.2
@@ -43,13 +38,12 @@ fastavro==1.9.4
 filelock==3.14.0
 fiona==1.9.6
 fonttools==4.51.0
-frozendict==2.4.4
 frozenlist==1.4.1
 fsspec==2024.3.1
 geopandas==0.14.4
 github-poster==2.7.4
 google-ai-generativelanguage==0.6.6
-google-api-core==2.19.0
+google-api-core[grpc]==2.19.0
 google-api-python-client==2.128.0
 google-auth==2.29.0
 google-auth-httplib2==0.2.0
@@ -65,36 +59,18 @@ httpx==0.27.0
 httpx-sse==0.4.0
 huggingface-hub==0.23.0
 idna==3.7
-intel-openmp==2021.4.0; platform_system == "Windows"
-jinja2==3.1.4
 jiter==0.5.0
 jmespath==1.0.1
 kiwisolver==1.4.5
 kling-creator==0.3.0
 markdown==3.6
 markdown-it-py==3.0.0
-markupsafe==2.1.5
 matplotlib==3.8.4
 mdurl==0.1.2
 mistletoe==1.4.0
-mkl==2021.4.0; platform_system == "Windows"
-mpmath==1.3.0
 multidict==6.0.5
 networkx==3.3
 numpy==1.26.4
-nvidia-cublas-cu12==12.1.3.1; platform_system == "Linux" and platform_machine == "x86_64"
-nvidia-cuda-cupti-cu12==12.1.105; platform_system == "Linux" and platform_machine == "x86_64"
-nvidia-cuda-nvrtc-cu12==12.1.105; platform_system == "Linux" and platform_machine == "x86_64"
-nvidia-cuda-runtime-cu12==12.1.105; platform_system == "Linux" and platform_machine == "x86_64"
-nvidia-cudnn-cu12==8.9.2.26; platform_system == "Linux" and platform_machine == "x86_64"
-nvidia-cufft-cu12==11.0.2.54; platform_system == "Linux" and platform_machine == "x86_64"
-nvidia-curand-cu12==10.3.2.106; platform_system == "Linux" and platform_machine == "x86_64"
-nvidia-cusolver-cu12==11.4.5.107; platform_system == "Linux" and platform_machine == "x86_64"
-nvidia-cusparse-cu12==12.1.0.106; platform_system == "Linux" and platform_machine == "x86_64"
-nvidia-nccl-cu12==2.20.5; platform_system == "Linux" and platform_machine == "x86_64"
-nvidia-nvjitlink-cu12==12.5.40; platform_system == "Linux" and platform_machine == "x86_64"
-nvidia-nvtx-cu12==12.1.105; platform_system == "Linux" and platform_machine == "x86_64"
-omegaconf==2.3.0
 openai==1.37.2
 osmnx==1.9.2
 packaging==24.0
@@ -106,55 +82,50 @@ platformdirs==4.2.1
 prettymapp==0.3.0
 proto-plus==1.23.0
 protobuf==4.25.3
+pyaes==1.6.1
 pyarrow==16.0.0
 pyasn1==0.6.0
 pyasn1-modules==0.4.0
 pycparser==2.22
-pydantic==2.7.1
-pydantic-core==2.18.2
+pydantic==2.11.7
+pydantic-core==2.33.2
+pydantic-settings==2.10.1
 pygments==2.18.0
 pyogrio==0.7.2
 pyparsing==3.1.2
 pyproj==3.6.1
+pysocks==1.7.1
 pytelegrambotapi==4.21.0
 python-dateutil==2.9.0.post0
+python-dotenv==1.1.1
 pytz==2024.1
 pyyaml==6.0.1
-regex==2024.5.15
 requests==2.32.3
 rich==13.7.1
 rsa==4.9
 s3transfer==0.10.2
-safetensors==0.4.3
-scipy==1.13.1
 shapely==2.0.4
 shellingham==1.5.4
 six==1.16.0
 sniffio==1.3.1
 soupsieve==2.5
 svgwrite==1.4.3
-sympy==1.12
 tabulate==0.9.0
-tbb==2021.12.0; platform_system == "Windows"
 telegramify-markdown==0.1.9
+telethon==1.40.0
 time-machine==2.14.1; implementation_name != "pypy"
 tinycss2==1.3.0
 together==1.2.5
 tokenizers==0.19.1
-torch==2.3.0
-torchaudio==2.3.0
 tqdm==4.66.4
-transformers==4.41.1
-triton==2.3.0; platform_system == "Linux" and platform_machine == "x86_64" and python_version < "3.12"
 typer==0.12.3
 types-requests==2.32.0.20240622
-typing-extensions==4.11.0
+typing-extensions==4.14.1
+typing-inspection==0.4.1
 tzdata==2024.1
 uritemplate==4.1.1
 uritools==4.0.2
 urlextract==1.9.0
 urllib3==2.2.1
-vector-quantize-pytorch==1.14.24
-vocos==0.1.0
 webencodings==0.5.1
 yarl==1.9.4

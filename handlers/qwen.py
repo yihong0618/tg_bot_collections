@@ -1,16 +1,15 @@
 # qwen use https://api.together.xyz
-from os import environ
 import time
+from os import environ
 
+from expiringdict import ExpiringDict
 from telebot import TeleBot
 from telebot.types import Message
-from expiringdict import ExpiringDict
-
-from . import *
-
-from together import Together
 from telegramify_markdown import convert
 from telegramify_markdown.customize import markdown_symbol
+from together import Together
+
+from ._utils import bot_reply_first, bot_reply_markdown, enrich_text_with_urls, logger
 
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
@@ -77,8 +76,8 @@ def qwen_handler(message: Message, bot: TeleBot) -> None:
                 }
             )
 
-    except Exception as e:
-        print(e)
+    except Exception:
+        logger.exception("Qwen handler error")
         bot.reply_to(message, "answer wrong maybe up to the max token")
         # pop my user
         player_message.pop()
@@ -150,8 +149,8 @@ def qwen_pro_handler(message: Message, bot: TeleBot) -> None:
             }
         )
 
-    except Exception as e:
-        print(e)
+    except Exception:
+        logger.exception("Qwen Pro handler error")
         bot.reply_to(message, "answer wrong maybe up to the max token")
         player_message.clear()
         return

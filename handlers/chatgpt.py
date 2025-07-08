@@ -1,27 +1,29 @@
-from os import environ
 import time
 
-from openai import OpenAI
+from expiringdict import ExpiringDict
 from telebot import TeleBot
 from telebot.types import Message
-from expiringdict import ExpiringDict
-from rich import print
-
-from . import *
-
 from telegramify_markdown import convert
 from telegramify_markdown.customize import markdown_symbol
+
+from config import settings
+
+from ._utils import (
+    bot_reply_first,
+    bot_reply_markdown,
+    enrich_text_with_urls,
+    image_to_data_uri,
+    logger,
+)
 
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
-CHATGPT_API_KEY = environ.get("OPENAI_API_KEY")
-CHATGPT_BASE_URL = environ.get("OPENAI_API_BASE") or "https://api.openai.com/v1"
-CHATGPT_MODEL = "gpt-4o-mini-2024-07-18"
-CHATGPT_PRO_MODEL = "gpt-4o-mini-2024-07-18"
+CHATGPT_MODEL = settings.openai_model
+CHATGPT_PRO_MODEL = settings.openai_model
 
 
-client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL)
+client = settings.openai_client
 
 
 # Global history cache
@@ -31,7 +33,7 @@ chatgpt_pro_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
 
 def chatgpt_handler(message: Message, bot: TeleBot) -> None:
     """gpt : /gpt <question>"""
-    print(message)
+    logger.debug(message)
     m = message.text.strip()
 
     player_message = []
@@ -81,8 +83,8 @@ def chatgpt_handler(message: Message, bot: TeleBot) -> None:
                 }
             )
 
-    except Exception as e:
-        print(e)
+    except Exception:
+        logger.exception("ChatGPT handler error")
         bot.reply_to(message, "answer wrong maybe up to the max token")
         # pop my user
         player_message.pop()
@@ -134,7 +136,7 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
         s = ""
         start = time.time()
         for chunk in r:
-            print(chunk)
+            logger.debug(chunk)
             if chunk.choices:
                 if chunk.choices[0].delta.content is None:
                     break
@@ -145,7 +147,7 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
         # maybe not complete
         try:
             bot_reply_markdown(reply_id, who, s, bot, split_text=True)
-        except:
+        except Exception:
             pass
 
         player_message.append(
@@ -155,8 +157,8 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
             }
         )
 
-    except Exception as e:
-        print(e)
+    except Exception:
+        logger.exception("ChatGPT handler error")
         # bot.reply_to(message, "answer wrong maybe up to the max token")
         player_message.clear()
         return
@@ -205,15 +207,15 @@ def chatgpt_photo_handler(message: Message, bot: TeleBot) -> None:
         # maybe not complete
         try:
             bot_reply_markdown(reply_id, who, s, bot)
-        except:
+        except Exception:
             pass
 
-    except Exception as e:
-        print(e)
+    except Exception:
+        logger.exception("ChatGPT handler error")
         bot.reply_to(message, "answer wrong maybe up to the max token")
 
 
-if CHATGPT_API_KEY:
+if settings.openai_api_key:
 
     def register(bot: TeleBot) -> None:
         bot.register_message_handler(chatgpt_handler, commands=["gpt"], pass_bot=True)

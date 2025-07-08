@@ -1,8 +1,8 @@
-from urlextract import URLExtract
 from telebot import TeleBot
 from telebot.types import Message
+from urlextract import URLExtract
 
-from . import *
+from ._utils import bot_reply_first, bot_reply_markdown
 
 
 def tweet_handler(message: Message, bot: TeleBot):

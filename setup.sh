@@ -7,20 +7,20 @@ service_name="tgbotyh"
 
 source .env
 
-google_gemini_api_key="${Google_Gemini_API_Key}"
-telegram_bot_token="${Telegram_Bot_Token}"
-anthropic_api_key="${Anthropic_API_Key}"
-openai_api_key="${Openai_API_Key}"
-yi_api_key="${Yi_API_Key}"
-yi_base_url="${Yi_Base_Url}"
+google_gemini_api_key="${GOOGLE_GEMINI_API_KEY}"
+telegram_bot_token="${TELEGRAM_BOT_TOKEN}"
+anthropic_api_key="${ANTHROPIC_API_KEY}"
+openai_api_key="${OPENAI_API_KEY}"
+yi_api_key="${YI_API_KEY}"
+yi_base_url="${YI_BASE_URL}"
 
 
-if [ -n "$Python_Bin_Path" ]; then
-    python_bin_path="$Python_Bin_Path"
+if [ -n "$PYTHON_BIN_PATH" ]; then
+    python_bin_path="$PYTHON_BIN_PATH"
 fi
 
-if [ -n "$Python_Venv_Path" ]; then
-    venv_dir="${Python_Venv_Path}"
+if [ -n "$PYTHON_VENV_PATH" ]; then
+    venv_dir="${PYTHON_VENV_PATH}"
 fi
 
 sudoCmd=""
