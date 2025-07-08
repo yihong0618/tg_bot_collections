@@ -34,7 +34,8 @@ class MessageStore:
 
     def _init_db(self):
         with self.connect() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS messages (
                     chat_id INTEGER,
                     message_id INTEGER,
@@ -44,10 +45,13 @@ class MessageStore:
                     timestamp TEXT,
                     PRIMARY KEY (chat_id, message_id)
                 );
-            """)
-            conn.execute("""
+            """
+            )
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_chat_timestamp ON messages (chat_id, timestamp);
-            """)
+            """
+            )
             conn.commit()
 
     def add_message(
