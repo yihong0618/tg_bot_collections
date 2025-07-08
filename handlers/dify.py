@@ -1,17 +1,15 @@
 import json
-import time
 import re
-
-from telebot import TeleBot
-from telebot.types import Message
-
-from . import *
-
+import time
 
 # TODO: update requirements.txt and setup tools
 # pip install dify-client
 from dify_client import ChatClient
+from telebot import TeleBot
+from telebot.types import Message
 from telegramify_markdown.customize import markdown_symbol
+
+from ._utils import bot_reply_first, bot_reply_markdown, enrich_text_with_urls
 
 # If you want, Customizing the head level 1 symbol
 markdown_symbol.head_level_1 = "📌"

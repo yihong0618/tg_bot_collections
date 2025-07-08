@@ -7,7 +7,7 @@ import sys
 from .messages import ChatMessage, MessageStore
 
 
-async def fetch_messages(chat_id: int) -> list[ChatMessage]:
+async def fetch_messages(chat_id: int) -> None:
     from telethon import TelegramClient
     from telethon.tl.types import Message
 

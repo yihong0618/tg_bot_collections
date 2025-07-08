@@ -9,7 +9,7 @@ from telebot import TeleBot
 from telebot.types import Message
 
 from config import settings
-from handlers import non_llm_handler
+from handlers._utils import non_llm_handler
 
 from .messages import ChatMessage, MessageStore
 from .utils import PROMPT, filter_message, parse_date

@@ -1,17 +1,18 @@
-from os import environ
-import time
 import datetime
 import re
-
-from telebot import TeleBot
-from telebot.types import Message
-from expiringdict import ExpiringDict
-
-from . import *
+import time
+from os import environ
 
 import cohere
+from expiringdict import ExpiringDict
+from telebot import TeleBot
+from telebot.types import Message
 from telegramify_markdown import convert
 from telegramify_markdown.customize import markdown_symbol
+
+from config import settings
+
+from ._utils import bot_reply_first, bot_reply_markdown, enrich_text_with_urls
 
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
@@ -21,8 +22,6 @@ COHERE_MODEL = "command-r-plus"  # command-r may cause Chinese garbled code, and
 if COHERE_API_KEY:
     co = cohere.Client(api_key=COHERE_API_KEY)
 
-TELEGRA_PH_TOKEN = environ.get("TELEGRA_PH_TOKEN")
-ph = TelegraphAPI(TELEGRA_PH_TOKEN)
 
 # Global history cache
 cohere_player_dict = ExpiringDict(max_len=1000, max_age_seconds=600)
@@ -140,7 +139,7 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
             + source
             + f"\nLast Update{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} at UTC+8\n"
         )
-        ph_s = ph.create_page_md(
+        ph_s = settings.telegraph_client.create_page_md(
             title="Cohere", markdown_text=content
         )  # or edit_page with get_page so not producing massive pages
         s += f"\n\n[View]({ph_s})"
@@ -149,7 +148,7 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
             bot_reply_markdown(
                 reply_id, who, s, bot, split_text=True, disable_web_page_preview=True
             )
-        except:
+        except Exception:
             pass
 
         player_message.append(

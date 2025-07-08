@@ -1,15 +1,15 @@
 import argparse
+import logging
 
 from telebot import TeleBot
 
 from config import settings
 from handlers import list_available_commands, load_handlers
 
+logger = logging.getLogger("bot")
+
 
 def setup_logging(debug: bool):
-    import logging
-
-    logger = logging.getLogger("bot")
     logger.setLevel(logging.DEBUG if debug else logging.INFO)
     handler = logging.StreamHandler()
     handler.setFormatter(
@@ -43,16 +43,15 @@ def main():
     )
 
     options = parser.parse_args()
-    print("Arg parse done.")
     setup_logging(options.debug)
 
     # Init bot
     bot = TeleBot(options.tg_token)
     load_handlers(bot, options.disable_commands)
-    print("Bot init done.")
+    logger.info("Bot init done.")
 
     # Start bot
-    print("Starting tg collections bot.")
+    logger.info("Starting tg collections bot.")
     bot.infinity_polling(timeout=10, long_polling_timeout=5)
 
 

@@ -15,18 +15,15 @@ def github_poster_handler(message: Message, bot: TeleBot):
         cmd_list.append("--year")
         cmd_list.append(years.strip())
     r = subprocess.check_output(cmd_list).decode("utf-8")
-    try:
-        if "done" in r:
-            # TODO windows path
-            r = subprocess.check_output(
-                ["cairosvg", "OUT_FOLDER/github.svg", "-o", f"github_{name}.png"]
-            ).decode("utf-8")
-            with open(f"github_{name}.png", "rb") as photo:
-                bot.send_photo(
-                    message.chat.id, photo, reply_to_message_id=message.message_id
-                )
-    except:
-        bot.reply_to(message, "github poster error")
+    if "done" in r:
+        # TODO windows path
+        r = subprocess.check_output(
+            ["cairosvg", "OUT_FOLDER/github.svg", "-o", f"github_{name}.png"]
+        ).decode("utf-8")
+        with open(f"github_{name}.png", "rb") as photo:
+            bot.send_photo(
+                message.chat.id, photo, reply_to_message_id=message.message_id
+            )
 
 
 def register(bot: TeleBot) -> None:

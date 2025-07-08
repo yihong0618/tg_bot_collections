@@ -1,13 +1,13 @@
 import re
-from telebot import TeleBot
-from telebot.types import Message
-from telebot.types import InputMediaPhoto
 from os import environ
+
+import requests
 from expiringdict import ExpiringDict
 from kling import ImageGen, VideoGen
-import requests
+from telebot import TeleBot
+from telebot.types import InputMediaPhoto, Message
 
-from . import *
+from ._utils import logger
 
 KLING_COOKIE = environ.get("KLING_COOKIE")
 pngs_link_dict = ExpiringDict(max_len=100, max_age_seconds=60 * 10)
@@ -17,7 +17,7 @@ def kling_handler(message: Message, bot: TeleBot):
     """kling: /kling <address>"""
     bot.reply_to(
         message,
-        f"Generating pretty kling image may take some time please wait",
+        "Generating pretty kling image may take some time please wait",
     )
     m = message.text.strip()
     prompt = m.strip()
@@ -47,7 +47,7 @@ def kling_pro_handler(message: Message, bot: TeleBot):
     """kling: /kling <address>"""
     bot.reply_to(
         message,
-        f"Generating pretty kling video may take a long time about 2mins to 5mins please wait",
+        "Generating pretty kling video may take a long time about 2mins to 5mins please wait",
     )
     m = message.text.strip()
     prompt = m.strip()
@@ -98,7 +98,7 @@ def kling_photo_handler(message: Message, bot: TeleBot) -> None:
     downloaded_file = bot.download_file(file_path)
     bot.reply_to(
         message,
-        f"Generating pretty kling image using your photo may take some time please wait",
+        "Generating pretty kling image using your photo may take some time please wait",
     )
     with open("kling.jpg", "wb") as temp_file:
         temp_file.write(downloaded_file)
@@ -109,10 +109,10 @@ def kling_photo_handler(message: Message, bot: TeleBot) -> None:
         # set the dict
         try:
             pngs_link_dict[str(message.from_user.id)] = links
-        except Exception as e:
-            print(str(e))
-    except Exception as e:
-        print(str(e))
+        except Exception:
+            logger.exception("Kling photo handler error")
+    except Exception:
+        logger.exception("Kling photo handler error")
         bot.reply_to(message, "kling error maybe block the prompt")
         return
     photos_list = [InputMediaPhoto(i) for i in links]

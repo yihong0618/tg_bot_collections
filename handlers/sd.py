@@ -1,22 +1,15 @@
 from os import environ
 
 import requests
-from openai import OpenAI
 from telebot import TeleBot
 from telebot.types import Message
 
 from config import settings
 
-from . import *
-
 SD_API_KEY = environ.get("SD3_KEY")
 
 # TODO refactor this shit to __init__
-CHATGPT_API_KEY = settings.openai_api_key
-CHATGPT_BASE_URL = settings.openai_base_url
 CHATGPT_PRO_MODEL = settings.openai_model
-
-client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL)
 
 
 def get_user_balance():
@@ -63,18 +56,14 @@ def sd_handler(message: Message, bot: TeleBot):
     )
     m = message.text.strip()
     prompt = m.strip()
-    try:
-        r = generate_sd3_image(prompt)
-        if r:
-            with open("sd3.jpeg", "rb") as photo:
-                bot.send_photo(
-                    message.chat.id, photo, reply_to_message_id=message.message_id
-                )
-        else:
-            bot.reply_to(message, "prompt error")
-    except Exception as e:
-        print(e)
-        bot.reply_to(message, "sd3 error")
+    r = generate_sd3_image(prompt)
+    if r:
+        with open("sd3.jpeg", "rb") as photo:
+            bot.send_photo(
+                message.chat.id, photo, reply_to_message_id=message.message_id
+            )
+    else:
+        bot.reply_to(message, "prompt error")
 
 
 def sd_pro_handler(message: Message, bot: TeleBot):
@@ -85,7 +74,7 @@ def sd_pro_handler(message: Message, bot: TeleBot):
     rewrite_prompt = (
         f"revise `{prompt}` to a DALL-E prompt only return the prompt in English."
     )
-    completion = client.chat.completions.create(
+    completion = settings.openai_client.chat.completions.create(
         messages=[{"role": "user", "content": rewrite_prompt}],
         max_tokens=2048,
         model=CHATGPT_PRO_MODEL,
@@ -97,21 +86,17 @@ def sd_pro_handler(message: Message, bot: TeleBot):
         message,
         f"Generating pretty sd3-turbo image may take some time please left credits {credits} every try will cost 4 criedits wait:\n the real prompt is: {sd_prompt}",
     )
-    try:
-        r = generate_sd3_image(sd_prompt)
-        if r:
-            with open("sd3.jpeg", "rb") as photo:
-                bot.send_photo(
-                    message.chat.id, photo, reply_to_message_id=message.message_id
-                )
-        else:
-            bot.reply_to(message, "prompt error")
-    except Exception as e:
-        print(e)
-        bot.reply_to(message, "sd3 error")
+    r = generate_sd3_image(sd_prompt)
+    if r:
+        with open("sd3.jpeg", "rb") as photo:
+            bot.send_photo(
+                message.chat.id, photo, reply_to_message_id=message.message_id
+            )
+    else:
+        bot.reply_to(message, "prompt error")
 
 
-if SD_API_KEY and CHATGPT_API_KEY:
+if SD_API_KEY and settings.openai_api_key:
 
     def register(bot: TeleBot) -> None:
         bot.register_message_handler(sd_handler, commands=["sd3"], pass_bot=True)

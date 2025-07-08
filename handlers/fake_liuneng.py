@@ -1,11 +1,10 @@
 import random
-from PIL import Image, ImageDraw, ImageFont
+import re
 from os import listdir
+
+from PIL import Image, ImageDraw, ImageFont
 from telebot import TeleBot
 from telebot.types import Message
-import re
-
-from . import *
 
 
 def split_lines(text, max_length=30):
@@ -157,7 +156,7 @@ def fake_photo_handler(message: Message, bot: TeleBot) -> None:
     s = s.replace("/fake", "").strip()
     s = s.replace("fake:", "").strip()
     prompt = s.strip()
-    bot.reply_to(message, f"Generating LiuNeng's fake image")
+    bot.reply_to(message, "Generating LiuNeng's fake image")
     # get the high quaility picture.
     max_size_photo = max(message.photo, key=lambda p: p.file_size)
     file_path = bot.get_file(max_size_photo.file_id).file_path
