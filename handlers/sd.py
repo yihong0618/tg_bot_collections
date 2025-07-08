@@ -1,18 +1,20 @@
-from telebot import TeleBot
-from telebot.types import Message
-import requests
-from openai import OpenAI
 from os import environ
 
-from . import *
+import requests
+from openai import OpenAI
+from telebot import TeleBot
+from telebot.types import Message
 
+from config import settings
+
+from . import *
 
 SD_API_KEY = environ.get("SD3_KEY")
 
 # TODO refactor this shit to __init__
-CHATGPT_API_KEY = environ.get("OPENAI_API_KEY")
-CHATGPT_BASE_URL = environ.get("OPENAI_API_BASE") or "https://api.openai.com/v1"
-CHATGPT_PRO_MODEL = "gpt-4o-2024-05-13"
+CHATGPT_API_KEY = settings.openai_api_key
+CHATGPT_BASE_URL = settings.openai_base_url
+CHATGPT_PRO_MODEL = settings.openai_model
 
 client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL)
 
@@ -33,7 +35,7 @@ def get_user_balance():
 
 def generate_sd3_image(prompt):
     response = requests.post(
-        f"https://api.stability.ai/v2beta/stable-image/generate/sd3",
+        "https://api.stability.ai/v2beta/stable-image/generate/sd3",
         headers={"authorization": f"Bearer {SD_API_KEY}", "accept": "image/*"},
         files={"none": ""},
         data={
@@ -64,7 +66,7 @@ def sd_handler(message: Message, bot: TeleBot):
     try:
         r = generate_sd3_image(prompt)
         if r:
-            with open(f"sd3.jpeg", "rb") as photo:
+            with open("sd3.jpeg", "rb") as photo:
                 bot.send_photo(
                     message.chat.id, photo, reply_to_message_id=message.message_id
                 )
@@ -98,7 +100,7 @@ def sd_pro_handler(message: Message, bot: TeleBot):
     try:
         r = generate_sd3_image(sd_prompt)
         if r:
-            with open(f"sd3.jpeg", "rb") as photo:
+            with open("sd3.jpeg", "rb") as photo:
                 bot.send_photo(
                     message.chat.id, photo, reply_to_message_id=message.message_id
                 )

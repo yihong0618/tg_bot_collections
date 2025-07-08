@@ -1,12 +1,12 @@
-from os import environ
 import time
+from os import environ
 
-from openai import OpenAI
 import requests
+from expiringdict import ExpiringDict
+from openai import OpenAI
 from telebot import TeleBot
 from telebot.types import Message
 from telegramify_markdown import convert
-from expiringdict import ExpiringDict
 
 from . import *
 
@@ -197,7 +197,7 @@ def yi_photo_handler(message: Message, bot: TeleBot) -> None:
     }
 
     response = requests.post(
-        f"https://api.lingyiwanwu.com/v1/chat/completions",
+        "https://api.lingyiwanwu.com/v1/chat/completions",
         headers=headers,
         json=payload,
     ).json()

@@ -1,24 +1,24 @@
-from os import environ
 import time
 
+from expiringdict import ExpiringDict
 from openai import OpenAI
+from rich import print
 from telebot import TeleBot
 from telebot.types import Message
-from expiringdict import ExpiringDict
-from rich import print
-
-from . import *
-
 from telegramify_markdown import convert
 from telegramify_markdown.customize import markdown_symbol
+
+from config import settings
+
+from . import *
 
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
-CHATGPT_API_KEY = environ.get("OPENAI_API_KEY")
-CHATGPT_BASE_URL = environ.get("OPENAI_API_BASE") or "https://api.openai.com/v1"
-CHATGPT_MODEL = "gpt-4o-mini-2024-07-18"
-CHATGPT_PRO_MODEL = "gpt-4o-mini-2024-07-18"
+CHATGPT_API_KEY = settings.openai_api_key
+CHATGPT_BASE_URL = settings.openai_base_url
+CHATGPT_MODEL = settings.openai_model
+CHATGPT_PRO_MODEL = settings.openai_model
 
 
 client = OpenAI(api_key=CHATGPT_API_KEY, base_url=CHATGPT_BASE_URL)

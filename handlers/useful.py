@@ -1,18 +1,18 @@
 # useful md for myself and you.
 
+import datetime
+import re
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from os import environ
+from threading import Lock
+
+from expiringdict import ExpiringDict
 from telebot import TeleBot
 from telebot.types import Message
-from expiringdict import ExpiringDict
-from os import environ
-import time
-import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from threading import Lock
-import re
+from telegramify_markdown.customize import markdown_symbol
 
 from . import *
-
-from telegramify_markdown.customize import markdown_symbol
 
 # Define the load priority, lower numbers have higher priority
 load_priority = 1000
@@ -87,8 +87,6 @@ if (CHATGPT_USE or CHATGPT_COMPLETE or CHATGPT_APPEND) and CHATGPT_API_KEY:
 GOOGLE_GEMINI_KEY = environ.get("GOOGLE_GEMINI_KEY")
 if (GEMINI_USE or GEMINI_USE_THREAD) and GOOGLE_GEMINI_KEY:
     import google.generativeai as genai
-    from google.generativeai import ChatSession
-    from google.generativeai.types.generation_types import StopCandidateException
 
     genai.configure(api_key=GOOGLE_GEMINI_KEY)
 
@@ -239,6 +237,7 @@ def latest_handle_messages(message: Message, bot: TeleBot):
         print(chat_message_dict[chat_id].text)
 
 
+@non_llm_handler
 def answer_it_handler(message: Message, bot: TeleBot) -> None:
     """answer_it: /answer_it"""
     # answer the last message in the chat group
@@ -864,7 +863,7 @@ def llm_summary(bot, full_answer, ph_s, reply_id) -> str:
     elif SUMMARY == "cohere":
         s = summary_cohere(bot, full_answer, ph_s, reply_id)
     else:
-        print(f"\n---\nSummary Fail\n---\n")
+        print("\n---\nSummary Fail\n---\n")
         s = f"**[Full Answer]({ph_s})**\n~~Summary Answer Wrong~~\n"
     return s
 

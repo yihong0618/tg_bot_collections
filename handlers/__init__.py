@@ -2,26 +2,27 @@ from __future__ import annotations
 
 import base64
 import importlib
+import logging
 import re
-import traceback
 from functools import update_wrapper
 from mimetypes import guess_type
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
 import requests
+import telegramify_markdown
+from expiringdict import ExpiringDict
 from telebot import TeleBot
 from telebot.types import BotCommand, Message
 from telebot.util import smart_split
-import telegramify_markdown
 from telegramify_markdown.customize import markdown_symbol
 from urlextract import URLExtract
-from expiringdict import ExpiringDict
 
 markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
 markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 T = TypeVar("T", bound=Callable)
+logger = logging.getLogger("bot")
 
 DEFAULT_LOAD_PRIORITY = 10
 
@@ -52,7 +53,7 @@ def bot_reply_markdown(
     try:
         cache_key = f"{reply_id.chat.id}_{reply_id.message_id}"
         if cache_key in REPLY_MESSAGE_CACHE and REPLY_MESSAGE_CACHE[cache_key] == text:
-            print(f"Skipping duplicate message for {cache_key}")
+            logger.info(f"Skipping duplicate message for {cache_key}")
             return True
         REPLY_MESSAGE_CACHE[cache_key] = text
         if len(text.encode("utf-8")) <= BOT_MESSAGE_LENGTH or not split_text:
@@ -77,14 +78,14 @@ def bot_reply_markdown(
         for i in range(1, len(msgs)):
             bot.reply_to(
                 reply_id.reply_to_message,
-                f"*{who}* \[{i+1}/{len(msgs)}\]:\n{telegramify_markdown.convert(msgs[i])}",
+                f"*{who}* \[{i + 1}/{len(msgs)}\\]:\n{telegramify_markdown.convert(msgs[i])}",
                 parse_mode="MarkdownV2",
             )
 
         return True
-    except Exception as e:
-        print(traceback.format_exc())
-        # print(f"wrong markdown format: {text}")
+    except Exception:
+        logger.exception("Error in bot_reply_markdown")
+        # logger.info(f"wrong markdown format: {text}")
         bot.edit_message_text(
             f"*{who}*:\n{text}",
             chat_id=reply_id.chat.id,
@@ -138,29 +139,34 @@ def remove_prompt_prefix(message: str) -> str:
     return re.sub(pattern, "", message).strip()
 
 
+def non_llm_handler(handler: T) -> T:
+    handler.__is_llm_handler__ = False
+    return handler
+
+
 def wrap_handler(handler: T, bot: TeleBot) -> T:
     def wrapper(message: Message, *args: Any, **kwargs: Any) -> None:
         try:
-            m = ""
+            if getattr(handler, "__is_llm_handler__", True):
+                m = ""
 
-            if message.text and message.text.find("answer_it") != -1:
-                # for answer_it no args
-                return handler(message, *args, **kwargs)
-            elif message.text is not None:
-                m = message.text = extract_prompt(message.text, bot.get_me().username)
-            elif message.caption is not None:
-                m = message.caption = extract_prompt(
-                    message.caption, bot.get_me().username
-                )
-            elif message.location and message.location.latitude is not None:
-                # for location map handler just return
-                return handler(message, *args, **kwargs)
-            if not m:
-                bot.reply_to(message, "Please provide info after start words.")
-                return
+                if message.text is not None:
+                    m = message.text = extract_prompt(
+                        message.text, bot.get_me().username
+                    )
+                elif message.caption is not None:
+                    m = message.caption = extract_prompt(
+                        message.caption, bot.get_me().username
+                    )
+                elif message.location and message.location.latitude is not None:
+                    # for location map handler just return
+                    return handler(message, *args, **kwargs)
+                if not m:
+                    bot.reply_to(message, "Please provide info after start words.")
+                    return
             return handler(message, *args, **kwargs)
         except Exception as e:
-            traceback.print_exc()
+            logger.exception("Error in handler %s: %s", handler.__name__, e)
             # handle more here
             if str(e).find("RECITATION") > 0:
                 bot.reply_to(message, "Your prompt `RECITATION` please check the log")
@@ -183,9 +189,9 @@ def load_handlers(bot: TeleBot, disable_commands: list[str]) -> None:
     modules_with_priority.sort(key=lambda x: x[-1])
     for module, name, priority in modules_with_priority:
         if hasattr(module, "register"):
-            print(f"Loading {name} handlers with priority {priority}.")
+            logger.debug(f"Loading {name} handlers with priority {priority}.")
             module.register(bot)
-    print("Loading handlers done.")
+    logger.info("Loading handlers done.")
 
     all_commands: list[BotCommand] = []
     for handler in bot.message_handlers:
@@ -200,7 +206,7 @@ def load_handlers(bot: TeleBot, disable_commands: list[str]) -> None:
 
     if all_commands:
         bot.set_my_commands(all_commands)
-        print("Setting commands done.")
+        logger.info("Setting commands done.")
 
 
 def list_available_commands() -> list[str]:
@@ -224,7 +230,7 @@ def get_text_from_jina_reader(url: str):
         r = requests.get(f"https://r.jina.ai/{url}")
         return r.text
     except Exception as e:
-        print(e)
+        logger.exception("Error fetching text from Jina reader: %s", e)
         return None
 
 
@@ -235,7 +241,7 @@ def enrich_text_with_urls(text: str) -> str:
             url_text = get_text_from_jina_reader(u)
             url_text = f"\n```markdown\n{url_text}\n```\n"
             text = text.replace(u, url_text)
-        except Exception as e:
+        except Exception:
             # just ignore the error
             pass
 
@@ -250,10 +256,10 @@ def image_to_data_uri(file_path):
 
 
 import json
-import requests
 import os
-from bs4 import BeautifulSoup
+
 import markdown
+from bs4 import BeautifulSoup
 
 
 class TelegraphAPI:
@@ -313,7 +319,9 @@ class TelegraphAPI:
             with open(TOKEN_FILE, "w") as f:
                 json.dump(tokens, f, indent=4)
         else:
-            print(f"Token not stored to file, but here is your token:\n{access_token}")
+            logger.info(
+                f"Token not stored to file, but here is your token:\n{access_token}"
+            )
 
         # Store it to the environment variable
         os.environ["TELEGRA_PH_TOKEN"] = access_token
@@ -354,7 +362,7 @@ class TelegraphAPI:
         if response.status_code == 200:
             return response.json()["result"]
         else:
-            print(f"Fail getting telegra.ph token info: {response.status_code}")
+            logger.info(f"Fail getting telegra.ph token info: {response.status_code}")
             return None
 
     def edit_page(
@@ -493,7 +501,7 @@ class TelegraphAPI:
                 image_url = f"{base_url}{response[0]['src']}"
                 return image_url
         except Exception as e:
-            print(f"upload image: {e}")
+            logger.info(f"upload image: {e}")
             return "https://telegra.ph/api"
 
 
@@ -505,4 +513,5 @@ __all__ = [
     "enrich_text_with_urls",
     "image_to_data_uri",
     "TelegraphAPI",
+    "non_llm_handler",
 ]

@@ -170,3 +170,5 @@ nohup.out
 .pdm-python
 *.wav
 token_key.json
+messages.db
+*.session
