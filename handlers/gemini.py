@@ -8,12 +8,9 @@ from google.generativeai import ChatSession
 from google.generativeai.types.generation_types import StopCandidateException
 from telebot import TeleBot
 from telebot.types import Message
-from telegramify_markdown.customize import markdown_symbol
 
 from ._utils import bot_reply_first, bot_reply_markdown, enrich_text_with_urls, logger
 
-markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
-markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 GOOGLE_GEMINI_KEY = environ.get("GEMIMI_PRO_KEY")
 

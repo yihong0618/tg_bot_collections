@@ -5,13 +5,10 @@ from expiringdict import ExpiringDict
 from groq import Groq
 from telebot import TeleBot
 from telebot.types import Message
-from telegramify_markdown import convert
-from telegramify_markdown.customize import markdown_symbol
+from telegramify_markdown import markdownify
 
 from ._utils import bot_reply_first, bot_reply_markdown, enrich_text_with_urls, logger
 
-markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
-markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 LLAMA_API_KEY = environ.get("GROQ_API_KEY")
 LLAMA_MODEL = "llama-3.1-70b-versatile"
@@ -143,7 +140,7 @@ def llama_pro_handler(message: Message, bot: TeleBot) -> None:
         player_message.append(
             {
                 "role": "assistant",
-                "content": convert(s),
+                "content": markdownify(s),
             }
         )
 

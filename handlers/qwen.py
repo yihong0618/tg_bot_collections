@@ -5,14 +5,11 @@ from os import environ
 from expiringdict import ExpiringDict
 from telebot import TeleBot
 from telebot.types import Message
-from telegramify_markdown import convert
-from telegramify_markdown.customize import markdown_symbol
+from telegramify_markdown import markdownify
 from together import Together
 
 from ._utils import bot_reply_first, bot_reply_markdown, enrich_text_with_urls, logger
 
-markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
-markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 QWEN_API_KEY = environ.get("TOGETHER_API_KEY")
 QWEN_MODEL = "Qwen/Qwen2-72B-Instruct"
@@ -145,7 +142,7 @@ def qwen_pro_handler(message: Message, bot: TeleBot) -> None:
         player_message.append(
             {
                 "role": "assistant",
-                "content": convert(s),
+                "content": markdownify(s),
             }
         )
 

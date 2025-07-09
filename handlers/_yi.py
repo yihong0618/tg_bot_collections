@@ -6,7 +6,7 @@ from expiringdict import ExpiringDict
 from openai import OpenAI
 from telebot import TeleBot
 from telebot.types import Message
-from telegramify_markdown import convert
+from telegramify_markdown import markdownify
 
 from . import *
 
@@ -150,7 +150,7 @@ def yi_pro_handler(message: Message, bot: TeleBot) -> None:
         player_message.append(
             {
                 "role": "assistant",
-                "content": convert(s),
+                "content": markdownify(s),
             }
         )
 

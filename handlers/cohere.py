@@ -7,15 +7,12 @@ import cohere
 from expiringdict import ExpiringDict
 from telebot import TeleBot
 from telebot.types import Message
-from telegramify_markdown import convert
-from telegramify_markdown.customize import markdown_symbol
+from telegramify_markdown import markdownify
 
 from config import settings
 
 from ._utils import bot_reply_first, bot_reply_markdown, enrich_text_with_urls
 
-markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
-markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 COHERE_API_KEY = environ.get("COHERE_API_KEY")
 COHERE_MODEL = "command-r-plus"  # command-r may cause Chinese garbled code, and non stream mode also may cause garbled code.
@@ -154,7 +151,7 @@ def cohere_handler(message: Message, bot: TeleBot) -> None:
         player_message.append(
             {
                 "role": "Chatbot",
-                "message": convert(s),
+                "message": markdownify(s),
             }
         )
 
