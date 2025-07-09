@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from functools import partial
+import shlex
 
 import telegramify_markdown
 from telebot import TeleBot
@@ -96,7 +97,7 @@ def stats_command(message: Message, bot: TeleBot):
 @non_llm_handler
 def search_command(message: Message, bot: TeleBot):
     """搜索群组消息（示例：/search 关键词 [N]）"""
-    text_parts = message.text.split(maxsplit=2)
+    text_parts = shlex.split(message.text)
     if len(text_parts) < 2:
         bot.reply_to(message, "请提供要搜索的关键词。")
         return
@@ -115,7 +116,7 @@ def search_command(message: Message, bot: TeleBot):
     items = []
     for msg in messages:
         link = f"https://t.me/c/{chat_id}/{msg.message_id}"
-        items.append(f"{link}\n```\n{msg.content}\n```")
+        items.append(f"{link}\n```\n{msg.user_name}: {msg.content}\n```")
     message_text = telegramify_markdown.markdownify("\n".join(items))
     bot.reply_to(
         message,
