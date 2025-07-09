@@ -154,7 +154,7 @@ class MessageStore:
         ]
 
     def _clean_old_messages(
-        self, chat_id: int, conn: sqlite3.Connection, days: int = 7
+        self, chat_id: int, conn: sqlite3.Connection, days: int = 30
     ) -> None:
         cursor = conn.cursor()
         threshold_date = datetime.now(tz=timezone.utc) - timedelta(days=days)
