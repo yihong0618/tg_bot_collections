@@ -3,8 +3,7 @@ import time
 from expiringdict import ExpiringDict
 from telebot import TeleBot
 from telebot.types import Message
-from telegramify_markdown import convert
-from telegramify_markdown.customize import markdown_symbol
+from telegramify_markdown import markdownify
 
 from config import settings
 
@@ -16,8 +15,6 @@ from ._utils import (
     logger,
 )
 
-markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
-markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 CHATGPT_MODEL = settings.openai_model
 CHATGPT_PRO_MODEL = settings.openai_model
@@ -153,7 +150,7 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
         player_message.append(
             {
                 "role": "assistant",
-                "content": convert(s),
+                "content": markdownify(s),
             }
         )
 

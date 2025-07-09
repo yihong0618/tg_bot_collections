@@ -16,8 +16,12 @@ from telebot.util import smart_split
 from telegramify_markdown.customize import get_runtime_config
 from urlextract import URLExtract
 
-get_runtime_config().markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
-get_runtime_config().markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
+get_runtime_config().markdown_symbol.head_level_1 = (
+    "📌"  # If you want, Customizing the head level 1 symbol
+)
+get_runtime_config().markdown_symbol.link = (
+    "🔗"  # If you want, Customizing the link symbol
+)
 
 T = TypeVar("T", bound=Callable)
 logger = logging.getLogger("bot")

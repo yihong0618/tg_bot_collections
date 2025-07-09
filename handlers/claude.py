@@ -6,13 +6,10 @@ from anthropic import Anthropic, APITimeoutError
 from expiringdict import ExpiringDict
 from telebot import TeleBot
 from telebot.types import Message
-from telegramify_markdown import convert
-from telegramify_markdown.customize import markdown_symbol
+from telegramify_markdown import markdownify
 
 from ._utils import bot_reply_first, bot_reply_markdown, enrich_text_with_urls
 
-markdown_symbol.head_level_1 = "📌"  # If you want, Customizing the head level 1 symbol
-markdown_symbol.link = "🔗"  # If you want, Customizing the link symbol
 
 ANTHROPIC_API_KEY = environ.get("ANTHROPIC_API_KEY")
 ANTHROPIC_BASE_URL = environ.get("ANTHROPIC_BASE_URL")
@@ -155,7 +152,7 @@ def claude_pro_handler(message: Message, bot: TeleBot) -> None:
         player_message.append(
             {
                 "role": "assistant",
-                "content": convert(s),
+                "content": markdownify(s),
             }
         )
 
