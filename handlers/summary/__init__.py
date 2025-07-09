@@ -119,7 +119,7 @@ def search_command(message: Message, bot: TeleBot):
     message_text = telegramify_markdown.markdownify("\n".join(items))
     bot.reply_to(
         message,
-        f"🔍 *搜索结果(只显示前 {limit} 个):*\n{message_text}",
+        f"🔍 *搜索结果\\(只显示前 {limit} 个\\):*\n{message_text}",
         parse_mode="MarkdownV2",
     )
 
