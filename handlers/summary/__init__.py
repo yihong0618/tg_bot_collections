@@ -65,7 +65,7 @@ def summary_command(message: Message, bot: TeleBot):
     )
     reply_text = f"""*👇 前情提要 👇 \\({since.strftime("%Y/%m/%d %H:%M")} \\- {now.strftime("%Y/%m/%d %H:%M")}\\)*
 
-{telegramify_markdown.convert(response.choices[0].message.content)}
+{telegramify_markdown.markdownify(response.choices[0].message.content)}
 """
     logger.debug("Generated summary:\n%s", reply_text)
     bot.edit_message_text(
@@ -116,7 +116,7 @@ def search_command(message: Message, bot: TeleBot):
     for msg in messages:
         link = f"https://t.me/c/{chat_id}/{msg.message_id}"
         items.append(f"{link}\n```\n{msg.content}\n```")
-    message_text = telegramify_markdown.convert("\n".join(items))
+    message_text = telegramify_markdown.markdownify("\n".join(items))
     bot.reply_to(
         message,
         f"🔍 *搜索结果(只显示前 {limit} 个):*\n{message_text}",
