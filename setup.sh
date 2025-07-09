@@ -1,7 +1,7 @@
 #!/bin/bash
 
 python_bin_path="$(which python3)"
-venv_dir="venv"
+venv_dir=".venv"
 project_path="$(pwd)"
 service_name="tgbotyh"
 
@@ -88,12 +88,12 @@ function installPythonVirtualEnv(){
     echo
     echo "Project path: $project_path"
     echo "Python bin path: $python_bin_path"
-    echo "Google_Gemini_API_Key: $Google_Gemini_API_Key"
-    echo "Telegram Bot Token: $Telegram_Bot_Token"
-    echo "Anthropic API Key: $Anthropic_API_Key"
-    echo "Openai API Key: $Openai_API_Key"
-    echo "Yi API Key: $Yi_API_Key"
-    echo "Yi Base Url: $Yi_Base_Url"
+    echo "Google_Gemini_API_Key: $google_gemini_api_key"
+    echo "Telegram Bot Token: $telegram_bot_token"
+    echo "Anthropic API Key: $anthropic_api_key"
+    echo "Openai API Key: $openai_api_key"
+    echo "Yi API Key: $yi_api_key"
+    echo "Yi Base Url: $yi_base_url"
     echo "=============================="
 
     echo
