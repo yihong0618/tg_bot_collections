@@ -92,7 +92,7 @@ class MessageStore:
             WHERE chat_id = ? AND timestamp >= ?
             ORDER BY timestamp ASC;
         """,
-                (chat_id, since.isoformat()),
+                (chat_id, since.astimezone(timezone.utc).isoformat()),
             )
             rows = cursor.fetchall()
         return [
