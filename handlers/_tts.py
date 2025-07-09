@@ -75,7 +75,7 @@ if USE_CHATTTS:
     def tts_handler(message: Message, bot: TeleBot):
         """pretty tts: /tts <prompt>"""
         bot.reply_to(
-            message, f"Generating ChatTTS may take some time please wait some time."
+            message, "Generating ChatTTS may take some time please wait some time."
         )
         m = message.text.strip()
         prompt = m.strip()
@@ -85,7 +85,7 @@ if USE_CHATTTS:
         try:
             with lock:
                 generate_tts_wav(prompt, "tts.wav")
-            with open(f"tts.wav", "rb") as audio:
+            with open("tts.wav", "rb") as audio:
                 bot.send_audio(
                     message.chat.id, audio, reply_to_message_id=message.message_id
                 )
@@ -152,7 +152,7 @@ if USE_CHATTTS:
                         remove("input.txt")
                         return
                     print(f"Combined audio saved as {output_file}")
-                    with open(f"tts_pro.wav", "rb") as audio:
+                    with open("tts_pro.wav", "rb") as audio:
                         bot.send_audio(
                             message.chat.id,
                             audio,
@@ -166,7 +166,7 @@ if USE_CHATTTS:
                             print(e)
                 else:
                     generate_tts_wav(prompt, "tts_pro.wav", seed)
-                    with open(f"tts_pro.wav", "rb") as audio:
+                    with open("tts_pro.wav", "rb") as audio:
                         bot.send_audio(
                             message.chat.id,
                             audio,
