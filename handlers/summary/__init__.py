@@ -87,26 +87,16 @@ def stats_command(message: Message, bot: TeleBot):
     stats_text = "\n".join(
         f"{entry.date}: {entry.message_count} messages" for entry in stats
     )
-    bot.reply_to(
-        message,
-        f"📊 群组消息统计信息:\n```\n{stats_text}\n```",
-        parse_mode="MarkdownV2",
-    )
-
-
-@non_llm_handler
-def user_stats_command(message: Message, bot: TeleBot):
-    """看看谁才是最能摸鱼的"""
     user_stats = store.get_user_stats(message.chat.id)
-    if not user_stats:
-        bot.reply_to(message, "没有找到任何用户统计信息。")
-        return
-    user_stats_text = "\n".join(
+    user_text = "\n".join(
         f"{entry.user_name}: {entry.message_count}" for entry in user_stats
     )
     bot.reply_to(
         message,
-        f"👤 用户消息统计信息:\n```\n{user_stats_text}\n```",
+        (
+            f"📊 群组消息统计信息:\n```\n{stats_text}\n```\n",
+            f"👤 用户消息统计信息:\n```\n{user_text}\n```",
+        ),
         parse_mode="MarkdownV2",
     )
 
@@ -151,9 +141,6 @@ if settings.openai_api_key:
             summary_command, commands=["summary"], pass_bot=True
         )
         bot.register_message_handler(stats_command, commands=["stats"], pass_bot=True)
-        bot.register_message_handler(
-            user_stats_command, commands=["userstats"], pass_bot=True
-        )
         bot.register_message_handler(search_command, commands=["search"], pass_bot=True)
         bot.register_message_handler(
             handle_message, func=partial(filter_message, bot=bot)
