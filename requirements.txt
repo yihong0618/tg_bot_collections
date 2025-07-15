@@ -127,5 +127,6 @@ uritemplate==4.1.1
 uritools==4.0.2
 urlextract==1.9.0
 urllib3==2.2.1
+wcwidth==0.2.13
 webencodings==0.5.1
 yarl==1.9.4

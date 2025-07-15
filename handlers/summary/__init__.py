@@ -8,6 +8,8 @@ import shlex
 import telegramify_markdown
 from telebot import TeleBot
 from telebot.types import Message
+from wcwidth import wcswidth
+from wcwidth import wcswidth
 
 from config import settings
 from handlers._utils import non_llm_handler
@@ -17,6 +19,12 @@ from .utils import PROMPT, filter_message, parse_date
 
 logger = logging.getLogger("bot")
 store = MessageStore("data/messages.db")
+
+
+def get_display_width(text: str) -> int:
+    """获取字符串的显示宽度，考虑中文字符"""
+    width = wcswidth(text)
+    return width if width is not None else len(text)
 
 
 @non_llm_handler
@@ -85,16 +93,25 @@ def stats_command(message: Message, bot: TeleBot):
         bot.reply_to(message, "没有找到任何统计信息。")
         return
 
-    # 格式化消息数量和日期对齐
+    # 计算消息数量的最大宽度
+    max_count_width = max(len(f"{entry.message_count} messages") for entry in stats)
     stats_text = "\n".join(
-        f"{entry.message_count:>4} messages - {entry.date}" for entry in stats
+        f"{f'{entry.message_count} messages':<{max_count_width}} - {entry.date}"
+        for entry in stats
     )
 
     user_stats = store.get_user_stats(message.chat.id)
-    # 格式化消息数量和用户名对齐
-    user_text = "\n".join(
-        f"{entry.message_count:>4} messages - {entry.user_name}" for entry in user_stats
-    )
+    if user_stats:
+        # 计算用户消息数量的最大宽度
+        max_user_count_width = max(
+            len(f"{entry.message_count} messages") for entry in user_stats
+        )
+        user_text = "\n".join(
+            f"{f'{entry.message_count} messages':<{max_user_count_width}} - {entry.user_name}"
+            for entry in user_stats
+        )
+    else:
+        user_text = ""
 
     bot.reply_to(
         message,

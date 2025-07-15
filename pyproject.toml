@@ -26,6 +26,7 @@ dependencies = [
     "pydantic>=2.11.7",
     "telethon>=1.40.0",
     "pysocks>=1.7.1",
+    "wcwidth>=0.2.13",
 ]
 requires-python = ">=3.10"
 
