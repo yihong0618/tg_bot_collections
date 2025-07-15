@@ -87,9 +87,16 @@ def stats_command(message: Message, bot: TeleBot):
     stats_text = "\n".join(
         f"{entry.date}: {entry.message_count} messages" for entry in stats
     )
+    user_stats = store.get_user_stats(message.chat.id)
+    user_text = "\n".join(
+        f"{entry.user_name}: {entry.message_count}" for entry in user_stats
+    )
     bot.reply_to(
         message,
-        f"📊 群组消息统计信息:\n```\n{stats_text}\n```",
+        (
+            f"📊 群组消息统计信息:\n```\n{stats_text}\n```\n",
+            f"👤 用户消息统计信息:\n```\n{user_text}\n```",
+        ),
         parse_mode="MarkdownV2",
     )
 

@@ -20,6 +20,13 @@ class StatsEntry:
     message_count: int
 
 
+@dataclass(frozen=True)
+class UserStatsEntry:
+    user_id: int
+    user_name: str
+    message_count: int
+
+
 class MessageStore:
     def __init__(self, db_file: str):
         parent_folder = os.path.dirname(db_file)
@@ -123,6 +130,25 @@ class MessageStore:
             )
             rows = cursor.fetchall()
         return [StatsEntry(date=row[0], message_count=row[1]) for row in rows]
+
+    def get_user_stats(self, chat_id: int, topk: int = 10) -> list[UserStatsEntry]:
+        with self.connect() as conn:
+            self._clean_old_messages(chat_id, conn)
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT user_id, 
+                    (SELECT user_name FROM messages m0 WHERE m0.user_id = m1.user_id LIMIT 1) AS name,
+                    COUNT(*) AS num
+                FROM messages m1
+                WHERE chat_id = ?
+                GROUP BY user_id
+                ORDER BY num DESC
+                LIMIT ?;""",
+                (chat_id, topk),
+            )
+            rows = cursor.fetchall()
+            return [UserStatsEntry(*row) for row in rows]
 
     def search_messages(
         self, chat_id: int, keyword: str, limit: int = 10
