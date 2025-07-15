@@ -81,6 +81,7 @@ def summary_command(message: Message, bot: TeleBot):
 def stats_command(message: Message, bot: TeleBot):
     """获取群组消息统计信息"""
     stats = store.get_stats(message.chat.id)
+    print(11111111111111111)
     if not stats:
         bot.reply_to(message, "没有找到任何统计信息。")
         return
@@ -94,8 +95,7 @@ def stats_command(message: Message, bot: TeleBot):
     bot.reply_to(
         message,
         (
-            f"📊 群组消息统计信息:\n```\n{stats_text}\n```\n",
-            f"👤 用户消息统计信息:\n```\n{user_text}\n```",
+            f"📊 群组消息统计信息:\n```\n{stats_text}\n```\n👤 用户消息统计信息:\n```\n{user_text}\n```"
         ),
         parse_mode="MarkdownV2",
     )
