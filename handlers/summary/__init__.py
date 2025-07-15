@@ -81,17 +81,21 @@ def summary_command(message: Message, bot: TeleBot):
 def stats_command(message: Message, bot: TeleBot):
     """获取群组消息统计信息"""
     stats = store.get_stats(message.chat.id)
-    print(11111111111111111)
     if not stats:
         bot.reply_to(message, "没有找到任何统计信息。")
         return
+
+    # 格式化消息数量和日期对齐
     stats_text = "\n".join(
-        f"{entry.date}: {entry.message_count} messages" for entry in stats
+        f"{entry.message_count:>4} messages - {entry.date}" for entry in stats
     )
+
     user_stats = store.get_user_stats(message.chat.id)
+    # 格式化消息数量和用户名对齐
     user_text = "\n".join(
-        f"{entry.user_name}: {entry.message_count}" for entry in user_stats
+        f"{entry.message_count:>4} messages - {entry.user_name}" for entry in user_stats
     )
+
     bot.reply_to(
         message,
         (
