@@ -9,7 +9,6 @@ import telegramify_markdown
 from telebot import TeleBot
 from telebot.types import Message
 from wcwidth import wcswidth
-from wcwidth import wcswidth
 
 from config import settings
 from handlers._utils import non_llm_handler
@@ -25,6 +24,13 @@ def get_display_width(text: str) -> int:
     """获取字符串的显示宽度，考虑中文字符"""
     width = wcswidth(text)
     return width if width is not None else len(text)
+
+
+def pad_to_width(text: str, target_width: int) -> str:
+    """根据显示宽度填充字符串到指定宽度"""
+    current_width = get_display_width(text)
+    padding = target_width - current_width
+    return text + " " * max(0, padding)
 
 
 @non_llm_handler
@@ -93,10 +99,10 @@ def stats_command(message: Message, bot: TeleBot):
         bot.reply_to(message, "没有找到任何统计信息。")
         return
 
-    # 计算消息数量的最大宽度
-    max_count_width = max(len(f"{entry.message_count} messages") for entry in stats)
+    # 计算数字部分的最大宽度
+    max_count_width = max(len(str(entry.message_count)) for entry in stats)
     stats_text = "\n".join(
-        f"{f'{entry.message_count} messages':<{max_count_width}} - {entry.date}"
+        f"{entry.message_count:>{max_count_width}} messages - {entry.date}"
         for entry in stats
     )
 
@@ -104,10 +110,10 @@ def stats_command(message: Message, bot: TeleBot):
     if user_stats:
         # 计算用户消息数量的最大宽度
         max_user_count_width = max(
-            len(f"{entry.message_count} messages") for entry in user_stats
+            len(str(entry.message_count)) for entry in user_stats
         )
         user_text = "\n".join(
-            f"{f'{entry.message_count} messages':<{max_user_count_width}} - {entry.user_name}"
+            f"{entry.message_count:>{max_user_count_width}} messages - {entry.user_name}"
             for entry in user_stats
         )
     else:
