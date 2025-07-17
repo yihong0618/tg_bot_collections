@@ -106,7 +106,12 @@ def stats_command(message: Message, bot: TeleBot):
         for entry in stats
     )
 
-    user_stats = store.get_user_stats(message.chat.id)
+    text_args = shlex.split(message.text)
+    if len(text_args) > 1 and text_args[1].isdigit():
+        limit = int(text_args[1])
+    else:
+        limit = 10
+    user_stats = store.get_user_stats(message.chat.id, limit=limit)
     if user_stats:
         # 计算用户消息数量的最大宽度
         max_user_count_width = max(
