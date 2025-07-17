@@ -131,7 +131,7 @@ class MessageStore:
             rows = cursor.fetchall()
         return [StatsEntry(date=row[0], message_count=row[1]) for row in rows]
 
-    def get_user_stats(self, chat_id: int, topk: int = 10) -> list[UserStatsEntry]:
+    def get_user_stats(self, chat_id: int, limit: int = 10) -> list[UserStatsEntry]:
         with self.connect() as conn:
             self._clean_old_messages(chat_id, conn)
             cursor = conn.cursor()
@@ -145,7 +145,7 @@ class MessageStore:
                 GROUP BY user_id
                 ORDER BY num DESC
                 LIMIT ?;""",
-                (chat_id, topk),
+                (chat_id, limit),
             )
             rows = cursor.fetchall()
             return [UserStatsEntry(*row) for row in rows]
