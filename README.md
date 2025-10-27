@@ -63,6 +63,8 @@ Note, if you are using third party service, you need to `export ANTHROPIC_BASE_U
 3. use `gpt: ${message}` to ask
 
 Note, if you are using third party service, you need to `export OPENAI_API_BASE=${the_url}` to change the url.
+Optional web search support:
+- export `OLLAMA_WEB_SEARCH_API_KEY=${the_ollama_web_search_api_key}` (and `OLLAMA_WEB_SEARCH_MAX_RESULTS` as needed)
 
 ## Bot -> llama3
 
