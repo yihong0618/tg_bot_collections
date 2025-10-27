@@ -27,6 +27,11 @@ client = settings.openai_client
 
 # Web search / tool-calling configuration
 WEB_SEARCH_TOOL_NAME = "web_search"
+WEB_SEARCH_SYSTEM_PROMPT = {
+    "role": "system",
+    "content": "You are a helpful assistant that uses the Ollama Cloud Web Search API to fetch recent information "
+    "from the public internet when needed. Always cite your sources using the format [number](URL) in your responses.\n\n",
+}
 OLLAMA_WEB_SEARCH_URL = "https://ollama.com/api/web_search"
 WEB_SEARCH_TOOL = {
     "type": "function",
@@ -95,7 +100,7 @@ def _format_web_search_results(payload: dict[str, Any]) -> str:
             snippet = snippet[:397].rstrip() + "..."
         entry = f"[{idx}] {title}"
         if url:
-            entry = f"{entry}\n{url}"
+            entry = f"{entry}\nURL: {url}"
         if snippet:
             entry = f"{entry}\n{snippet}"
         formatted.append(entry)
@@ -168,6 +173,7 @@ def _accumulate_tool_call_deltas(
 
 def _finalize_tool_calls(buffer: dict[int, dict[str, Any]]) -> list[dict[str, Any]]:
     tool_calls: list[dict[str, Any]] = []
+
     for idx in sorted(buffer):
         entry = buffer[idx]
         function_name = entry.get("function", {}).get("name")
@@ -242,6 +248,8 @@ def _stream_chatgpt_pro_response(
     tools = _available_tools()
     tool_loops_remaining = MAX_TOOL_ITERATIONS if tools else 0
     final_response = ""
+    if tools:
+        conversation.insert(0, WEB_SEARCH_SYSTEM_PROMPT)
     while True:
         request_payload: dict[str, Any] = {
             "messages": conversation,
@@ -249,7 +257,7 @@ def _stream_chatgpt_pro_response(
             "stream": True,
         }
         if tools:
-            request_payload["tools"] = tools
+            request_payload.update(tools=tools, tool_choice="auto")
 
         stream = client.chat.completions.create(**request_payload)
         buffer = ""
@@ -409,7 +417,7 @@ def chatgpt_pro_handler(message: Message, bot: TeleBot) -> None:
         player_message = player_message[2:]
 
     try:
-        reply_text = _stream_chatgpt_pro_response(player_message, reply_id, who, bot)
+        reply_text = _stream_chatgpt_pro_response(player_message[:], reply_id, who, bot)
         player_message.append(
             {
                 "role": "assistant",
