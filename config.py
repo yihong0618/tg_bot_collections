@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     google_gemini_api_key: str | None = None
     anthropic_api_key: str | None = None
     telegra_ph_token: str | None = None
+    ollama_web_search_api_key: str | None = None
+    ollama_web_search_max_results: int = 5
+    ollama_web_search_timeout: int = 10
 
     @cached_property
     def openai_client(self) -> openai.OpenAI:
