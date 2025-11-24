@@ -366,7 +366,7 @@ if settings.openai_api_key:
             confirm_command, commands=["confirm"], pass_bot=True
         )
         bot.register_message_handler(
-            handle_message, func=partial(filter_message, bot=bot), pass_bot=True
+            handle_message, func=partial(filter_message, bot=bot, check_chinese=True), pass_bot=True
         )
 
         # 启动提肛提醒定时任务
