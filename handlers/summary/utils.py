@@ -20,7 +20,7 @@ def contains_non_ascii(text: str) -> bool:
 
 def filter_message(message: Message, bot: TeleBot, check_chinese: bool = False) -> bool:
     """过滤消息，排除非文本消息和命令消息
-    
+
     Args:
         message: 消息对象
         bot: Bot 实例
