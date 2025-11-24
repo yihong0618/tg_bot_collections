@@ -14,6 +14,10 @@ PROMPT = """\
 """
 
 
+def contains_non_ascii(text: str) -> bool:
+    return not text.isascii()
+
+
 def filter_message(message: Message, bot: TeleBot) -> bool:
     """过滤消息，排除非文本消息和命令消息"""
     if not message.text:

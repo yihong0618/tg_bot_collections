@@ -35,7 +35,7 @@ REPLY_MESSAGE_CACHE = ExpiringDict(max_len=1000, max_age_seconds=600)
 def bot_reply_first(message: Message, who: str, bot: TeleBot) -> Message:
     """Create the first reply message which make user feel the bot is working."""
     return bot.reply_to(
-        message, f"*{who}* is _thinking_ \.\.\.", parse_mode="MarkdownV2"
+        message, f"*{who}* is _thinking_ \\.\\.\\.", parse_mode="MarkdownV2"
     )
 
 
@@ -70,7 +70,7 @@ def bot_reply_markdown(
         # Need a split of message
         msgs = smart_split(text, BOT_MESSAGE_LENGTH)
         bot.edit_message_text(
-            f"*{who}* \[1/{len(msgs)}\]:\n{telegramify_markdown.markdownify(msgs[0])}",
+            f"*{who}* \\[1/{len(msgs)}\\]:\n{telegramify_markdown.markdownify(msgs[0])}",
             chat_id=reply_id.chat.id,
             message_id=reply_id.message_id,
             parse_mode="MarkdownV2",
@@ -79,7 +79,7 @@ def bot_reply_markdown(
         for i in range(1, len(msgs)):
             bot.reply_to(
                 reply_id.reply_to_message,
-                f"*{who}* \[{i + 1}/{len(msgs)}\\]:\n{telegramify_markdown.markdownify(msgs[i])}",
+                f"*{who}* \\[{i + 1}/{len(msgs)}\\]:\n{telegramify_markdown.markdownify(msgs[i])}",
                 parse_mode="MarkdownV2",
             )
 

@@ -59,6 +59,19 @@ class MessageStore:
                 CREATE INDEX IF NOT EXISTS idx_chat_timestamp ON messages (chat_id, timestamp);
             """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS tigong_alerts (
+                    chat_id INTEGER,
+                    user_id INTEGER,
+                    user_name TEXT,
+                    username TEXT,
+                    date TEXT,
+                    confirmed INTEGER DEFAULT 0,
+                    PRIMARY KEY (chat_id, user_id, date)
+                );
+            """
+            )
             conn.commit()
 
     def add_message(
@@ -188,3 +201,63 @@ class MessageStore:
             "DELETE FROM messages WHERE chat_id = ? AND timestamp < ?;",
             (chat_id, threshold_date.isoformat()),
         )
+
+    def add_tigong_alert_user(
+        self, chat_id: int, user_id: int, user_name: str, username: str, date: str
+    ) -> None:
+        """添加用户到提肛提醒队列"""
+        with self.connect() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO tigong_alerts (chat_id, user_id, user_name, username, date, confirmed)
+                VALUES (?, ?, ?, ?, ?, 0);
+                """,
+                (chat_id, user_id, user_name, username, date),
+            )
+            conn.commit()
+
+    def confirm_tigong_alert(self, chat_id: int, user_id: int, date: str) -> bool:
+        """确认用户完成提肛"""
+        with self.connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE tigong_alerts SET confirmed = 1
+                WHERE chat_id = ? AND user_id = ? AND date = ?;
+                """,
+                (chat_id, user_id, date),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def get_unconfirmed_users(self, chat_id: int, date: str) -> list[dict]:
+        """获取当天未确认的用户列表"""
+        with self.connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT user_id, user_name, username
+                FROM tigong_alerts
+                WHERE chat_id = ? AND date = ? AND confirmed = 0;
+                """,
+                (chat_id, date),
+            )
+            rows = cursor.fetchall()
+        return [
+            {"user_id": row[0], "user_name": row[1], "username": row[2]} for row in rows
+        ]
+
+    def get_today_message_count(self, chat_id: int, date_str: str) -> int:
+        """获取当天的消息数量"""
+        with self.connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT COUNT(*)
+                FROM messages
+                WHERE chat_id = ? AND DATE(timestamp) = ?;
+                """,
+                (chat_id, date_str),
+            )
+            result = cursor.fetchone()
+            return result[0] if result else 0

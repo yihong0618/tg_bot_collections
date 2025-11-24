@@ -103,8 +103,8 @@ def gemini_handler(message: Message, bot: TeleBot) -> None:
         player.send_message(m)
         gemini_reply_text = player.last.text.strip()
         # Gemini is often using ':' in **Title** which not work in Telegram Markdown
-        gemini_reply_text = gemini_reply_text.replace(":**", "\:**")
-        gemini_reply_text = gemini_reply_text.replace("：**", "**\: ")
+        gemini_reply_text = gemini_reply_text.replace(":**", "\\:**")
+        gemini_reply_text = gemini_reply_text.replace("：**", "**\\: ")
     except StopCandidateException as e:
         match = re.search(r'content\s*{\s*parts\s*{\s*text:\s*"([^"]+)"', str(e))
         if match:
