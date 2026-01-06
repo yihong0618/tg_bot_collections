@@ -175,12 +175,15 @@ def stats_command(message: Message, bot: TeleBot):
     else:
         user_text = ""
 
-    return_message = f"📊 群组消息统计信息:\n```\n{stats_text}\n```\n👤 用户消息统计信息:\n```\n{user_text}\n```\\-\\-\\-\n"
+    return_message = (
+        f"📊 群组消息统计信息:\n<blockquote expandable>\n{stats_text}\n</blockquote>\n"
+        f"👤 用户消息统计信息:\n<blockquote expandable>\n{user_text}\n</blockquote>\n"
+    )
 
     bot.reply_to(
         message,
         return_message,
-        parse_mode="MarkdownV2",
+        parse_mode="HTML",
     )
 
 
