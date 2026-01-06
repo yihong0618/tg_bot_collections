@@ -1,6 +1,7 @@
 import re
 import zoneinfo
 from datetime import datetime, timedelta
+from urllib.parse import unquote
 
 from telebot import TeleBot
 from telebot.types import Message
@@ -15,29 +16,30 @@ PROMPT = """\
 
 
 def contains_non_ascii(text: str) -> bool:
-    return not text.isascii()
+    # 首先检查原始文本
+    if not text.isascii():
+        return True
+    # 然后检查 URL decode 后的文本（处理 %XX 编码的中文）
+    try:
+        decoded = unquote(text)
+        if not decoded.isascii():
+            return True
+    except Exception:
+        pass
+    return False
 
 
-def filter_message(message: Message, bot: TeleBot, check_chinese: bool = False) -> bool:
-    """过滤消息，排除非文本消息和命令消息
-
-    Args:
-        message: 消息对象
-        bot: Bot 实例
-        check_chinese: 是否允许检查中文消息（即不过滤命令）
-    """
+def filter_message(message: Message, bot: TeleBot) -> bool:
+    """过滤消息，排除非文本消息和命令消息"""
     if not message.text:
         return False
     if not message.from_user:
         return False
     if message.from_user.id == bot.get_me().id:
         return False
-    # 如果需要检查中文，则不过滤命令消息（让 handle_message 处理）
-    if not check_chinese and message.text.startswith("/"):
+    if message.text.startswith("/"):
         return False
     return True
-
-
 date_regex = re.compile(r"^(\d+)([dhm])$")
 
 
