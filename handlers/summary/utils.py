@@ -40,6 +40,8 @@ def filter_message(message: Message, bot: TeleBot) -> bool:
     if message.text.startswith("/"):
         return False
     return True
+
+
 date_regex = re.compile(r"^(\d+)([dhm])$")
 
 

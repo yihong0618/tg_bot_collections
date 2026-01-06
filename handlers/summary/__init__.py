@@ -65,7 +65,7 @@ def check_poll_for_chinese(message: Message) -> bool:
 
 def check_caption_for_chinese(message: Message) -> bool:
     """检查媒体消息的 caption 是否包含中文"""
-    if hasattr(message, 'caption') and message.caption:
+    if hasattr(message, "caption") and message.caption:
         return contains_non_ascii(message.caption)
     return False
 
@@ -73,36 +73,44 @@ def check_caption_for_chinese(message: Message) -> bool:
 def check_link_preview_for_chinese(message: Message) -> bool:
     """检查消息链接预览是否包含中文"""
     # 检查 link_preview_options（如果存在）
-    if hasattr(message, 'link_preview_options') and message.link_preview_options:
+    if hasattr(message, "link_preview_options") and message.link_preview_options:
         lpo = message.link_preview_options
-        if hasattr(lpo, 'url') and lpo.url and contains_non_ascii(lpo.url):
+        if hasattr(lpo, "url") and lpo.url and contains_non_ascii(lpo.url):
             return True
-    
+
     # 检查 web_page（链接预览的详细信息）
-    if hasattr(message, 'web_page') and message.web_page:
+    if hasattr(message, "web_page") and message.web_page:
         wp = message.web_page
         # 检查标题
-        if hasattr(wp, 'title') and wp.title and contains_non_ascii(wp.title):
+        if hasattr(wp, "title") and wp.title and contains_non_ascii(wp.title):
             return True
         # 检查描述
-        if hasattr(wp, 'description') and wp.description and contains_non_ascii(wp.description):
+        if (
+            hasattr(wp, "description")
+            and wp.description
+            and contains_non_ascii(wp.description)
+        ):
             return True
         # 检查站点名称
-        if hasattr(wp, 'site_name') and wp.site_name and contains_non_ascii(wp.site_name):
+        if (
+            hasattr(wp, "site_name")
+            and wp.site_name
+            and contains_non_ascii(wp.site_name)
+        ):
             return True
         # 检查 URL
-        if hasattr(wp, 'url') and wp.url and contains_non_ascii(wp.url):
+        if hasattr(wp, "url") and wp.url and contains_non_ascii(wp.url):
             return True
-    
+
     return False
 
 
 def message_has_url(message: Message) -> bool:
     """检查消息是否包含 URL"""
     # 检查 entities 中是否有 URL 类型
-    if hasattr(message, 'entities') and message.entities:
+    if hasattr(message, "entities") and message.entities:
         for entity in message.entities:
-            if entity.type in ('url', 'text_link'):
+            if entity.type in ("url", "text_link"):
                 return True
     return False
 
@@ -112,7 +120,7 @@ def check_and_delete_message_with_url(message: Message, bot: TeleBot):
     """检测并删除包含 URL 的消息（因为链接预览可能包含中文）"""
     beijing_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
     current_time = datetime.now(tz=beijing_tz)
-    
+
     try:
         bot.delete_message(message.chat.id, message.message_id)
         bot.send_message(
@@ -134,7 +142,7 @@ def check_and_delete_chinese_link_preview(message: Message, bot: TeleBot):
     """检测并删除链接预览包含中文的消息(仅在特定时间和群组)"""
     beijing_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
     current_time = datetime.now(tz=beijing_tz)
-    
+
     try:
         bot.delete_message(message.chat.id, message.message_id)
         bot.send_message(
@@ -156,7 +164,7 @@ def check_and_delete_chinese_poll(message: Message, bot: TeleBot):
     """检测并删除包含中文的投票消息(仅在特定时间和群组)"""
     beijing_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
     current_time = datetime.now(tz=beijing_tz)
-    
+
     try:
         bot.delete_message(message.chat.id, message.message_id)
         bot.send_message(
@@ -178,7 +186,7 @@ def check_and_delete_chinese_caption(message: Message, bot: TeleBot):
     """检测并删除 caption 包含中文的媒体消息(仅在特定时间和群组)"""
     beijing_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
     current_time = datetime.now(tz=beijing_tz)
-    
+
     try:
         bot.delete_message(message.chat.id, message.message_id)
         bot.send_message(
@@ -208,10 +216,10 @@ def check_and_delete_chinese(message: Message, bot: TeleBot):
         beijing_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
         current_time = datetime.now(tz=beijing_tz)
         is_command = message.text.startswith("/")
-        
+
         try:
             bot.delete_message(message.chat.id, message.message_id)
-            
+
             if is_command:
                 bot.send_message(
                     message.chat.id,
@@ -222,7 +230,7 @@ def check_and_delete_chinese(message: Message, bot: TeleBot):
                     message.chat.id,
                     f"已删除 @{message.from_user.username or message.from_user.full_name} 的中文消息",
                 )
-                
+
             logger.info(
                 "Deleted Chinese message from user %s in chat %d at %s (is_command: %s)",
                 message.from_user.full_name,
@@ -537,10 +545,11 @@ if settings.openai_api_key:
                 func=chinese_filter,
                 pass_bot=True,
             )
-            
+
             # 处理包含中文的投票
             poll_filter = lambda msg: (
-                hasattr(msg, 'poll') and msg.poll is not None
+                hasattr(msg, "poll")
+                and msg.poll is not None
                 and msg.chat.id == TIGONG_CHAT_ID
                 and is_chinese_ban_time()
                 and check_poll_for_chinese(msg)
@@ -550,7 +559,7 @@ if settings.openai_api_key:
                 func=poll_filter,
                 pass_bot=True,
             )
-            
+
             # 处理 caption 包含中文的媒体消息（图片、视频、文档等）
             caption_filter = lambda msg: (
                 msg.chat.id == TIGONG_CHAT_ID
@@ -560,13 +569,29 @@ if settings.openai_api_key:
             bot.register_message_handler(
                 check_and_delete_chinese_caption,
                 func=caption_filter,
-                content_types=['photo', 'video', 'document', 'audio', 'voice', 'video_note', 'animation'],
+                content_types=[
+                    "photo",
+                    "video",
+                    "document",
+                    "audio",
+                    "voice",
+                    "video_note",
+                    "animation",
+                ],
                 pass_bot=True,
             )
             bot.register_edited_message_handler(
                 check_and_delete_chinese_caption,
                 func=caption_filter,
-                content_types=['photo', 'video', 'document', 'audio', 'voice', 'video_note', 'animation'],
+                content_types=[
+                    "photo",
+                    "video",
+                    "document",
+                    "audio",
+                    "voice",
+                    "video_note",
+                    "animation",
+                ],
                 pass_bot=True,
             )
 
