@@ -338,8 +338,8 @@ def stats_command(message: Message, bot: TeleBot):
         user_text = ""
 
     return_message = (
-        f"📊 群组消息统计信息:\n<blockquote expandable>\n{stats_text}\n</blockquote>\n"
-        f"👤 用户消息统计信息:\n<blockquote expandable>\n{user_text}\n</blockquote>\n"
+        f"📊 群组消息统计信息:\n<blockquote expandable><pre>\n{stats_text}\n</pre></blockquote>\n"
+        f"👤 用户消息统计信息:\n<blockquote expandable><pre>\n{user_text}\n</pre></blockquote>\n"
     )
 
     bot.reply_to(
