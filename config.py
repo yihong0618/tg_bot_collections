@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
     openai_base_url: str = "https://api.openai.com/v1"
 
+    minimax_api_key: str | None = None
+    minimax_model: str = "MiniMax-M3"
+    minimax_base_url: str = "https://api.minimax.io/v1"
+
     google_gemini_api_key: str | None = None
     anthropic_api_key: str | None = None
     telegra_ph_token: str | None = None

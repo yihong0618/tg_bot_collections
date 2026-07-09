@@ -66,6 +66,12 @@ Note, if you are using third party service, you need to `export OPENAI_API_BASE=
 Optional web search support:
 - export `OLLAMA_WEB_SEARCH_API_KEY=${the_ollama_web_search_api_key}` (and `OLLAMA_WEB_SEARCH_MAX_RESULTS` as needed)
 
+## Bot -> MiniMax
+
+1. visit https://platform.minimax.io get the key
+2. export MINIMAX_API_KEY=${the_key}
+3. use `minimax: ${message}` to ask MiniMax-M3
+
 ## Bot -> llama3
 
 1. visit https://console.groq.com/docs/quickstart get the key
