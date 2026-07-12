@@ -4,7 +4,6 @@ from expiringdict import ExpiringDict
 from openai import OpenAI
 from telebot import TeleBot
 from telebot.types import Message
-from telegramify_markdown import markdownify
 
 from config import settings
 
@@ -56,7 +55,7 @@ def minimax_handler(message: Message, bot: TeleBot) -> None:
         r = client.chat.completions.create(
             messages=player_message, max_tokens=4096, model=MINIMAX_MODEL
         )
-        content = r.choices[0].message.content.encode("utf8").decode()
+        content = r.choices[0].message.content
         if not content:
             minimax_reply_text = f"{who} did not answer."
             player_message.pop()
@@ -116,12 +115,20 @@ def minimax_pro_handler(message: Message, bot: TeleBot) -> None:
         s = ""
         start = time.time()
         for chunk in r:
-            if chunk.choices[0].delta.content is None:
-                break
-            s += chunk.choices[0].delta.content
+            if not chunk.choices:
+                continue
+            content = chunk.choices[0].delta.content
+            if not content:
+                continue
+            s += content
             if time.time() - start > 1.7:
                 start = time.time()
                 bot_reply_markdown(reply_id, who, s, bot, split_text=False)
+
+        if not s:
+            player_message.pop()
+            bot_reply_markdown(reply_id, who, f"{who} did not answer.", bot)
+            return
 
         if not bot_reply_markdown(reply_id, who, s, bot):
             player_message.clear()
@@ -130,7 +137,7 @@ def minimax_pro_handler(message: Message, bot: TeleBot) -> None:
         player_message.append(
             {
                 "role": "assistant",
-                "content": markdownify(s),
+                "content": s,
             }
         )
 
@@ -144,7 +151,9 @@ def minimax_pro_handler(message: Message, bot: TeleBot) -> None:
 if settings.minimax_api_key:
 
     def register(bot: TeleBot) -> None:
-        bot.register_message_handler(minimax_handler, commands=["minimax"], pass_bot=True)
+        bot.register_message_handler(
+            minimax_handler, commands=["minimax"], pass_bot=True
+        )
         bot.register_message_handler(minimax_handler, regexp="^minimax:", pass_bot=True)
         bot.register_message_handler(
             minimax_pro_handler, commands=["minimax_pro"], pass_bot=True

@@ -72,6 +72,11 @@ Optional web search support:
 2. export MINIMAX_API_KEY=${the_key}
 3. use `minimax: ${message}` to ask MiniMax-M3
 
+The handler uses the OpenAI-compatible API and defaults to `MiniMax-M3` at
+`https://api.minimax.io/v1`. Set `MINIMAX_MODEL=MiniMax-M2.7` to use
+MiniMax-M2.7, or set `MINIMAX_BASE_URL=https://api.minimaxi.com/v1` to use the
+China endpoint.
+
 ## Bot -> llama3
 
 1. visit https://console.groq.com/docs/quickstart get the key
