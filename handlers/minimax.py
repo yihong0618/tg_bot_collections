@@ -1,3 +1,4 @@
+import json
 import time
 from typing import Any
 
@@ -62,8 +63,8 @@ def _complete(messages: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
         max_tokens=4096,
         model=MINIMAX_MODEL,
     )
-    content = response.choices[0].message.content or ""
-    return content, {"role": "assistant", "content": content}
+    message = response.choices[0].message
+    return message.content or "", message.model_dump(exclude_none=True)
 
 
 def _stream(
@@ -75,18 +76,48 @@ def _stream(
     text = ""
     last_update = time.time()
     if settings.minimax_api_type == "anthropic":
-        with client.messages.stream(
+        blocks: dict[int, dict[str, Any]] = {}
+        tool_inputs: dict[int, str] = {}
+        # Preserve thinking deltas even with older SDKs that do not accumulate
+        # thinking blocks in their high-level messages.stream helper.
+        with client.messages.create(
             messages=messages,
             max_tokens=8192,
             model=MINIMAX_MODEL,
+            stream=True,
         ) as stream:
-            for delta in stream.text_stream:
-                text += delta
-                if time.time() - last_update > 1.7:
-                    last_update = time.time()
-                    bot_reply_markdown(reply_id, who, text, bot, split_text=False)
-            response = stream.get_final_message()
-        return text, {"role": response.role, "content": response.content}
+            for event in stream:
+                if event.type == "content_block_start":
+                    blocks[event.index] = event.content_block.model_dump(
+                        exclude_none=True
+                    )
+                elif event.type == "content_block_delta":
+                    block = blocks[event.index]
+                    delta = event.delta
+                    if delta.type == "input_json_delta":
+                        tool_inputs[event.index] = (
+                            tool_inputs.get(event.index, "") + delta.partial_json
+                        )
+                    elif delta.type in (
+                        "text_delta",
+                        "thinking_delta",
+                        "signature_delta",
+                    ):
+                        field = delta.type.removesuffix("_delta")
+                        block[field] = block.get(field, "") + getattr(delta, field)
+                        if field == "text":
+                            text += delta.text
+                            if time.time() - last_update > 1.7:
+                                last_update = time.time()
+                                bot_reply_markdown(
+                                    reply_id, who, text, bot, split_text=False
+                                )
+                elif event.type == "content_block_stop" and event.index in tool_inputs:
+                    blocks[event.index]["input"] = json.loads(tool_inputs[event.index])
+        return text, {
+            "role": "assistant",
+            "content": [blocks[i] for i in sorted(blocks)],
+        }
 
     response = client.chat.completions.create(
         messages=messages,
@@ -94,17 +125,41 @@ def _stream(
         model=MINIMAX_MODEL,
         stream=True,
     )
+    reasoning = ""
+    tool_calls: dict[int, dict[str, Any]] = {}
     for chunk in response:
         if not chunk.choices:
             continue
-        delta = chunk.choices[0].delta.content
-        if not delta:
+        delta = chunk.choices[0].delta
+        reasoning += getattr(delta, "reasoning_content", None) or ""
+        for call in delta.tool_calls or []:
+            tool = tool_calls.setdefault(
+                call.index,
+                {
+                    "id": "",
+                    "type": "function",
+                    "function": {"name": "", "arguments": ""},
+                },
+            )
+            if call.id:
+                tool["id"] = call.id
+            if call.type:
+                tool["type"] = call.type
+            if call.function:
+                tool["function"]["name"] += call.function.name or ""
+                tool["function"]["arguments"] += call.function.arguments or ""
+        if not delta.content:
             continue
-        text += delta
+        text += delta.content
         if time.time() - last_update > 1.7:
             last_update = time.time()
             bot_reply_markdown(reply_id, who, text, bot, split_text=False)
-    return text, {"role": "assistant", "content": text}
+    assistant_message: dict[str, Any] = {"role": "assistant", "content": text}
+    if reasoning:
+        assistant_message["reasoning_content"] = reasoning
+    if tool_calls:
+        assistant_message["tool_calls"] = [tool_calls[i] for i in sorted(tool_calls)]
+    return text, assistant_message
 
 
 def minimax_handler(message: Message, bot: TeleBot) -> None:
