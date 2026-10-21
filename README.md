@@ -72,14 +72,16 @@ Optional web search support:
 2. export `MINIMAX_API_KEY=${the_key}`
 3. use `minimax: ${message}` or `/minimax_pro ${message}` to ask
 
-The handler defaults to `MiniMax-M3` and the global OpenAI-compatible API. Set
-`MINIMAX_MODEL=MiniMax-M2.7` to use MiniMax-M2.7. Select an API type and endpoint
-with the following environment variables:
+The handler defaults to `MiniMax-M3.1-Flash` and the global OpenAI-compatible API.
+Set `MINIMAX_MODEL=MiniMax-M3` to use MiniMax-M3. Existing explicit model settings,
+including custom or legacy model IDs, are passed through unchanged. Flash uses
+its default adaptive thinking and effort; reasoning is preserved in conversation
+history. Select an API type and endpoint with the following environment variables:
 
 | API type | Global endpoint | China endpoint |
 | --- | --- | --- |
-| OpenAI | `MINIMAX_API_TYPE=openai MINIMAX_BASE_URL=https://api.minimax.io/v1` | `MINIMAX_API_TYPE=openai MINIMAX_BASE_URL=https://api.minimaxi.com/v1` |
-| Anthropic | `MINIMAX_API_TYPE=anthropic MINIMAX_BASE_URL=https://api.minimax.io/anthropic` | `MINIMAX_API_TYPE=anthropic MINIMAX_BASE_URL=https://api.minimaxi.com/anthropic` |
+| OpenAI | `MINIMAX_API_TYPE=openai MINIMAX_BASE_URL=https://api.minimax.io/v1` | `MINIMAX_API_TYPE=openai MINIMAX_BASE_URL=https://api.minimax.cn/v1` |
+| Anthropic | `MINIMAX_API_TYPE=anthropic MINIMAX_BASE_URL=https://api.minimax.io/anthropic` | `MINIMAX_API_TYPE=anthropic MINIMAX_BASE_URL=https://api.minimax.cn/anthropic` |
 
 ## Bot -> llama3
 
