@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     minimax_api_type: Literal["openai", "anthropic"] = "openai"
     minimax_base_url: str | None = None
 
+    litellm_model: str | None = None
+    litellm_api_key: str | None = None
+    litellm_api_base: str | None = None
+
     google_gemini_api_key: str | None = None
     anthropic_api_key: str | None = None
     telegra_ph_token: str | None = None
