@@ -133,6 +133,12 @@ Do not share the token with others, it's like a password.
 
 ## HOW TO Install and Run
 
+### Using Monid (optional)
+
+Export `MONID_API_KEY=${your_monid_api_key}` before starting the bot.
+The bot will fetch Markdown for links in supported prompts through Monid.
+See https://docs.monid.ai for setup.
+
 ### Manually install 
 1. pip install -r requirements.txt
 2. Get tg token, ask Google or ChatGPT, need get it from [BotFather](https://t.me/BotFather)

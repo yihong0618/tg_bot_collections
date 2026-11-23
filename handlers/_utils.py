@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import base64
+import json
 import logging
+import os
 import re
+import time
 from functools import update_wrapper
 from mimetypes import guess_type
 from typing import Any, Callable, TypeVar
@@ -28,6 +31,9 @@ logger = logging.getLogger("bot")
 
 
 BOT_MESSAGE_LENGTH = 4000
+MONID_API = "https://api.monid.ai"
+MONID_TIMEOUT = 60
+MONID_TOKEN_BUDGET = 20000
 
 REPLY_MESSAGE_CACHE = ExpiringDict(max_len=1000, max_age_seconds=600)
 
@@ -183,7 +189,66 @@ def extract_url_from_text(text: str) -> list[str]:
     return urls
 
 
+def _get_text_from_monid(url: str, key: str) -> str:
+    if not url.lower().startswith(("http://", "https://")):
+        url = f"https://{url}"
+    headers = {"Authorization": f"Bearer {key}"}
+    payload = {
+        "provider": "litescrape",
+        "endpoint": "/web/fetch",
+        "input": {
+            "body": {
+                "url": url,
+                "respond_with": "markdown",
+                "token_budget": MONID_TOKEN_BUDGET,
+            }
+        },
+    }
+    response = requests.post(
+        f"{MONID_API}/v1/run",
+        headers={**headers, "Content-Type": "application/json; charset=utf-8"},
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        timeout=MONID_TIMEOUT,
+    )
+    response.raise_for_status()
+    run = response.json()
+    if response.status_code == 202:
+        run_url = f"{MONID_API}/v1/runs/{run['runId']}"
+        deadline = time.monotonic() + MONID_TIMEOUT
+        while run.get("status") not in (
+            "COMPLETED",
+            "FAILED",
+            "TIMED_OUT",
+            "STOPPED",
+            "BLOCKED",
+        ):
+            time.sleep(2)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("Monid run timed out")
+            response = requests.get(run_url, headers=headers, timeout=remaining)
+            response.raise_for_status()
+            run = response.json()
+
+    provider_response = run.get("providerResponse") or {}
+    if provider_response.get("httpStatus", 200) >= 400:
+        # Jina Reader passes HTTP error bodies through as text.
+        error = provider_response.get("error")
+        return (
+            error if isinstance(error, str) else json.dumps(error, ensure_ascii=False)
+        )
+    if run.get("status") not in (None, "COMPLETED"):
+        raise RuntimeError(f"Monid run {run.get('status')}")
+    return run["output"]["content"]
+
+
 def get_text_from_jina_reader(url: str):
+    if key := os.environ.get("MONID_API_KEY"):
+        try:
+            return _get_text_from_monid(url, key)
+        except Exception:
+            logger.exception("Error fetching text from Monid")
+            return None
     try:
         r = requests.get(f"https://r.jina.ai/{url}")
         return r.text
